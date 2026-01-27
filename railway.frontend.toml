@@ -1,0 +1,13 @@
+# Railway configuration for JBS Internal Portal Frontend
+# Astro frontend only
+
+[build]
+builder = "nixpacks"
+buildCommand = "cd frontend && npm ci && npm run build"
+
+[deploy]
+startCommand = "cd frontend && npm run start"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10

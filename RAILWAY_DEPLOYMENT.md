@@ -53,23 +53,30 @@
 
 1. Click "New Service" → "GitHub Repo"
 2. Select same repository
-3. Configure:
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm run preview`
+3. **CRITICAL**: Configure Root Directory:
+   - Go to Settings → General
+   - Set **Root Directory**: `frontend`
+   - This tells Railway to build from the frontend folder only
 
-4. **Environment Variables**:
+4. The build will use the `railway.toml` file in the frontend directory automatically
+
+5. **Environment Variables** (Settings → Variables):
    ```
-   API_BASE_URL=https://jbs-backend-XXXX.railway.app/api
+   PUBLIC_API_URL=https://jbs-backend-XXXX.railway.app/api
    NODE_ENV=production
    ```
 
-5. Update `frontend/src/lib/api.ts`:
+6. Update `frontend/src/lib/api.ts`:
    ```typescript
    const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
    ```
 
-6. Click "Deploy" - frontend will be available at: `https://jbs-portal-XXXX.railway.app`
+7. Click "Deploy" - frontend will be available at: `https://jbs-portal-XXXX.railway.app`
+
+**Important**: If you get npm workspace errors, ensure:
+- Root Directory is set to `frontend` (not root)
+- Node version is 20+ (specified in `.node-version`)
+- Using `npm install --legacy-peer-deps` in build command
 
 ### 4. Update CORS Settings
 
@@ -135,6 +142,17 @@ Migrations run automatically on startup. Check logs:
 - **Health Check**: Backend `/health` endpoint
 
 ## Troubleshooting
+
+### NPM Workspace/Install Errors (Frontend)
+**Error**: `npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]`
+
+**Cause**: Railway is building from root directory instead of frontend directory, or npm version mismatch.
+
+**Fix**:
+1. Go to Railway service Settings → General
+2. Set **Root Directory** to `frontend` (NOT root or empty)
+3. Redeploy the service
+4. If still failing, check that `frontend/.node-version` exists with `20.11.0`
 
 ### Backend won't start
 - Check `DATABASE_URL` is connected to PostgreSQL service
