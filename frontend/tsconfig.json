@@ -1,5 +1,4 @@
 {
-  "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
     "target": "ES2020",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
@@ -13,7 +12,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["astro/client"]
+    "noEmit": true
   },
-  "exclude": ["dist", "node_modules", ".astro"]
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", ".astro", "*.config.*", "*.mjs", "*.js"]
 }
