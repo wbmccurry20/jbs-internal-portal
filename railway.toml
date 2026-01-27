@@ -1,0 +1,13 @@
+# Railway configuration for JBS Internal Portal
+# This ensures Railway deploys the Go backend correctly
+
+[build]
+builder = "nixpacks"
+buildCommand = "cd backend && go build -o server ./cmd/server"
+
+[deploy]
+startCommand = "cd backend && ./server"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
