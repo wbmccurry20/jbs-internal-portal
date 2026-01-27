@@ -121,3 +121,21 @@ export async function resetUserPassword(userId: number, newPassword: string): Pr
     throw new Error(error.error || 'Failed to reset password');
   }
 }
+
+// Change own password
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/change-password`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to change password');
+  }
+}

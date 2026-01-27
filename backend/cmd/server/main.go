@@ -76,6 +76,7 @@ func main() {
 	{
 		// User routes
 		api.GET("/user", handlers.GetCurrentUser)
+		api.POST("/change-password", handlers.ChangeOwnPassword)
 
 		// User management routes (support account only)
 		api.GET("/users", handlers.ListUsers)
