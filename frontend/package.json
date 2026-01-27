@@ -7,11 +7,12 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "start": "astro dev",
+    "start": "node ./dist/server/entry.mjs",
     "build": "astro build",
     "preview": "astro preview"
   },
   "dependencies": {
+    "@astrojs/node": "^9.5.2",
     "@astrojs/react": "^3.0.9",
     "@astrojs/tailwind": "^5.1.0",
     "@types/react": "^18.2.55",
