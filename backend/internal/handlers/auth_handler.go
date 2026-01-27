@@ -27,7 +27,12 @@ func Login(c *gin.Context) {
 	`, req.Email).Scan(&user.ID, &user.Email, &user.Password, &user.Name, 
 		&user.Role, &user.CreatedAt, &user.UpdatedAt)
 
+	// Prevent timing attacks: always hash password even if user doesn't exist
+	// This ensures consistent response time
+	dummyHash := "$2a$14$LKWvvvvvvvvvvvvvvvvvvuO.UpVvvvvvvvvvvvvvvvvvvvvvvvvv" // Dummy bcrypt hash
 	if err == sql.ErrNoRows {
+		// Hash dummy password to maintain consistent timing
+		auth.CheckPasswordHash(req.Password, dummyHash)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}

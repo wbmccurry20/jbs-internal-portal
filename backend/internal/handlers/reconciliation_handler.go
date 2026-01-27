@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -229,12 +230,27 @@ func DownloadReconciliationResult(c *gin.Context) {
 		return
 	}
 
+	// Validate path to prevent directory traversal
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = "./uploads"
+	}
+	cleanPath := filepath.Clean(outputPath)
+	absUploadDir, _ := filepath.Abs(uploadDir)
+	absOutputPath, _ := filepath.Abs(cleanPath)
+	
+	// Ensure file is within upload directory
+	if !strings.HasPrefix(absOutputPath, absUploadDir) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		return
+	}
+
 	// Check file exists
-	if _, err := os.Stat(outputPath); os.IsNotExist(err) {
+	if _, err := os.Stat(cleanPath); os.IsNotExist(err) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Output file not found"})
 		return
 	}
 
 	// Serve the file
-	c.FileAttachment(outputPath, filepath.Base(outputPath))
+	c.FileAttachment(cleanPath, filepath.Base(cleanPath))
 }
