@@ -166,6 +166,11 @@ import Layout from '../../layouts/Layout.astro';
     const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8080';
     const token = localStorage.getItem('jbs_token');
 
+    // Redirect to login if not authenticated
+    if (!token) {
+      window.location.href = '/';
+    }
+
     let bankFile: File | null = null;
     let foundationFile: File | null = null;
     let currentJobId: number | null = null;

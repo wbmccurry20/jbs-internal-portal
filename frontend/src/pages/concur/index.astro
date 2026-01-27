@@ -111,6 +111,11 @@ import Layout from '../../layouts/Layout.astro';
     const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8080';
     const token = localStorage.getItem('jbs_token');
 
+    // Redirect to login if not authenticated
+    if (!token) {
+      window.location.href = '/';
+    }
+
     let selectedFile: File | null = null;
     let currentJobId: number | null = null;
 
@@ -150,6 +155,8 @@ import Layout from '../../layouts/Layout.astro';
         formData.append('file', selectedFile);
         formData.append('vendor_id', vendorId);
 
+        console.log('Uploading with token:', token ? 'Token exists' : 'NO TOKEN');
+
         const response = await fetch(`${API_URL}/api/concur/upload`, {
           method: 'POST',
           headers: {
@@ -161,6 +168,7 @@ import Layout from '../../layouts/Layout.astro';
         const data = await response.json();
 
         if (!response.ok) {
+          console.error('Upload error:', data);
           throw new Error(data.error || 'Upload failed');
         }
 
