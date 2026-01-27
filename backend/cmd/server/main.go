@@ -37,9 +37,10 @@ func main() {
 	// Initialize Gin router
 	router := gin.Default()
 
-	// Security middleware
+	// Security middleware (applied to all routes)
 	router.Use(middleware.SecurityHeaders())
-	router.Use(middleware.InputValidation())
+	router.Use(middleware.RequestLogger())
+	router.Use(middleware.RateLimitGeneral())
 
 	// CORS middleware
 	router.Use(func(c *gin.Context) {
@@ -67,7 +68,7 @@ func main() {
 
 	// Public routes
 	router.GET("/health", handlers.Health)
-	router.POST("/api/login", handlers.Login)
+	router.POST("/api/login", middleware.RateLimitLogin(), handlers.Login)
 
 	// Protected routes
 	api := router.Group("/api")
@@ -76,13 +77,13 @@ func main() {
 		// User routes
 		api.GET("/user", handlers.GetCurrentUser)
 
-		// Concur conversion routes
-		api.POST("/concur/upload", handlers.UploadConcurFile)
+		// Concur conversion routes (with upload rate limiting)
+		api.POST("/concur/upload", middleware.RateLimitUpload(), handlers.UploadConcurFile)
 		api.GET("/concur/history", handlers.GetConversionHistory)
 		api.GET("/download/:id", handlers.DownloadConversionResult)
 
-		// Reconciliation routes
-		api.POST("/reconciliation/upload", handlers.UploadReconciliationFiles)
+		// Reconciliation routes (with upload rate limiting)
+		api.POST("/reconciliation/upload", middleware.RateLimitUpload(), handlers.UploadReconciliationFiles)
 		api.GET("/reconciliation/history", handlers.GetReconciliationHistory)
 		api.GET("/reconciliation/download/:id", handlers.DownloadReconciliationResult)
 	}
