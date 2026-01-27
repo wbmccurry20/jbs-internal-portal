@@ -198,9 +198,59 @@ import Layout from '../../layouts/Layout.astro';
     // Download button
     document.getElementById('download-btn')?.addEventListener('click', async () => {
       if (currentJobId) {
-        window.location.href = `${API_URL}/api/download/${currentJobId}`;
+        try {
+          const response = await fetch(`${API_URL}/api/download/${currentJobId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Download failed');
+          }
+
+          // Get the blob and download it
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `foundation_${currentJobId}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        } catch (error) {
+          alert('Failed to download file');
+        }
       }
     });
+
+    // Download file function (available globally for history links)
+    (window as any).downloadFile = async (jobId: number) => {
+      try {
+        const response = await fetch(`${API_URL}/api/download/${jobId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Download failed');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `foundation_${jobId}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (error) {
+        alert('Failed to download file');
+      }
+    };
 
     // Load conversion history
     async function loadHistory() {
@@ -235,9 +285,9 @@ import Layout from '../../layouts/Layout.astro';
                   ${job.status}
                 </span>
                 ${job.status === 'completed' ? `
-                  <a href="${API_URL}/api/download/${job.id}" class="text-primary hover:text-blue-700 text-sm">
+                  <button onclick="downloadFile(${job.id})" class="text-sm text-primary hover:text-blue-700">
                     Download
-                  </a>
+                  </button>
                 ` : ''}
               </div>
             </div>
