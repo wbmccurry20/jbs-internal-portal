@@ -1,0 +1,314 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout>
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold text-gray-900">Bank Reconciliation</h1>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Upload Files for Reconciliation</h2>
+      
+      <form id="upload-form" class="space-y-4">
+        <div>
+          <label for="tolerance-days" class="block text-sm font-medium text-gray-700">
+            Date Tolerance (Days)
+          </label>
+          <input
+            type="number"
+            id="tolerance-days"
+            value="3"
+            min="0"
+            max="30"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+          />
+          <p class="mt-1 text-sm text-gray-500">Transactions within this many days will be considered for matching</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Bank File Upload -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Bank Statement (AmEx CSV/Excel)
+            </label>
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-primary transition-colors">
+              <div class="space-y-1 text-center">
+                <svg
+                  class="mx-auto h-12 w-12 text-gray-400"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                >
+                  <path
+                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <div class="flex text-sm text-gray-600">
+                  <label
+                    for="bank-file"
+                    class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-blue-500"
+                  >
+                    <span>Upload bank file</span>
+                    <input id="bank-file" name="bank-file" type="file" class="sr-only" accept=".csv,.xlsx,.xls" />
+                  </label>
+                </div>
+                <p class="text-xs text-gray-500">CSV or Excel</p>
+              </div>
+            </div>
+            <p id="bank-file-name" class="mt-2 text-sm text-gray-500"></p>
+          </div>
+
+          <!-- Foundation File Upload -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Foundation Export (CSV)
+            </label>
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-primary transition-colors">
+              <div class="space-y-1 text-center">
+                <svg
+                  class="mx-auto h-12 w-12 text-gray-400"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                >
+                  <path
+                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <div class="flex text-sm text-gray-600">
+                  <label
+                    for="foundation-file"
+                    class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-blue-500"
+                  >
+                    <span>Upload foundation file</span>
+                    <input id="foundation-file" name="foundation-file" type="file" class="sr-only" accept=".csv,.xlsx,.xls" />
+                  </label>
+                </div>
+                <p class="text-xs text-gray-500">CSV or Excel</p>
+              </div>
+            </div>
+            <p id="foundation-file-name" class="mt-2 text-sm text-gray-500"></p>
+          </div>
+        </div>
+
+        <div id="upload-status" class="hidden">
+          <div class="rounded-md bg-blue-50 p-4">
+            <p class="text-sm text-blue-700">Processing reconciliation...</p>
+          </div>
+        </div>
+
+        <div id="upload-error" class="hidden">
+          <div class="rounded-md bg-red-50 p-4">
+            <p class="text-sm text-red-700"></p>
+          </div>
+        </div>
+
+        <div id="upload-success" class="hidden">
+          <div class="rounded-md bg-green-50 p-4 space-y-3">
+            <p class="text-sm font-medium text-green-800">Reconciliation Completed!</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-green-700">
+              <div>
+                <p class="font-semibold">Matched:</p>
+                <p id="success-matched">0</p>
+              </div>
+              <div>
+                <p class="font-semibold">Bank Only:</p>
+                <p id="success-bank-only">0</p>
+              </div>
+              <div>
+                <p class="font-semibold">Foundation Only:</p>
+                <p id="success-foundation-only">0</p>
+              </div>
+              <div>
+                <p class="font-semibold">Match Rate:</p>
+                <p id="success-match-rate">0%</p>
+              </div>
+            </div>
+            <button
+              id="download-btn"
+              type="button"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+            >
+              Download Excel Report
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          id="submit-btn"
+          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Run Reconciliation
+        </button>
+      </form>
+    </div>
+
+    <!-- Reconciliation History -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Recent Reconciliations</h2>
+      <div id="history-list" class="space-y-2">
+        <p class="text-sm text-gray-500">Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:8080';
+    const token = localStorage.getItem('jbs_token');
+
+    let bankFile: File | null = null;
+    let foundationFile: File | null = null;
+    let currentJobId: number | null = null;
+
+    // Bank file input handler
+    const bankFileInput = document.getElementById('bank-file') as HTMLInputElement;
+    bankFileInput?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files[0]) {
+        bankFile = target.files[0];
+        document.getElementById('bank-file-name')!.textContent = `Selected: ${bankFile.name}`;
+      }
+    });
+
+    // Foundation file input handler
+    const foundationFileInput = document.getElementById('foundation-file') as HTMLInputElement;
+    foundationFileInput?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files[0]) {
+        foundationFile = target.files[0];
+        document.getElementById('foundation-file-name')!.textContent = `Selected: ${foundationFile.name}`;
+      }
+    });
+
+    // Form submission
+    document.getElementById('upload-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!bankFile || !foundationFile) {
+        alert('Please select both bank and foundation files');
+        return;
+      }
+
+      const toleranceDays = (document.getElementById('tolerance-days') as HTMLInputElement).value;
+      const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+      const statusDiv = document.getElementById('upload-status');
+      const errorDiv = document.getElementById('upload-error');
+      const successDiv = document.getElementById('upload-success');
+
+      // Reset states
+      statusDiv?.classList.remove('hidden');
+      errorDiv?.classList.add('hidden');
+      successDiv?.classList.add('hidden');
+      submitBtn.disabled = true;
+
+      try {
+        const formData = new FormData();
+        formData.append('bank_file', bankFile);
+        formData.append('foundation_file', foundationFile);
+        formData.append('tolerance_days', toleranceDays);
+
+        const response = await fetch(`${API_URL}/api/reconciliation/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Reconciliation failed');
+        }
+
+        // Success
+        currentJobId = data.job_id;
+        document.getElementById('success-matched')!.textContent = data.matched_count.toString();
+        document.getElementById('success-bank-only')!.textContent = data.bank_only_count.toString();
+        document.getElementById('success-foundation-only')!.textContent = data.foundation_only_count.toString();
+        document.getElementById('success-match-rate')!.textContent = data.match_rate;
+
+        statusDiv?.classList.add('hidden');
+        successDiv?.classList.remove('hidden');
+
+        // Reload history
+        loadHistory();
+
+      } catch (error) {
+        statusDiv?.classList.add('hidden');
+        errorDiv?.classList.remove('hidden');
+        errorDiv!.querySelector('p')!.textContent = error instanceof Error ? error.message : 'An error occurred';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Download button
+    document.getElementById('download-btn')?.addEventListener('click', async () => {
+      if (currentJobId) {
+        window.location.href = `${API_URL}/api/reconciliation/download/${currentJobId}`;
+      }
+    });
+
+    // Load reconciliation history
+    async function loadHistory() {
+      try {
+        const response = await fetch(`${API_URL}/api/reconciliation/history`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const jobs = await response.json();
+          const historyList = document.getElementById('history-list');
+          
+          if (jobs.length === 0) {
+            historyList!.innerHTML = '<p class="text-sm text-gray-500">No reconciliations yet</p>';
+            return;
+          }
+
+          historyList!.innerHTML = jobs.map((job: any) => `
+            <div class="flex justify-between items-center py-2 px-3 bg-gray-50 rounded">
+              <div>
+                <p class="text-sm font-medium text-gray-900">${job.bank_filename} + ${job.foundation_filename}</p>
+                <p class="text-xs text-gray-500">${new Date(job.created_at).toLocaleString()}</p>
+                ${job.status === 'completed' ? `
+                  <p class="text-xs text-gray-600">Matched: ${job.matched_count} | Voids: ${job.void_count} | Ambiguous: ${job.ambiguous_void_count}</p>
+                ` : ''}
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  job.status === 'completed' ? 'bg-green-100 text-green-800' :
+                  job.status === 'failed' ? 'bg-red-100 text-red-800' :
+                  'bg-yellow-100 text-yellow-800'
+                }">
+                  ${job.status}
+                </span>
+                ${job.status === 'completed' ? `
+                  <a href="${API_URL}/api/reconciliation/download/${job.id}" class="text-primary hover:text-blue-700 text-sm">
+                    Download
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Failed to load history:', error);
+      }
+    }
+
+    loadHistory();
+  </script>
+</Layout>

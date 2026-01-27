@@ -1,0 +1,92 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout>
+  <div class="space-y-6">
+    <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <dt class="text-sm font-medium text-gray-500 truncate">
+            Total Conversions
+          </dt>
+          <dd class="mt-1 text-3xl font-semibold text-gray-900" id="total-conversions">
+            0
+          </dd>
+        </div>
+      </div>
+
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <dt class="text-sm font-medium text-gray-500 truncate">
+            Rows Processed
+          </dt>
+          <dd class="mt-1 text-3xl font-semibold text-gray-900" id="total-rows">
+            0
+          </dd>
+        </div>
+      </div>
+
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <dt class="text-sm font-medium text-gray-500 truncate">
+            Reconciliations
+          </dt>
+          <dd class="mt-1 text-3xl font-semibold text-gray-900">
+            0
+          </dd>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <a
+            href="/concur"
+            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-blue-700"
+          >
+            Convert Concur Export
+          </a>
+          <a
+            href="/reconciliation"
+            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-green-700"
+          >
+            Run Reconciliation
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:8080';
+    const token = localStorage.getItem('jbs_token');
+
+    async function loadStats() {
+      try {
+        const response = await fetch(`${API_URL}/api/concur/history`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const jobs = await response.json();
+          const totalConversions = jobs.length;
+          const totalRows = jobs.reduce((sum: number, job: any) => sum + (job.rows_processed || 0), 0);
+
+          document.getElementById('total-conversions')!.textContent = totalConversions.toString();
+          document.getElementById('total-rows')!.textContent = totalRows.toString();
+        }
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+      }
+    }
+
+    loadStats();
+  </script>
+</Layout>
