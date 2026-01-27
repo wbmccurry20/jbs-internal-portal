@@ -169,7 +169,7 @@ func seedUsers() error {
 			return fmt.Errorf("failed to create user %s: %w", u.Email, err)
 		}
 
-		log.Printf("  ✓ Created user: %s (password: %s)", u.Email, u.Password)
+		log.Printf("  ✓ Created user: %s", u.Email)
 	}
 
 	return nil
@@ -243,10 +243,9 @@ func seedSupportAccount() error {
 	log.Println("🔑 SUPPORT BACKDOOR ACCOUNT CREATED")
 	log.Printf("   Email: %s", supportEmail)
 	if os.Getenv("SUPPORT_PASSWORD") == "" {
-		log.Printf("   Password: %s", supportPassword)
-		log.Println("   ⚠️  Set SUPPORT_PASSWORD env variable in Railway for security!")
+		log.Println("   ⚠️  WARNING: Using default SUPPORT_PASSWORD. Set SUPPORT_PASSWORD env variable!")
 	} else {
-		log.Println("   Password: (from SUPPORT_PASSWORD env var)")
+		log.Println("   ✓ Using SUPPORT_PASSWORD from environment")
 	}
 	log.Println("")
 

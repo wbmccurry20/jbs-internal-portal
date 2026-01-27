@@ -12,6 +12,7 @@ import (
 	"github.com/wbmccurry20/jbs-internal-portal/internal/database"
 	"github.com/wbmccurry20/jbs-internal-portal/internal/models"
 	"github.com/wbmccurry20/jbs-internal-portal/internal/services"
+	"github.com/wbmccurry20/jbs-internal-portal/internal/utils"
 )
 
 // UploadConcurFile handles Concur Excel file upload and conversion
@@ -33,12 +34,14 @@ func UploadConcurFile(c *gin.Context) {
 		return
 	}
 
-	// Validate file extension
-	ext := filepath.Ext(file.Filename)
-	if ext != ".xlsx" && ext != ".xls" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Only Excel files (.xlsx, .xls) are supported"})
+	// Validate file
+	if err := utils.ValidateExcelFile(file); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Sanitize filename
+	safeFilename := utils.SanitizeFilename(file.Filename)
 
 	// Create upload directory if it doesn't exist
 	uploadDir := os.Getenv("UPLOAD_DIR")
@@ -49,7 +52,7 @@ func UploadConcurFile(c *gin.Context) {
 
 	// Generate unique filename
 	timestamp := time.Now().Format("20060102_150405")
-	inputFilename := fmt.Sprintf("concur_%s_%s", timestamp, file.Filename)
+	inputFilename := fmt.Sprintf("concur_%s_%s", timestamp, safeFilename)
 	inputPath := filepath.Join(uploadDir, inputFilename)
 
 	// Save uploaded file

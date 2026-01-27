@@ -57,6 +57,10 @@ func ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		// Validate signing algorithm to prevent 'none' algorithm attack
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("invalid signing algorithm")
+		}
 		return []byte(secret), nil
 	})
 

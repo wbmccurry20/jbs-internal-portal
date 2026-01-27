@@ -12,6 +12,7 @@ import (
 	"github.com/wbmccurry20/jbs-internal-portal/internal/database"
 	"github.com/wbmccurry20/jbs-internal-portal/internal/models"
 	"github.com/wbmccurry20/jbs-internal-portal/internal/services"
+	"github.com/wbmccurry20/jbs-internal-portal/internal/utils"
 )
 
 // UploadReconciliationFiles handles bank and foundation file uploads for reconciliation
@@ -52,6 +53,10 @@ func UploadReconciliationFiles(c *gin.Context) {
 		return
 	}
 
+	// Sanitize filenames
+	safeBankFilename := utils.SanitizeFilename(bankFile.Filename)
+	safeFoundationFilename := utils.SanitizeFilename(foundationFile.Filename)
+
 	// Create upload directory
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
@@ -61,8 +66,8 @@ func UploadReconciliationFiles(c *gin.Context) {
 
 	// Generate unique filenames
 	timestamp := time.Now().Format("20060102_150405")
-	bankFilename := fmt.Sprintf("bank_%s_%s", timestamp, bankFile.Filename)
-	foundationFilename := fmt.Sprintf("foundation_%s_%s", timestamp, foundationFile.Filename)
+	bankFilename := fmt.Sprintf("bank_%s_%s", timestamp, safeBankFilename)
+	foundationFilename := fmt.Sprintf("foundation_%s_%s", timestamp, safeFoundationFilename)
 	bankPath := filepath.Join(uploadDir, bankFilename)
 	foundationPath := filepath.Join(uploadDir, foundationFilename)
 
