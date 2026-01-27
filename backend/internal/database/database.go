@@ -206,7 +206,7 @@ func seedSupportAccount() error {
 		err = bcrypt.CompareHashAndPassword([]byte(existingHash), []byte(supportPassword))
 		if err != nil {
 			// Password doesn't match - update it
-			hash, err := bcrypt.GenerateFromPassword([]byte(supportPassword), bcrypt.DefaultCost)
+			hash, err := bcrypt.GenerateFromPassword([]byte(supportPassword), 14)
 			if err != nil {
 				return fmt.Errorf("failed to hash support password: %w", err)
 			}
@@ -225,8 +225,8 @@ func seedSupportAccount() error {
 		return nil
 	}
 
-	// Support account doesn't exist - create it
-	hash, err := bcrypt.GenerateFromPassword([]byte(supportPassword), bcrypt.DefaultCost)
+	// Support account doesn't exist - create it with cost 14
+	hash, err := bcrypt.GenerateFromPassword([]byte(supportPassword), 14)
 	if err != nil {
 		return fmt.Errorf("failed to hash support password: %w", err)
 	}
