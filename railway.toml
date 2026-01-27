@@ -3,7 +3,7 @@
 
 [build]
 builder = "nixpacks"
-buildCommand = "cd frontend && npm install && npm run build && cd ../backend && go build -o server ./cmd/server"
+buildCommand = "cd frontend && npm install && npm run build && cd ../backend && cp -r ../frontend/dist ./frontend-dist && go build -o server ./cmd/server"
 
 [deploy]
 startCommand = "cd backend && ./server"
