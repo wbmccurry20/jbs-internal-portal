@@ -108,7 +108,7 @@ import Layout from '../../layouts/Layout.astro';
   </div>
 
   <script>
-    const API_URL = 'https://jbs-internal-portal-production.up.railway.app';
+    const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8080';
     const token = localStorage.getItem('jbs_token');
 
     let selectedFile: File | null = null;
