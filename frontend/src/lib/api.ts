@@ -1,5 +1,6 @@
 // API client configuration
 const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
+console.log('API_BASE_URL:', API_BASE_URL, 'PUBLIC_API_URL env:', import.meta.env.PUBLIC_API_URL);
 
 export interface LoginResponse {
   token: string;
