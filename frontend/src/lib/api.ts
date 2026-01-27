@@ -29,17 +29,17 @@ export async function login(email: string, password: string): Promise<LoginRespo
 
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('auth_token');
+  return localStorage.getItem('jbs_token');
 }
 
 export function setAuthToken(token: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('auth_token', token);
+  localStorage.setItem('jbs_token', token);
 }
 
 export function clearAuthToken(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('auth_token');
+  localStorage.removeItem('jbs_token');
 }
 
 export function isAuthenticated(): boolean {
