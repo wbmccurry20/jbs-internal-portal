@@ -45,7 +45,9 @@ func Connect(databaseURL string) error {
 
 func Close() {
 	if DB != nil {
-		DB.Close()
+		if err := DB.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
 	}
 }
 

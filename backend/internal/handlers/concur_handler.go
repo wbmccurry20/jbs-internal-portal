@@ -49,7 +49,10 @@ func UploadConcurFile(c *gin.Context) {
 	if uploadDir == "" {
 		uploadDir = "./uploads"
 	}
-	os.MkdirAll(uploadDir, 0755)
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		c.JSON(500, gin.H{"error": "Failed to create upload directory"})
+		return
+	}
 
 	// Generate unique filename
 	timestamp := time.Now().Format("20060102_150405")
