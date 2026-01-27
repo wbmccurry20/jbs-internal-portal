@@ -1,0 +1,167 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Manage Users - JBS Portal">
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold text-gray-900">User Management</h1>
+      <a href="/dashboard" class="text-sm text-gray-600 hover:text-gray-900">
+        ← Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Add User Form -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4">Create New User</h2>
+      <form id="create-user-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+          <input type="text" id="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input type="email" id="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Password (min 8 chars)</label>
+          <input type="password" id="password" required minlength="8" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+          <select id="role" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+            <option value="employee">Employee</option>
+            <option value="owner">Owner</option>
+            <option value="accountant">Accountant</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <button type="submit" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-700">
+            Create User
+          </button>
+        </div>
+      </form>
+      <div id="create-error" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded"></div>
+      <div id="create-success" class="hidden mt-4 p-3 bg-green-100 text-green-700 rounded">User created successfully!</div>
+    </div>
+
+    <!-- Users List -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4">All Users</h2>
+      <div id="loading" class="text-center py-4">Loading users...</div>
+      <div id="users-list" class="hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody" class="bg-white divide-y divide-gray-200">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { listUsers, createUser, deleteUser, resetUserPassword } from '../lib/api';
+
+    const token = localStorage.getItem('jbs_token');
+    if (!token) {
+      window.location.href = '/';
+    }
+
+    // Load users
+    async function loadUsers() {
+      try {
+        const users = await listUsers();
+        const tbody = document.getElementById('users-tbody');
+        const loadingDiv = document.getElementById('loading');
+        const usersListDiv = document.getElementById('users-list');
+
+        loadingDiv?.classList.add('hidden');
+        usersListDiv?.classList.remove('hidden');
+
+        tbody!.innerHTML = users.map(user => `
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.name}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.role}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(user.created_at).toLocaleDateString()}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+              ${user.email !== 'hello@itwill.dev' ? `
+                <button onclick="resetPassword(${user.id})" class="text-yellow-600 hover:text-yellow-900">Reset Password</button>
+                <button onclick="deleteUserConfirm(${user.id}, '${user.email}')" class="text-red-600 hover:text-red-900">Delete</button>
+              ` : '<span class="text-gray-400">Protected</span>'}
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        document.getElementById('loading')!.textContent = 'Failed to load users: ' + (error as Error).message;
+      }
+    }
+
+    // Create user
+    document.getElementById('create-user-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target as HTMLFormElement;
+      const errorDiv = document.getElementById('create-error');
+      const successDiv = document.getElementById('create-success');
+
+      errorDiv?.classList.add('hidden');
+      successDiv?.classList.add('hidden');
+
+      try {
+        const name = (document.getElementById('name') as HTMLInputElement).value;
+        const email = (document.getElementById('email') as HTMLInputElement).value;
+        const password = (document.getElementById('password') as HTMLInputElement).value;
+        const role = (document.getElementById('role') as HTMLSelectElement).value;
+
+        await createUser(email, password, name, role);
+
+        successDiv?.classList.remove('hidden');
+        form.reset();
+        loadUsers();
+
+        setTimeout(() => successDiv?.classList.add('hidden'), 3000);
+      } catch (error) {
+        errorDiv!.textContent = (error as Error).message;
+        errorDiv?.classList.remove('hidden');
+      }
+    });
+
+    // Delete user (make available globally)
+    (window as any).deleteUserConfirm = async (userId: number, email: string) => {
+      if (confirm(`Are you sure you want to delete user: ${email}?`)) {
+        try {
+          await deleteUser(userId);
+          alert('User deleted successfully');
+          loadUsers();
+        } catch (error) {
+          alert('Failed to delete user: ' + (error as Error).message);
+        }
+      }
+    };
+
+    // Reset password (make available globally)
+    (window as any).resetPassword = async (userId: number) => {
+      const newPassword = prompt('Enter new password (min 8 characters):');
+      if (newPassword && newPassword.length >= 8) {
+        try {
+          await resetUserPassword(userId, newPassword);
+          alert('Password reset successfully');
+        } catch (error) {
+          alert('Failed to reset password: ' + (error as Error).message);
+        }
+      } else if (newPassword) {
+        alert('Password must be at least 8 characters');
+      }
+    };
+
+    loadUsers();
+  </script>
+</Layout>
