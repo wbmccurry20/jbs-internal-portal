@@ -45,3 +45,79 @@ export function clearAuthToken(): void {
 export function isAuthenticated(): boolean {
   return !!getAuthToken();
 }
+
+// User interface
+export interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  created_at: string;
+}
+
+// User Management API
+export async function listUsers(): Promise<User[]> {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/users`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch users');
+  }
+
+  const data = await response.json();
+  return data.users;
+}
+
+export async function createUser(email: string, password: string, name: string, role: string): Promise<void> {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/users`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password, name, role }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create user');
+  }
+}
+
+export async function deleteUser(userId: number): Promise<void> {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to delete user');
+  }
+}
+
+export async function resetUserPassword(userId: number, newPassword: string): Promise<void> {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/reset-password`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ new_password: newPassword }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to reset password');
+  }
+}

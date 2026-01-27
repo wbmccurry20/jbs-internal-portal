@@ -77,6 +77,12 @@ func main() {
 		// User routes
 		api.GET("/user", handlers.GetCurrentUser)
 
+		// User management routes (support account only)
+		api.GET("/users", handlers.ListUsers)
+		api.POST("/users", handlers.CreateUser)
+		api.DELETE("/users/:id", handlers.DeleteUser)
+		api.POST("/users/:id/reset-password", handlers.ResetUserPassword)
+
 		// Concur conversion routes (with upload rate limiting)
 		api.POST("/concur/upload", middleware.RateLimitUpload(), handlers.UploadConcurFile)
 		api.GET("/concur/history", handlers.GetConversionHistory)
