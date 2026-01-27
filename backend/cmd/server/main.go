@@ -88,12 +88,19 @@ func main() {
 		api.GET("/reconciliation/download/:id", handlers.DownloadReconciliationResult)
 	}
 
-	// Serve frontend static files
-	router.Static("/assets", "../frontend/dist/assets")
-	router.StaticFile("/favicon.svg", "../frontend/dist/favicon.svg")
+	// Serve frontend static files FIRST (before NoRoute)
+	router.StaticFile("/", "./frontend-dist/index.html")
+	router.StaticFile("/favicon.svg", "./frontend-dist/favicon.svg")
+	router.Static("/assets", "./frontend-dist/assets")
+	router.Static("/_astro", "./frontend-dist/_astro")
 	
-	// Serve index.html for all other routes (SPA routing)
+	// Fallback for SPA routing - serve index.html for any non-API, non-asset routes
 	router.NoRoute(func(c *gin.Context) {
+		// Don't catch API routes
+		if strings.HasPrefix(c.Request.URL.Path, "/api") {
+			c.JSON(404, gin.H{"error": "Not found"})
+			return
+		}
 		c.File("../frontend/dist/index.html")
 	})
 
