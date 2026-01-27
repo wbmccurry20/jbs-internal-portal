@@ -1,9 +1,9 @@
 # Railway configuration for JBS Internal Portal
-# This ensures Railway deploys the Go backend correctly
+# Builds frontend + backend together
 
 [build]
 builder = "nixpacks"
-buildCommand = "cd backend && go build -o server ./cmd/server"
+buildCommand = "cd frontend && npm install && npm run build && cd ../backend && go build -o server ./cmd/server"
 
 [deploy]
 startCommand = "cd backend && ./server"

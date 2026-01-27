@@ -88,6 +88,15 @@ func main() {
 		api.GET("/reconciliation/download/:id", handlers.DownloadReconciliationResult)
 	}
 
+	// Serve frontend static files
+	router.Static("/assets", "../frontend/dist/assets")
+	router.StaticFile("/favicon.svg", "../frontend/dist/favicon.svg")
+	
+	// Serve index.html for all other routes (SPA routing)
+	router.NoRoute(func(c *gin.Context) {
+		c.File("../frontend/dist/index.html")
+	})
+
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
