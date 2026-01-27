@@ -13,4 +13,12 @@ export default defineConfig({
     port: 4321,
     host: true, // Allow external connections
   },
+  vite: {
+    server: {
+      allowedHosts: [
+        'welcoming-rejoicing-production.up.railway.app',
+        'portal.jbsconstructiongroup.com'
+      ]
+    }
+  }
 });
