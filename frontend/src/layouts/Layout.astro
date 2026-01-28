@@ -50,11 +50,84 @@ const title = 'JBS Internal Portal';
         window.location.href = '/';
       }
 
-      // Logout handler
-      document.getElementById('logout-btn')?.addEventListener('click', () => {
+      // Auto-logout configuration
+      const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes of inactivity
+      const TOKEN_CHECK_INTERVAL = 60 * 1000; // Check token every minute
+      const ACTIVITY_THROTTLE = 5000; // Only reset timer every 5 seconds max
+      let inactivityTimer: number;
+      let tokenCheckInterval: number;
+      let lastActivityReset = 0;
+
+      // Parse JWT to get expiration time
+      function getTokenExpiration(token: string): number | null {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          return payload.exp ? payload.exp * 1000 : null; // Convert to milliseconds
+        } catch (error) {
+          return null;
+        }
+      }
+
+      // Logout function
+      function logout(reason?: string) {
+        if (reason) {
+          console.log('Auto-logout:', reason);
+        }
         localStorage.removeItem('jbs_token');
         localStorage.removeItem('jbs_user');
         window.location.href = '/';
+      }
+
+      // Reset inactivity timer (throttled)
+      function resetInactivityTimer() {
+        const now = Date.now();
+        // Throttle: only reset if 5 seconds have passed since last reset
+        if (now - lastActivityReset < ACTIVITY_THROTTLE) {
+          return;
+        }
+        lastActivityReset = now;
+        
+        clearTimeout(inactivityTimer);
+        inactivityTimer = window.setTimeout(() => {
+          logout('Logged out due to 30 minutes of inactivity');
+        }, INACTIVITY_TIMEOUT);
+      }
+
+      // Check if token is expired
+      function checkTokenExpiration() {
+        const currentToken = localStorage.getItem('jbs_token');
+        if (!currentToken) return;
+
+        const expiration = getTokenExpiration(currentToken);
+        if (expiration && Date.now() >= expiration) {
+          logout('Session expired');
+        }
+      }
+
+      // Set up activity listeners
+      if (token && window.location.pathname !== '/') {
+        // Monitor user activity (reduced events, passive listeners for performance)
+        const activityEvents = ['mousedown', 'keydown', 'touchstart'];
+        activityEvents.forEach(event => {
+          document.addEventListener(event, resetInactivityTimer, { passive: true, capture: true });
+        });
+
+        // Start inactivity timer
+        resetInactivityTimer();
+
+        // Check token expiration periodically
+        tokenCheckInterval = window.setInterval(checkTokenExpiration, TOKEN_CHECK_INTERVAL);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+          clearTimeout(inactivityTimer);
+          clearInterval(tokenCheckInterval);
+        });
+      }
+
+      // Logout handler
+      document.getElementById('logout-btn')?.addEventListener('click', () => {
+        logout();
       });
     </script>
   </body>
