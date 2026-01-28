@@ -254,3 +254,60 @@ func DownloadReconciliationResult(c *gin.Context) {
 	// Serve the file
 	c.FileAttachment(cleanPath, filepath.Base(cleanPath))
 }
+
+// DeleteReconciliationJob deletes a reconciliation job and its associated files
+func DeleteReconciliationJob(c *gin.Context) {
+	jobIDStr := c.Param("id")
+	jobID, err := strconv.Atoi(jobIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid job ID"})
+		return
+	}
+
+	userID, _ := c.Get("userID")
+
+	// Get job details to verify ownership and get file paths
+	var outputPath string
+	var ownerID int
+	err = database.DB.QueryRow(`
+		SELECT user_id, output_file_path
+		FROM reconciliation_jobs
+		WHERE id = $1
+	`, jobID).Scan(&ownerID, &outputPath)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Job not found"})
+		return
+	}
+
+	// Verify user owns this job
+	if ownerID != userID.(int) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own jobs"})
+		return
+	}
+
+	// Delete the output file if it exists
+	if outputPath != "" {
+		uploadDir := os.Getenv("UPLOAD_DIR")
+		if uploadDir == "" {
+			uploadDir = "./uploads"
+		}
+		cleanPath := filepath.Clean(outputPath)
+		absUploadDir, _ := filepath.Abs(uploadDir)
+		absOutputPath, _ := filepath.Abs(cleanPath)
+		
+		// Only delete if within upload directory
+		if strings.HasPrefix(absOutputPath, absUploadDir) {
+			os.Remove(cleanPath)
+		}
+	}
+
+	// Delete the database record
+	_, err = database.DB.Exec(`DELETE FROM reconciliation_jobs WHERE id = $1`, jobID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete job"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Job deleted successfully"})
+}

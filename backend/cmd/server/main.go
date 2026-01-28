@@ -88,11 +88,13 @@ func main() {
 		api.POST("/concur/upload", middleware.RateLimitUpload(), handlers.UploadConcurFile)
 		api.GET("/concur/history", handlers.GetConversionHistory)
 		api.GET("/download/:id", handlers.DownloadConversionResult)
+		api.DELETE("/concur/:id", handlers.DeleteConversionJob)
 
 		// Reconciliation routes (with upload rate limiting)
 		api.POST("/reconciliation/upload", middleware.RateLimitUpload(), handlers.UploadReconciliationFiles)
 		api.GET("/reconciliation/history", handlers.GetReconciliationHistory)
 		api.GET("/reconciliation/download/:id", handlers.DownloadReconciliationResult)
+		api.DELETE("/reconciliation/:id", handlers.DeleteReconciliationJob)
 	}
 
 	// Start server

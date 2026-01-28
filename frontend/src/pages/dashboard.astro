@@ -11,14 +11,28 @@ import Layout from '../layouts/Layout.astro';
       </a>
     </div>
     
+    <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
           <dt class="text-sm font-medium text-gray-500 truncate">
-            Total Conversions
+            Conversions
           </dt>
-          <dd class="mt-1 text-3xl font-semibold text-gray-900" id="total-conversions">
-            0
+          <dd class="mt-1 flex items-baseline justify-between">
+            <div class="text-3xl font-semibold text-gray-900" id="total-conversions">0</div>
+            <div class="text-xs text-gray-500" id="conversion-breakdown"></div>
+          </dd>
+        </div>
+      </div>
+
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <dt class="text-sm font-medium text-gray-500 truncate">
+            Reconciliations
+          </dt>
+          <dd class="mt-1 flex items-baseline justify-between">
+            <div class="text-3xl font-semibold text-gray-900" id="total-reconciliations">0</div>
+            <div class="text-xs text-gray-500" id="reconciliation-breakdown"></div>
           </dd>
         </div>
       </div>
@@ -33,15 +47,18 @@ import Layout from '../layouts/Layout.astro';
           </dd>
         </div>
       </div>
+    </div>
 
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <dt class="text-sm font-medium text-gray-500 truncate">
-            Reconciliations
-          </dt>
-          <dd class="mt-1 text-3xl font-semibold text-gray-900">
-            0
-          </dd>
+    <!-- Recent Activity -->
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Recent Activity</h2>
+        <div id="recent-activity" class="space-y-2">
+          <div class="animate-pulse space-y-2">
+            <div class="h-12 bg-gray-200 rounded"></div>
+            <div class="h-12 bg-gray-200 rounded"></div>
+            <div class="h-12 bg-gray-200 rounded"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -80,43 +97,114 @@ import Layout from '../layouts/Layout.astro';
     const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8080';
     const token = localStorage.getItem('jbs_token');
 
-    async function loadStats() {
+    async function loadDashboard() {
       const totalConversionsEl = document.getElementById('total-conversions');
+      const totalReconEl = document.getElementById('total-reconciliations');
       const totalRowsEl = document.getElementById('total-rows');
-      
-      // Show loading state
-      if (totalConversionsEl) totalConversionsEl.innerHTML = '<div class="animate-pulse h-8 bg-gray-200 rounded w-16"></div>';
-      if (totalRowsEl) totalRowsEl.innerHTML = '<div class="animate-pulse h-8 bg-gray-200 rounded w-16"></div>';
+      const recentActivityEl = document.getElementById('recent-activity');
+      const conversionBreakdownEl = document.getElementById('conversion-breakdown');
+      const reconciliationBreakdownEl = document.getElementById('reconciliation-breakdown');
       
       try {
-        const response = await fetch(`${API_URL}/api/concur/history`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+        // Fetch both conversion and reconciliation histories
+        const [conversionsRes, reconciliationsRes] = await Promise.all([
+          fetch(`${API_URL}/api/concur/history`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/api/reconciliation/history`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          }),
+        ]);
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            ErrorHandler.handleAuthError(response);
+        if (!conversionsRes.ok || !reconciliationsRes.ok) {
+          if (conversionsRes.status === 401 || reconciliationsRes.status === 401) {
+            ErrorHandler.handleAuthError(conversionsRes);
             return;
           }
-          throw new Error(`Failed to load stats (${response.status})`);
+          throw new Error('Failed to load dashboard data');
         }
 
-        const jobs = await response.json();
-        const totalConversions = jobs.length;
-        const totalRows = jobs.reduce((sum: number, job: any) => sum + (job.rows_processed || 0), 0);
+        const conversions = await conversionsRes.json();
+        const reconciliations = await reconciliationsRes.json();
 
+        // Calculate stats
+        const totalConversions = conversions.length;
+        const completedConversions = conversions.filter((j: any) => j.status === 'completed').length;
+        const failedConversions = conversions.filter((j: any) => j.status === 'failed').length;
+        
+        const totalReconciliations = reconciliations.length;
+        const completedReconciliations = reconciliations.filter((j: any) => j.status === 'completed').length;
+        const failedReconciliations = reconciliations.filter((j: any) => j.status === 'failed').length;
+        
+        const totalRows = conversions.reduce((sum: number, job: any) => sum + (job.rows_processed || 0), 0);
+
+        // Update stats
         if (totalConversionsEl) totalConversionsEl.textContent = totalConversions.toString();
+        if (totalReconEl) totalReconEl.textContent = totalReconciliations.toString();
         if (totalRowsEl) totalRowsEl.textContent = totalRows.toString();
+        
+        if (conversionBreakdownEl) {
+          conversionBreakdownEl.innerHTML = `<span class="text-green-600">${completedConversions} ✓</span> <span class="text-red-600">${failedConversions} ✗</span>`;
+        }
+        if (reconciliationBreakdownEl) {
+          reconciliationBreakdownEl.innerHTML = `<span class="text-green-600">${completedReconciliations} ✓</span> <span class="text-red-600">${failedReconciliations} ✗</span>`;
+        }
+
+        // Combine and sort recent activity
+        const allActivity = [
+          ...conversions.map((j: any) => ({ ...j, type: 'conversion' })),
+          ...reconciliations.map((j: any) => ({ ...j, type: 'reconciliation' })),
+        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+         .slice(0, 5);
+
+        if (allActivity.length === 0) {
+          recentActivityEl!.innerHTML = '<p class="text-sm text-gray-500">No recent activity</p>';
+          return;
+        }
+
+        // Display recent activity
+        recentActivityEl!.innerHTML = allActivity.map((item: any) => {
+          const isConversion = item.type === 'conversion';
+          const statusColor = item.status === 'completed' ? 'bg-green-100 text-green-800' :
+                             item.status === 'failed' ? 'bg-red-100 text-red-800' :
+                             'bg-yellow-100 text-yellow-800';
+          
+          return `
+            <div class="flex justify-between items-center py-3 px-3 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
+              <div class="flex-1">
+                <div class="flex items-center space-x-2">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isConversion ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+                    ${isConversion ? 'Conversion' : 'Reconciliation'}
+                  </span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">
+                    ${item.status}
+                  </span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 mt-1">
+                  ${isConversion ? item.filename : `${item.bank_filename} + ${item.foundation_filename}`}
+                </p>
+                <p class="text-xs text-gray-500">${new Date(item.created_at).toLocaleString()}</p>
+              </div>
+              <div class="flex items-center space-x-2">
+                ${item.status === 'completed' ? `
+                  <a href="${isConversion ? `/concur` : `/reconciliation`}" class="text-sm text-primary hover:text-blue-700">
+                    View
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+        
       } catch (error) {
-        console.error('Failed to load stats:', error);
+        console.error('Failed to load dashboard:', error);
         if (totalConversionsEl) totalConversionsEl.textContent = '0';
+        if (totalReconEl) totalReconEl.textContent = '0';
         if (totalRowsEl) totalRowsEl.textContent = '0';
-        ErrorHandler.handle(error, 'Failed to load dashboard statistics');
+        ErrorHandler.handle(error, 'Failed to load dashboard');
       }
     }
 
-    loadStats();
+    loadDashboard();
   </script>
 </Layout>
