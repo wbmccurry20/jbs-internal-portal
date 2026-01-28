@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
@@ -18,6 +19,12 @@ func Connect(databaseURL string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
+
+	// Configure connection pool
+	DB.SetMaxOpenConns(25)                  // Maximum number of open connections
+	DB.SetMaxIdleConns(5)                   // Maximum idle connections in pool
+	DB.SetConnMaxLifetime(5 * time.Minute)  // Maximum lifetime of a connection
+	DB.SetConnMaxIdleTime(1 * time.Minute)  // Maximum idle time before closing
 
 	if err = DB.Ping(); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
@@ -67,7 +74,7 @@ func runMigrations() error {
 		// Conversion jobs table
 		`CREATE TABLE IF NOT EXISTS conversion_jobs (
 			id SERIAL PRIMARY KEY,
-			user_id INTEGER REFERENCES users(id),
+			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			filename VARCHAR(500) NOT NULL,
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
 			vendor_id VARCHAR(50) NOT NULL DEFAULT '138',
@@ -76,13 +83,17 @@ func runMigrations() error {
 			output_file_path TEXT,
 			error_log TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			completed_at TIMESTAMP
+			completed_at TIMESTAMP,
+			CONSTRAINT conversion_jobs_status_check 
+				CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+			CONSTRAINT conversion_jobs_rows_nonnegative 
+				CHECK (rows_processed >= 0 AND rows_skipped >= 0)
 		)`,
 		
 		// Reconciliation jobs table
 		`CREATE TABLE IF NOT EXISTS reconciliation_jobs (
 			id SERIAL PRIMARY KEY,
-			user_id INTEGER REFERENCES users(id),
+			user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			bank_filename VARCHAR(500) NOT NULL,
 			foundation_filename VARCHAR(500) NOT NULL,
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
@@ -93,22 +104,22 @@ func runMigrations() error {
 			output_file_path TEXT,
 			error_log TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			completed_at TIMESTAMP
+			completed_at TIMESTAMP,
+			CONSTRAINT reconciliation_jobs_status_check 
+				CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+			CONSTRAINT reconciliation_jobs_tolerance_positive 
+				CHECK (tolerance_days > 0)
 		)`,
 		
-		// Vendor configs table
-		`CREATE TABLE IF NOT EXISTS vendor_configs (
-			id SERIAL PRIMARY KEY,
-			vendor_name VARCHAR(255) NOT NULL,
-			vendor_id VARCHAR(50) NOT NULL UNIQUE,
-			is_default BOOLEAN DEFAULT false,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		)`,
-		
-		// Insert default vendor
-		`INSERT INTO vendor_configs (vendor_name, vendor_id, is_default)
-		 VALUES ('American Express', '138', true)
-		 ON CONFLICT (vendor_id) DO NOTHING`,
+		// Performance indexes
+		`CREATE INDEX IF NOT EXISTS idx_conversion_jobs_user_created 
+			ON conversion_jobs(user_id, created_at DESC)`,
+		`CREATE INDEX IF NOT EXISTS idx_conversion_jobs_status 
+			ON conversion_jobs(status)`,
+		`CREATE INDEX IF NOT EXISTS idx_reconciliation_jobs_user_created 
+			ON reconciliation_jobs(user_id, created_at DESC)`,
+		`CREATE INDEX IF NOT EXISTS idx_reconciliation_jobs_status 
+			ON reconciliation_jobs(status)`,
 	}
 
 	for _, migration := range migrations {

@@ -269,11 +269,12 @@ func DeleteReconciliationJob(c *gin.Context) {
 	// Get job details to verify ownership and get file paths
 	var outputPath string
 	var ownerID int
+	var status string
 	err = database.DB.QueryRow(`
-		SELECT user_id, output_file_path
+		SELECT user_id, output_file_path, status
 		FROM reconciliation_jobs
 		WHERE id = $1
-	`, jobID).Scan(&ownerID, &outputPath)
+	`, jobID).Scan(&ownerID, &outputPath, &status)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Job not found"})
@@ -283,6 +284,12 @@ func DeleteReconciliationJob(c *gin.Context) {
 	// Verify user owns this job
 	if ownerID != userID.(int) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own jobs"})
+		return
+	}
+
+	// Don't allow deleting jobs that are currently processing
+	if status == "processing" {
+		c.JSON(http.StatusConflict, gin.H{"error": "Cannot delete job while processing"})
 		return
 	}
 
@@ -298,7 +305,10 @@ func DeleteReconciliationJob(c *gin.Context) {
 		
 		// Only delete if within upload directory
 		if strings.HasPrefix(absOutputPath, absUploadDir) {
-			os.Remove(cleanPath)
+			if err := os.Remove(cleanPath); err != nil {
+				// Log error but don't fail the delete operation
+				fmt.Printf("Warning: Failed to delete file %s: %v\n", cleanPath, err)
+			}
 		}
 	}
 
