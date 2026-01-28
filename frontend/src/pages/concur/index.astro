@@ -108,6 +108,10 @@ import Layout from '../../layouts/Layout.astro';
   </div>
 
   <script>
+    import { toast } from '../../utils/toast';
+    import { ErrorHandler } from '../../utils/errorHandler';
+    import { setButtonLoading } from '../../utils/loading';
+    
     const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8080';
     const token = localStorage.getItem('jbs_token');
 
@@ -134,7 +138,7 @@ import Layout from '../../layouts/Layout.astro';
       e.preventDefault();
 
       if (!selectedFile) {
-        alert('Please select a file');
+        ErrorHandler.handleValidationError('File', 'Please select a file');
         return;
       }
 
@@ -148,7 +152,7 @@ import Layout from '../../layouts/Layout.astro';
       statusDiv?.classList.remove('hidden');
       errorDiv?.classList.add('hidden');
       successDiv?.classList.add('hidden');
-      submitBtn.disabled = true;
+      setButtonLoading(submitBtn, true);
 
       try {
         const formData = new FormData();
@@ -168,7 +172,10 @@ import Layout from '../../layouts/Layout.astro';
         const data = await response.json();
 
         if (!response.ok) {
-          console.error('Upload error:', data);
+          if (response.status === 401) {
+            ErrorHandler.handleAuthError(response);
+            return;
+          }
           throw new Error(data.error || 'Upload failed');
         }
 
@@ -182,6 +189,7 @@ import Layout from '../../layouts/Layout.astro';
         document.getElementById('success-message')!.textContent = successMsg;
         statusDiv?.classList.add('hidden');
         successDiv?.classList.remove('hidden');
+        toast.success('File converted successfully!');
 
         // Reload history
         loadHistory();
@@ -190,8 +198,9 @@ import Layout from '../../layouts/Layout.astro';
         statusDiv?.classList.add('hidden');
         errorDiv?.classList.remove('hidden');
         errorDiv!.querySelector('p')!.textContent = error instanceof Error ? error.message : 'An error occurred';
+        ErrorHandler.handle(error, 'Failed to convert file');
       } finally {
-        submitBtn.disabled = false;
+        setButtonLoading(submitBtn, false);
       }
     });
 
@@ -219,8 +228,9 @@ import Layout from '../../layouts/Layout.astro';
           a.click();
           window.URL.revokeObjectURL(url);
           document.body.removeChild(a);
+          toast.success('File downloaded successfully');
         } catch (error) {
-          alert('Failed to download file');
+          ErrorHandler.handle(error, 'Failed to download file');
         }
       }
     });
@@ -247,8 +257,9 @@ import Layout from '../../layouts/Layout.astro';
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        toast.success('File downloaded successfully');
       } catch (error) {
-        alert('Failed to download file');
+        ErrorHandler.handle(error, 'Failed to download file');
       }
     };
 

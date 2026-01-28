@@ -41,8 +41,6 @@ import Layout from '../layouts/Layout.astro';
           </button>
         </div>
       </form>
-      <div id="create-error" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded"></div>
-      <div id="create-success" class="hidden mt-4 p-3 bg-green-100 text-green-700 rounded">User created successfully!</div>
     </div>
 
     <!-- Users List -->
@@ -69,6 +67,9 @@ import Layout from '../layouts/Layout.astro';
 
   <script>
     import { listUsers, createUser, deleteUser, resetUserPassword } from '../lib/api';
+    import { toast } from '../utils/toast';
+    import { ErrorHandler } from '../utils/errorHandler';
+    import { createTableSkeleton, setButtonLoading } from '../utils/loading';
 
     const token = localStorage.getItem('jbs_token');
     if (!token) {
@@ -77,14 +78,28 @@ import Layout from '../layouts/Layout.astro';
 
     // Load users
     async function loadUsers() {
+      const tbody = document.getElementById('users-tbody');
+      const loadingDiv = document.getElementById('loading');
+      const usersListDiv = document.getElementById('users-list');
+
       try {
-        const users = await listUsers();
-        const tbody = document.getElementById('users-tbody');
-        const loadingDiv = document.getElementById('loading');
-        const usersListDiv = document.getElementById('users-list');
+        // Show skeleton
+        if (tbody) {
+          tbody.innerHTML = Array.from({ length: 5 }, () => `
+            <tr class="animate-pulse">
+              <td class="px-6 py-4"><div class="h-4 bg-gray-200 rounded w-32"></div></td>
+              <td class="px-6 py-4"><div class="h-4 bg-gray-200 rounded w-48"></div></td>
+              <td class="px-6 py-4"><div class="h-4 bg-gray-200 rounded w-24"></div></td>
+              <td class="px-6 py-4"><div class="h-4 bg-gray-200 rounded w-24"></div></td>
+              <td class="px-6 py-4"><div class="h-4 bg-gray-200 rounded w-32"></div></td>
+            </tr>
+          `).join('');
+        }
 
         loadingDiv?.classList.add('hidden');
         usersListDiv?.classList.remove('hidden');
+
+        const users = await listUsers();
 
         tbody!.innerHTML = users.map(user => `
           <tr>
@@ -101,7 +116,9 @@ import Layout from '../layouts/Layout.astro';
           </tr>
         `).join('');
       } catch (error) {
-        document.getElementById('loading')!.textContent = 'Failed to load users: ' + (error as Error).message;
+        loadingDiv!.textContent = 'Failed to load users';
+        loadingDiv?.classList.remove('hidden');
+        ErrorHandler.handle(error, 'Failed to load users');
       }
     }
 
@@ -109,13 +126,11 @@ import Layout from '../layouts/Layout.astro';
     document.getElementById('create-user-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target as HTMLFormElement;
-      const errorDiv = document.getElementById('create-error');
-      const successDiv = document.getElementById('create-success');
-
-      errorDiv?.classList.add('hidden');
-      successDiv?.classList.add('hidden');
+      const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
 
       try {
+        setButtonLoading(submitBtn, true);
+
         const name = (document.getElementById('name') as HTMLInputElement).value;
         const email = (document.getElementById('email') as HTMLInputElement).value;
         const password = (document.getElementById('password') as HTMLInputElement).value;
@@ -123,14 +138,13 @@ import Layout from '../layouts/Layout.astro';
 
         await createUser(email, password, name, role);
 
-        successDiv?.classList.remove('hidden');
+        toast.success('User created successfully!');
         form.reset();
         loadUsers();
-
-        setTimeout(() => successDiv?.classList.add('hidden'), 3000);
       } catch (error) {
-        errorDiv!.textContent = (error as Error).message;
-        errorDiv?.classList.remove('hidden');
+        ErrorHandler.handle(error, 'Failed to create user');
+      } finally {
+        setButtonLoading(submitBtn, false);
       }
     });
 
@@ -139,10 +153,10 @@ import Layout from '../layouts/Layout.astro';
       if (confirm(`Are you sure you want to delete user: ${email}?`)) {
         try {
           await deleteUser(userId);
-          alert('User deleted successfully');
+          toast.success('User deleted successfully');
           loadUsers();
         } catch (error) {
-          alert('Failed to delete user: ' + (error as Error).message);
+          ErrorHandler.handle(error, 'Failed to delete user');
         }
       }
     };
@@ -153,12 +167,12 @@ import Layout from '../layouts/Layout.astro';
       if (newPassword && newPassword.length >= 8) {
         try {
           await resetUserPassword(userId, newPassword);
-          alert('Password reset successfully');
+          toast.success('Password reset successfully');
         } catch (error) {
-          alert('Failed to reset password: ' + (error as Error).message);
+          ErrorHandler.handle(error, 'Failed to reset password');
         }
       } else if (newPassword) {
-        alert('Password must be at least 8 characters');
+        ErrorHandler.handleValidationError('Password', 'Must be at least 8 characters');
       }
     };
 

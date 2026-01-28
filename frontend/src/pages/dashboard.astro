@@ -74,10 +74,20 @@ import Layout from '../layouts/Layout.astro';
   </div>
 
   <script>
+    import { toast } from '../utils/toast';
+    import { ErrorHandler } from '../utils/errorHandler';
+    
     const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8080';
     const token = localStorage.getItem('jbs_token');
 
     async function loadStats() {
+      const totalConversionsEl = document.getElementById('total-conversions');
+      const totalRowsEl = document.getElementById('total-rows');
+      
+      // Show loading state
+      if (totalConversionsEl) totalConversionsEl.innerHTML = '<div class="animate-pulse h-8 bg-gray-200 rounded w-16"></div>';
+      if (totalRowsEl) totalRowsEl.innerHTML = '<div class="animate-pulse h-8 bg-gray-200 rounded w-16"></div>';
+      
       try {
         const response = await fetch(`${API_URL}/api/concur/history`, {
           headers: {
@@ -85,16 +95,25 @@ import Layout from '../layouts/Layout.astro';
           },
         });
 
-        if (response.ok) {
-          const jobs = await response.json();
-          const totalConversions = jobs.length;
-          const totalRows = jobs.reduce((sum: number, job: any) => sum + (job.rows_processed || 0), 0);
-
-          document.getElementById('total-conversions')!.textContent = totalConversions.toString();
-          document.getElementById('total-rows')!.textContent = totalRows.toString();
+        if (!response.ok) {
+          if (response.status === 401) {
+            ErrorHandler.handleAuthError(response);
+            return;
+          }
+          throw new Error(`Failed to load stats (${response.status})`);
         }
+
+        const jobs = await response.json();
+        const totalConversions = jobs.length;
+        const totalRows = jobs.reduce((sum: number, job: any) => sum + (job.rows_processed || 0), 0);
+
+        if (totalConversionsEl) totalConversionsEl.textContent = totalConversions.toString();
+        if (totalRowsEl) totalRowsEl.textContent = totalRows.toString();
       } catch (error) {
         console.error('Failed to load stats:', error);
+        if (totalConversionsEl) totalConversionsEl.textContent = '0';
+        if (totalRowsEl) totalRowsEl.textContent = '0';
+        ErrorHandler.handle(error, 'Failed to load dashboard statistics');
       }
     }
 
