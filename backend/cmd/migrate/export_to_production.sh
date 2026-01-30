@@ -4,7 +4,8 @@
 
 set -e
 
-LOCAL_DB="postgresql://jbs_user:jbs_password@localhost:5433/jbs_portal?sslmode=disable"
+# Get local database URL from environment or use default
+LOCAL_DB="${LOCAL_DATABASE_URL:-postgresql://jbs_user:jbs_password@localhost:5433/jbs_portal?sslmode=disable}"
 OUTPUT_DIR="./production_export"
 
 mkdir -p "$OUTPUT_DIR"
