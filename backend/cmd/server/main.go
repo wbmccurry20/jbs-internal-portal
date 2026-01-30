@@ -120,6 +120,13 @@ func main() {
 		api.POST("/lodging", handlers.CreateLodging)
 		api.PUT("/lodging/:id", handlers.UpdateLodging)
 		api.DELETE("/lodging/:id", middleware.RequireRole("owner", "support"), handlers.DeleteLodging)
+
+		// License routes (delete requires owner or support)
+		api.GET("/licenses", handlers.ListLicenses)
+		api.GET("/licenses/state-summary", handlers.GetStateSummary)
+		api.POST("/licenses", handlers.CreateLicense)
+		api.PUT("/licenses/:id", handlers.UpdateLicense)
+		api.DELETE("/licenses/:id", middleware.RequireRole("owner", "support"), handlers.DeleteLicense)
 	}
 
 	// Start server

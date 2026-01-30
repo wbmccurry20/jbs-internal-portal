@@ -1,0 +1,424 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout>
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">State Licensing</h1>
+        <p class="mt-2 text-sm text-gray-600">Manage licenses across all states</p>
+      </div>
+      <button id="add-license-btn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm transition-colors">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Add License
+      </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div class="text-sm text-gray-600">Total States</div>
+        <div id="total-states" class="text-2xl font-bold text-gray-900">-</div>
+      </div>
+      <div class="bg-green-50 p-4 rounded-lg shadow-sm border border-green-200">
+        <div class="text-sm text-green-700">Active</div>
+        <div id="active-count" class="text-2xl font-bold text-green-900">-</div>
+      </div>
+      <div class="bg-yellow-50 p-4 rounded-lg shadow-sm border border-yellow-200">
+        <div class="text-sm text-yellow-700">Expiring Soon</div>
+        <div id="expiring-count" class="text-2xl font-bold text-yellow-900">-</div>
+      </div>
+      <div class="bg-red-50 p-4 rounded-lg shadow-sm border border-red-200">
+        <div class="text-sm text-red-700">Expired</div>
+        <div id="expired-count" class="text-2xl font-bold text-red-900">-</div>
+      </div>
+    </div>
+
+    <!-- US Map View -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-900">License Coverage Map</h2>
+        <div class="flex items-center space-x-4 text-sm">
+          <div class="flex items-center">
+            <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+            <span>Active</span>
+          </div>
+          <div class="flex items-center">
+            <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
+            <span>Expiring</span>
+          </div>
+          <div class="flex items-center">
+            <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+            <span>Expired</span>
+          </div>
+          <div class="flex items-center">
+            <div class="w-4 h-4 bg-gray-200 rounded mr-2"></div>
+            <span>No License</span>
+          </div>
+        </div>
+      </div>
+      <div id="us-map" class="w-full"></div>
+      <div id="state-tooltip" class="hidden absolute bg-gray-900 text-white text-sm rounded px-3 py-2 shadow-lg pointer-events-none z-10"></div>
+    </div>
+
+    <!-- License List -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div id="licenses-container" class="overflow-x-auto">
+        <div id="loading" class="text-center py-12">
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <p class="mt-4 text-gray-600">Loading licenses...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit License Modal -->
+  <div id="license-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="modal-title" class="text-2xl font-bold text-gray-900">Add License</h3>
+        <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form id="license-form" class="space-y-4">
+        <input type="hidden" id="license-id">
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="state" class="block text-sm font-medium text-gray-700 mb-1">State *</label>
+            <select id="state" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">Select State</option>
+              <option value="AL">Alabama</option>
+              <option value="AZ">Arizona</option>
+              <option value="FL">Florida</option>
+              <option value="GA">Georgia</option>
+              <option value="TX">Texas</option>
+              <!-- Add all 50 states -->
+            </select>
+          </div>
+          <div>
+            <label for="license-type" class="block text-sm font-medium text-gray-700 mb-1">License Type *</label>
+            <input type="text" id="license-type" required placeholder="e.g., General Contractor" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="license-number" class="block text-sm font-medium text-gray-700 mb-1">License Number</label>
+            <input type="text" id="license-number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label for="entity-name" class="block text-sm font-medium text-gray-700 mb-1">Entity Name</label>
+            <input type="text" id="entity-name" placeholder="JBS Construction Group" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="issue-date" class="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
+            <input type="date" id="issue-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label for="expiration-date" class="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
+            <input type="date" id="expiration-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select id="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">Auto-calculate</option>
+              <option value="active">Active</option>
+              <option value="expiring">Expiring Soon</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+          <div>
+            <label for="renewal-fee" class="block text-sm font-medium text-gray-700 mb-1">Renewal Fee ($)</label>
+            <input type="number" id="renewal-fee" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+        </div>
+
+        <div>
+          <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <textarea id="notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button type="button" id="cancel-btn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+            Cancel
+          </button>
+          <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">
+            Save License
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
+    const token = localStorage.getItem('jbs_token');
+
+    if (!token) {
+      window.location.href = '/';
+    }
+
+    const modal = document.getElementById('license-modal')!;
+    const form = document.getElementById('license-form') as HTMLFormElement;
+    const container = document.getElementById('licenses-container')!;
+    const loading = document.getElementById('loading')!;
+
+    interface License {
+      id: number;
+      state: string;
+      license_type: string;
+      license_number: string | null;
+      entity_name: string | null;
+      issue_date: string | null;
+      expiration_date: string | null;
+      status: string;
+      renewal_fee: number;
+      notes: string | null;
+    }
+
+    // Load licenses
+    async function loadLicenses() {
+      try {
+        const response = await fetch(`${API_URL}/licenses`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load licenses');
+
+        const licenses: License[] = await response.json();
+        loading.classList.add('hidden');
+
+        if (licenses.length === 0) {
+          container.innerHTML = '<div class="text-center py-12 text-gray-500">No licenses yet. Add your first license to get started!</div>';
+          return;
+        }
+
+        // Render table
+        container.innerHTML = `
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License #</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiration</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              ${licenses.map((license: License) => `
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${license.state}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.license_type}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.license_number || '-'}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.expiration_date || '-'}</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                      ${license.status === 'active' ? 'bg-green-100 text-green-800' : 
+                        license.status === 'expiring' ? 'bg-yellow-100 text-yellow-800' : 
+                        'bg-red-100 text-red-800'}">
+                      ${license.status || 'unknown'}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button onclick="deleteLicense(${license.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+
+        // Update stats
+        updateStats(licenses);
+        
+        // Update map
+        renderUSMap(licenses);
+
+      } catch (error: any) {
+        loading.classList.add('hidden');
+        container.innerHTML = '<div class="text-center py-12 text-red-500">Failed to load licenses</div>';
+      }
+    }
+
+    function updateStats(licenses: License[]) {
+      const statesWithLicenses = new Set(licenses.map((l: License) => l.state)).size;
+      const active = licenses.filter((l: License) => l.status === 'active').length;
+      const expiring = licenses.filter((l: License) => l.status === 'expiring').length;
+      const expired = licenses.filter((l: License) => l.status === 'expired').length;
+
+      document.getElementById('total-states')!.textContent = String(statesWithLicenses);
+      document.getElementById('active-count')!.textContent = String(active);
+      document.getElementById('expiring-count')!.textContent = String(expiring);
+      document.getElementById('expired-count')!.textContent = String(expired);
+    }
+
+    function renderUSMap(licenses: License[]) {
+      const licenseMap = new Map<string, License>();
+      licenses.forEach(l => licenseMap.set(l.state, l));
+
+      const stateAbbreviations = {
+        'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 'California': 'CA',
+        'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE', 'Florida': 'FL', 'Georgia': 'GA',
+        'Hawaii': 'HI', 'Idaho': 'ID', 'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA',
+        'Kansas': 'KS', 'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD',
+        'Massachusetts': 'MA', 'Michigan': 'MI', 'Minnesota': 'MN', 'Mississippi': 'MS', 'Missouri': 'MO',
+        'Montana': 'MT', 'Nebraska': 'NE', 'Nevada': 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+        'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', 'Ohio': 'OH',
+        'Oklahoma': 'OK', 'Oregon': 'OR', 'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+        'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT', 'Vermont': 'VT',
+        'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV', 'Wisconsin': 'WI', 'Wyoming': 'WY'
+      };
+
+      const mapContainer = document.getElementById('us-map')!;
+      const tooltip = document.getElementById('state-tooltip')!;
+      
+      let html = '<div class="grid grid-cols-10 gap-1">';
+      
+      Object.entries(stateAbbreviations).forEach(([stateName, abbr]) => {
+        const license = licenseMap.get(stateName);
+        let colorClass = 'bg-gray-200 hover:bg-gray-300';
+        
+        if (license) {
+          if (license.status === 'active') colorClass = 'bg-green-500 hover:bg-green-600';
+          else if (license.status === 'expiring') colorClass = 'bg-yellow-500 hover:bg-yellow-600';
+          else if (license.status === 'expired') colorClass = 'bg-red-500 hover:bg-red-600';
+        }
+        
+        html += `
+          <div 
+            class="${colorClass} rounded p-2 text-center text-xs font-semibold text-white cursor-pointer transition-colors state-badge"
+            data-state="${stateName}"
+            data-has-license="${license ? 'true' : 'false'}"
+            data-status="${license?.status || 'none'}"
+            data-type="${license?.license_type || ''}"
+            data-expiration="${license?.expiration_date || ''}"
+          >
+            ${abbr}
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      mapContainer.innerHTML = html;
+
+      // Add hover tooltips
+      document.querySelectorAll('.state-badge').forEach(badge => {
+        badge.addEventListener('mouseenter', (e) => {
+          const target = e.target as HTMLElement;
+          const state = target.dataset.state!;
+          const hasLicense = target.dataset.hasLicense === 'true';
+          const status = target.dataset.status!;
+          const type = target.dataset.type || 'N/A';
+          const expiration = target.dataset.expiration || 'N/A';
+          
+          tooltip.innerHTML = `
+            <div class="font-semibold">${state}</div>
+            ${hasLicense ? `
+              <div class="mt-1 text-xs">
+                <div>Status: ${status}</div>
+                <div>Type: ${type}</div>
+                <div>Expires: ${expiration}</div>
+              </div>
+            ` : '<div class="text-xs">No license</div>'}
+          `;
+          
+          tooltip.classList.remove('hidden');
+        });
+        
+        badge.addEventListener('mousemove', (e) => {
+          const event = e as MouseEvent;
+          tooltip.style.left = (event.pageX + 10) + 'px';
+          tooltip.style.top = (event.pageY + 10) + 'px';
+        });
+        
+        badge.addEventListener('mouseleave', () => {
+          tooltip.classList.add('hidden');
+        });
+      });
+    }
+
+    // Open modal
+    document.getElementById('add-license-btn')!.addEventListener('click', () => {
+      form.reset();
+      (document.getElementById('license-id') as HTMLInputElement).value = '';
+      document.getElementById('modal-title')!.textContent = 'Add License';
+      modal.classList.remove('hidden');
+    });
+
+    // Close modal
+    document.getElementById('close-modal')!.addEventListener('click', () => modal.classList.add('hidden'));
+    document.getElementById('cancel-btn')!.addEventListener('click', () => modal.classList.add('hidden'));
+
+    // Submit form
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const data = {
+        state: (document.getElementById('state') as HTMLInputElement).value,
+        license_type: (document.getElementById('license-type') as HTMLInputElement).value,
+        license_number: (document.getElementById('license-number') as HTMLInputElement).value,
+        entity_name: (document.getElementById('entity-name') as HTMLInputElement).value,
+        issue_date: (document.getElementById('issue-date') as HTMLInputElement).value,
+        expiration_date: (document.getElementById('expiration-date') as HTMLInputElement).value,
+        status: (document.getElementById('status') as HTMLSelectElement).value,
+        renewal_fee: parseFloat((document.getElementById('renewal-fee') as HTMLInputElement).value) || 0,
+        notes: (document.getElementById('notes') as HTMLTextAreaElement).value
+      };
+
+      try {
+        const response = await fetch(`${API_URL}/licenses`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error('Failed to save license');
+
+        modal.classList.add('hidden');
+        loadLicenses();
+      } catch (error: any) {
+        alert('Failed to save license: ' + error.message);
+      }
+    });
+
+    // Delete license
+    (window as any).deleteLicense = async (id: number) => {
+      if (!confirm('Are you sure you want to delete this license?')) return;
+
+      try {
+        const response = await fetch(`${API_URL}/licenses/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to delete');
+
+        loadLicenses();
+      } catch (error) {
+        alert('Failed to delete license');
+      }
+    };
+
+    // Initial load
+    loadLicenses();
+  </script>
+</Layout>
