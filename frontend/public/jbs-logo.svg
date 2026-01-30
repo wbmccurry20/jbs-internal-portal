@@ -1,0 +1,8 @@
+<svg viewBox="0 0 1280 768" xmlns="http://www.w3.org/2000/svg">
+  <polygon points="200,195 345,530 200,530" fill="#1B9BD8"/>
+  <g fill="#000000">
+    <text x="380" y="530" font-family="Arial, sans-serif" font-size="380" font-weight="bold">JBS</text>
+  </g>
+  <rect x="200" y="540" width="880" height="8" fill="#1B9BD8"/>
+  <text x="190" y="640" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#6B7280" letter-spacing="12">BUILT DIFFERENT</text>
+</svg>

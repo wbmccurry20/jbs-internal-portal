@@ -1,0 +1,387 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout>
+  <div class="space-y-6">
+    <!-- Page header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Bid Pipeline</h1>
+        <p class="mt-2 text-sm text-gray-600">Track and manage sales opportunities</p>
+      </div>
+      <button id="create-bid-btn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm transition-colors">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        New Bid
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+          <input 
+            type="text" 
+            id="search" 
+            placeholder="Search project name, client..." 
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          >
+        </div>
+        <div>
+          <label for="priority-filter" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+          <select id="priority-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <option value="">All Priorities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipeline columns -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <!-- In Progress -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+            In Progress
+          </h3>
+          <span id="count-in_progress" class="text-sm font-medium text-gray-500">0</span>
+        </div>
+        <div id="column-in_progress" class="space-y-3 min-h-[200px]">
+          <!-- Cards will be inserted here -->
+        </div>
+      </div>
+
+      <!-- Complete -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+            Complete
+          </h3>
+          <span id="count-complete" class="text-sm font-medium text-gray-500">0</span>
+        </div>
+        <div id="column-complete" class="space-y-3 min-h-[200px]">
+          <!-- Cards will be inserted here -->
+        </div>
+      </div>
+
+      <!-- Did Not Bid -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
+            Did Not Bid
+          </h3>
+          <span id="count-did_not_bid" class="text-sm font-medium text-gray-500">0</span>
+        </div>
+        <div id="column-did_not_bid" class="space-y-3 min-h-[200px]">
+          <!-- Cards will be inserted here -->
+        </div>
+      </div>
+
+      <!-- No Access -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
+            No Access
+          </h3>
+          <span id="count-no_access" class="text-sm font-medium text-gray-500">0</span>
+        </div>
+        <div id="column-no_access" class="space-y-3 min-h-[200px]">
+          <!-- Cards will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <p class="mt-4 text-gray-600">Loading bids...</p>
+    </div>
+  </div>
+
+  <!-- Bid Modal -->
+  <div id="bid-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="modal-title" class="text-2xl font-bold text-gray-900">New Bid</h3>
+        <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form id="bid-form" class="space-y-4">
+        <input type="hidden" id="bid-id">
+        
+        <div>
+          <label for="project-name" class="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
+          <input type="text" id="project-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        </div>
+
+        <div>
+          <label for="client-name" class="block text-sm font-medium text-gray-700 mb-1">Client Name *</label>
+          <input type="text" id="client-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="bid-amount" class="block text-sm font-medium text-gray-700 mb-1">Bid Amount *</label>
+            <input type="number" id="bid-amount" step="0.01" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label for="due-date" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+            <input type="date" id="due-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+            <select id="status" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="in_progress">In Progress</option>
+              <option value="complete">Complete</option>
+              <option value="did_not_bid">Did Not Bid</option>
+              <option value="no_access">No Access</option>
+            </select>
+          </div>
+          <div>
+            <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <select id="priority" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="contact" class="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+          <input type="text" id="contact" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+        </div>
+
+        <div>
+          <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <textarea id="notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+          <button type="button" id="cancel-btn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+            Cancel
+          </button>
+          <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">
+            Save Bid
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
+    const token = localStorage.getItem('jbs_token');
+
+    let bids: any[] = [];
+    let filteredBids: any[] = [];
+    let editingBidId: number | null = null;
+
+    // Fetch bids
+    async function fetchBids() {
+      try {
+        const response = await fetch(`${API_URL}/bids`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch bids');
+        
+        bids = await response.json();
+        filteredBids = bids;
+        renderBids();
+        
+        const loading = document.getElementById('loading');
+        if (loading) loading.classList.add('hidden');
+      } catch (error) {
+        console.error('Error fetching bids:', error);
+        showError('Failed to load bids');
+      }
+    }
+
+    // Render bids in pipeline columns
+    function renderBids() {
+      const statuses = ['in_progress', 'complete', 'did_not_bid', 'no_access'];
+      
+      statuses.forEach(status => {
+        const column = document.getElementById(`column-${status}`);
+        const countEl = document.getElementById(`count-${status}`);
+        if (!column) return;
+
+        const statusBids = filteredBids.filter(bid => bid.status === status);
+        
+        if (countEl) countEl.textContent = statusBids.length.toString();
+
+        if (statusBids.length === 0) {
+          column.innerHTML = `
+            <div class="text-center py-8 text-gray-400 text-sm">
+              No bids
+            </div>
+          `;
+          return;
+        }
+
+        column.innerHTML = statusBids.map(bid => {
+          const priority = bid.priority || 'low';
+          const priorityColors: any = {
+            'high': 'border-red-500 bg-red-50',
+            'medium': 'border-yellow-500 bg-yellow-50',
+            'low': 'border-gray-300 bg-white'
+          };
+
+          return `
+            <div class="bg-white border-l-4 ${priorityColors[priority]} rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="editBid(${bid.id})">
+              <h4 class="font-semibold text-gray-900 mb-1">${bid.location || 'Untitled Bid'}</h4>
+              <p class="text-sm text-gray-600 mb-2">${bid.client?.name || 'No client'}</p>
+              <div class="flex items-center justify-between text-sm">
+                <span class="font-semibold text-primary-600">$${parseFloat(bid.bid_amount || 0).toLocaleString()}</span>
+                ${bid.due_date ? `<span class="text-gray-500">${formatDate(bid.due_date)}</span>` : ''}
+              </div>
+              ${bid.priority !== 'low' ? `
+                <div class="mt-2">
+                  <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                    priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                  }">
+                    ${priority.toUpperCase()} Priority
+                  </span>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      });
+    }
+
+    function formatDate(dateStr: string): string {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    // Filter
+    document.getElementById('search')?.addEventListener('input', applyFilters);
+    document.getElementById('priority-filter')?.addEventListener('change', applyFilters);
+
+    function applyFilters() {
+      const search = (document.getElementById('search') as HTMLInputElement)?.value.toLowerCase() || '';
+      const priority = (document.getElementById('priority-filter') as HTMLSelectElement)?.value || '';
+
+      filteredBids = bids.filter(bid => {
+        const matchesSearch = !search || 
+          bid.project_name?.toLowerCase().includes(search) ||
+          bid.client_name?.toLowerCase().includes(search);
+        
+        const matchesPriority = !priority || bid.priority === priority;
+        
+        return matchesSearch && matchesPriority;
+      });
+
+      renderBids();
+    }
+
+    // Modal handling
+    const modal = document.getElementById('bid-modal');
+    const form = document.getElementById('bid-form');
+
+    document.getElementById('create-bid-btn')?.addEventListener('click', () => {
+      editingBidId = null;
+      (document.getElementById('modal-title') as HTMLElement).textContent = 'New Bid';
+      (form as HTMLFormElement)?.reset();
+      modal?.classList.remove('hidden');
+    });
+
+    document.getElementById('close-modal')?.addEventListener('click', () => {
+      modal?.classList.add('hidden');
+    });
+
+    document.getElementById('cancel-btn')?.addEventListener('click', () => {
+      modal?.classList.add('hidden');
+    });
+
+    // Edit bid
+    (window as any).editBid = function(id: number) {
+      const bid = bids.find(b => b.id === id);
+      if (!bid) return;
+
+      editingBidId = id;
+      (document.getElementById('modal-title') as HTMLElement).textContent = 'Edit Bid';
+      (document.getElementById('project-name') as HTMLInputElement).value = bid.project_name || '';
+      (document.getElementById('client-name') as HTMLInputElement).value = bid.client_name || '';
+      (document.getElementById('bid-amount') as HTMLInputElement).value = bid.bid_amount || '';
+      (document.getElementById('due-date') as HTMLInputElement).value = bid.due_date ? bid.due_date.split('T')[0] : '';
+      (document.getElementById('status') as HTMLSelectElement).value = bid.status || 'prospecting';
+      (document.getElementById('priority') as HTMLSelectElement).value = bid.priority || 'low';
+      (document.getElementById('contact') as HTMLInputElement).value = bid.contact || '';
+      (document.getElementById('notes') as HTMLTextAreaElement).value = bid.notes || '';
+
+      modal?.classList.remove('hidden');
+    };
+
+    // Submit form
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const data = {
+        project_name: (document.getElementById('project-name') as HTMLInputElement).value,
+        client_name: (document.getElementById('client-name') as HTMLInputElement).value,
+        bid_amount: (document.getElementById('bid-amount') as HTMLInputElement).value,
+        due_date: (document.getElementById('due-date') as HTMLInputElement).value || null,
+        status: (document.getElementById('status') as HTMLSelectElement).value,
+        priority: (document.getElementById('priority') as HTMLSelectElement).value || 'low',
+        contact: (document.getElementById('contact') as HTMLInputElement).value || null,
+        notes: (document.getElementById('notes') as HTMLTextAreaElement).value || null
+      };
+
+      try {
+        const url = editingBidId ? `${API_URL}/bids/${editingBidId}` : `${API_URL}/bids`;
+        const method = editingBidId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error(`Failed to ${editingBidId ? 'update' : 'create'} bid`);
+        
+        showSuccess(`Bid ${editingBidId ? 'updated' : 'created'} successfully`);
+        modal?.classList.add('hidden');
+        await fetchBids();
+      } catch (error) {
+        console.error('Error saving bid:', error);
+        showError(`Failed to ${editingBidId ? 'update' : 'create'} bid`);
+      }
+    });
+
+    function showSuccess(message: string) {
+      alert(message);
+    }
+
+    function showError(message: string) {
+      alert(message);
+    }
+
+    // Initial load
+    fetchBids();
+  </script>
+</Layout>

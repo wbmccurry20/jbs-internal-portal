@@ -18,7 +18,7 @@ func ListBids(c *gin.Context) {
 			b.id, b.client_id, b.location, b.city, b.state,
 			b.due_date, b.assigned_to_id, b.status,
 			b.building_connected_date, b.plan_hub_date,
-			b.awarded, b.job_id, b.archived,
+			b.awarded, b.bid_amount, b.notes, b.job_id, b.archived,
 			b.created_at, b.updated_at,
 			c.id as c_id, c.name as c_name,
 			j.id as j_id, j.job_number, j.job_name
@@ -85,7 +85,7 @@ func ListBids(c *gin.Context) {
 			&b.ID, &b.ClientID, &b.Location, &b.City, &b.State,
 			&b.DueDate, &b.AssignedToID, &b.Status,
 			&b.BuildingConnectedDate, &b.PlanHubDate,
-			&awarded, &b.JobID, &b.Archived,
+			&awarded, &b.BidAmount, &b.Notes, &b.JobID, &b.Archived,
 			&b.CreatedAt, &b.UpdatedAt,
 			&cID, &cName, &jID, &jNumber, &jName,
 		)
@@ -106,6 +106,8 @@ func ListBids(c *gin.Context) {
 			"building_connected_date": b.BuildingConnectedDate,
 			"plan_hub_date":          b.PlanHubDate,
 			"awarded":                awarded.String,
+			"bid_amount":             b.BidAmount,
+			"notes":                  b.Notes,
 			"job_id":                 b.JobID,
 			"archived":               b.Archived,
 			"created_at":             b.CreatedAt,

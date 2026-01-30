@@ -8,36 +8,148 @@ const title = 'JBS Internal Portal';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/src/styles/global.css">
   </head>
-  <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-white shadow">
+  <body class="bg-gray-50 min-h-screen font-sans">
+    <nav class="bg-white shadow-md">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex">
+        <div class="flex justify-between h-20">
+          <!-- Logo and primary navigation -->
+          <div class="flex items-center space-x-8">
+            <!-- Logo -->
             <div class="flex-shrink-0 flex items-center">
-              <h1 class="text-xl font-bold text-gray-900">JBS Portal</h1>
+              <a href="/dashboard" class="flex items-center">
+                <img src="/jbs-logo.svg" alt="JBS Construction" class="h-12 w-auto">
+              </a>
             </div>
-            <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <a href="/dashboard" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+
+            <!-- Desktop navigation -->
+            <div class="hidden md:flex md:space-x-1">
+              <a href="/dashboard" class="nav-link group">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
                 Dashboard
               </a>
-              <a href="/concur" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Concur Converter
+              
+              <a href="/jobs" class="nav-link group">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                Jobs
               </a>
-              <a href="/reconciliation" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Reconciliation
+              
+              <a href="/bids" class="nav-link group">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Bids
               </a>
+              
+              <a href="/lodging" class="nav-link group">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Lodging
+              </a>
+
+              <!-- Finance Tools dropdown -->
+              <div class="relative group">
+                <button class="nav-link inline-flex items-center">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Finance
+                  <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+                
+                <div class="absolute left-0 mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div class="bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 py-1">
+                    <a href="/concur" class="dropdown-item">
+                      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                      </svg>
+                      Concur Converter
+                    </a>
+                    <a href="/reconciliation" class="dropdown-item">
+                      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                      </svg>
+                      Reconciliation
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="flex items-center">
-            <button id="logout-btn" class="text-gray-500 hover:text-gray-700 text-sm font-medium">
+
+          <!-- Right side: User menu and logout -->
+          <div class="flex items-center space-x-4">
+            <!-- User info -->
+            <div class="hidden sm:flex items-center space-x-3">
+              <div class="text-right">
+                <p id="user-name" class="text-sm font-semibold text-gray-900"></p>
+                <p id="user-role" class="text-xs text-gray-500 capitalize"></p>
+              </div>
+              <div class="h-10 w-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold">
+                <span id="user-initials"></span>
+              </div>
+            </div>
+
+            <!-- Logout button -->
+            <button id="logout-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
               Logout
+            </button>
+
+            <!-- Mobile menu button -->
+            <button id="mobile-menu-btn" class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
             </button>
           </div>
         </div>
       </div>
+
+      <!-- Mobile menu -->
+      <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 bg-white">
+        <div class="pt-2 pb-3 space-y-1">
+          <a href="/dashboard" class="mobile-nav-link">Dashboard</a>
+          <a href="/jobs" class="mobile-nav-link">Jobs</a>
+          <a href="/bids" class="mobile-nav-link">Bids</a>
+          <a href="/lodging" class="mobile-nav-link">Lodging</a>
+          <div class="border-t border-gray-200 my-2"></div>
+          <a href="/concur" class="mobile-nav-link">Concur Converter</a>
+          <a href="/reconciliation" class="mobile-nav-link">Reconciliation</a>
+        </div>
+      </div>
     </nav>
+
+    <style>
+      .nav-link {
+        @apply inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors;
+      }
+      
+      .nav-link.active {
+        @apply text-primary-600 bg-primary-50;
+      }
+      
+      .dropdown-item {
+        @apply flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors;
+      }
+      
+      .mobile-nav-link {
+        @apply block pl-6 pr-4 py-3 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 border-l-4 border-transparent hover:border-primary-500;
+      }
+    </style>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <slot />
@@ -49,6 +161,53 @@ const title = 'JBS Internal Portal';
       if (!token && window.location.pathname !== '/') {
         window.location.href = '/';
       }
+
+      // Display user info
+      const userStr = localStorage.getItem('jbs_user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          const nameEl = document.getElementById('user-name');
+          const roleEl = document.getElementById('user-role');
+          const initialsEl = document.getElementById('user-initials');
+          
+          if (nameEl && user.name) {
+            nameEl.textContent = user.name;
+          }
+          if (roleEl && user.role) {
+            roleEl.textContent = user.role;
+          }
+          if (initialsEl && user.name) {
+            const names = user.name.split(' ');
+            const initials = names.length >= 2 
+              ? names[0][0] + names[names.length - 1][0]
+              : names[0][0];
+            initialsEl.textContent = initials.toUpperCase();
+          }
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
+      }
+
+      // Mobile menu toggle
+      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
+      
+      mobileMenuBtn?.addEventListener('click', () => {
+        mobileMenu?.classList.toggle('hidden');
+      });
+
+      // Highlight active nav link
+      const currentPath = window.location.pathname;
+      document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && currentPath.startsWith(href) && href !== '/') {
+          link.classList.add('active');
+        }
+        if (href === '/dashboard' && currentPath === '/dashboard') {
+          link.classList.add('active');
+        }
+      });
 
       // Auto-logout configuration
       const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes of inactivity

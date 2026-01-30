@@ -5,206 +5,323 @@ import Layout from '../layouts/Layout.astro';
 <Layout>
   <div class="space-y-6">
     <div class="flex justify-between items-center">
-      <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-      <a href="/change-password" class="text-sm text-primary hover:text-blue-700">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p class="mt-1 text-sm text-gray-500">Welcome to JBS Internal Portal</p>
+      </div>
+      <a href="/change-password" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
         Change Password
       </a>
     </div>
     
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <dt class="text-sm font-medium text-gray-500 truncate">
-            Conversions
-          </dt>
-          <dd class="mt-1 flex items-baseline justify-between">
-            <div class="text-3xl font-semibold text-gray-900" id="total-conversions">0</div>
-            <div class="text-xs text-gray-500" id="conversion-breakdown"></div>
-          </dd>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Jobs -->
+      <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+        <div class="px-6 py-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-10 w-10 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dt class="text-sm font-medium text-gray-500 truncate">Active Jobs</dt>
+              <dd class="flex items-baseline">
+                <div class="text-3xl font-semibold text-gray-900" id="active-jobs">-</div>
+                <div class="ml-2 text-sm text-gray-500" id="total-jobs"></div>
+              </dd>
+            </div>
+          </div>
+          <div class="mt-4">
+            <a href="/jobs" class="text-sm font-medium text-primary-600 hover:text-primary-700">View all jobs →</a>
+          </div>
         </div>
       </div>
 
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <dt class="text-sm font-medium text-gray-500 truncate">
-            Reconciliations
-          </dt>
-          <dd class="mt-1 flex items-baseline justify-between">
-            <div class="text-3xl font-semibold text-gray-900" id="total-reconciliations">0</div>
-            <div class="text-xs text-gray-500" id="reconciliation-breakdown"></div>
-          </dd>
+      <!-- Bids -->
+      <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+        <div class="px-6 py-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-10 w-10 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dt class="text-sm font-medium text-gray-500 truncate">Pipeline Value</dt>
+              <dd class="flex items-baseline">
+                <div class="text-3xl font-semibold text-gray-900" id="pipeline-value">-</div>
+              </dd>
+            </div>
+          </div>
+          <div class="mt-4">
+            <div class="text-sm text-gray-600" id="bid-breakdown"></div>
+            <a href="/bids" class="text-sm font-medium text-primary-600 hover:text-primary-700">View pipeline →</a>
+          </div>
         </div>
       </div>
 
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <dt class="text-sm font-medium text-gray-500 truncate">
-            Rows Processed
-          </dt>
-          <dd class="mt-1 text-3xl font-semibold text-gray-900" id="total-rows">
-            0
-          </dd>
+      <!-- Lodging -->
+      <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+        <div class="px-6 py-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dt class="text-sm font-medium text-gray-500 truncate">Active Lodging</dt>
+              <dd class="flex items-baseline">
+                <div class="text-3xl font-semibold text-gray-900" id="active-lodging">-</div>
+              </dd>
+            </div>
+          </div>
+          <div class="mt-4">
+            <div class="text-sm text-gray-600" id="upcoming-checkouts"></div>
+            <a href="/lodging" class="text-sm font-medium text-primary-600 hover:text-primary-700">View lodging →</a>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Recent Activity -->
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-4 py-5 sm:p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Recent Activity</h2>
-        <div id="recent-activity" class="space-y-2">
-          <div class="animate-pulse space-y-2">
-            <div class="h-12 bg-gray-200 rounded"></div>
-            <div class="h-12 bg-gray-200 rounded"></div>
-            <div class="h-12 bg-gray-200 rounded"></div>
+      <!-- Finance Tools -->
+      <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+        <div class="px-6 py-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-10 w-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dt class="text-sm font-medium text-gray-500 truncate">Finance Activity</dt>
+              <dd class="flex items-baseline">
+                <div class="text-3xl font-semibold text-gray-900" id="finance-activity">-</div>
+              </dd>
+            </div>
+          </div>
+          <div class="mt-4">
+            <div class="text-sm text-gray-600" id="finance-breakdown"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-4 py-5 sm:p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Quick Actions -->
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+      <div class="px-6 py-5">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <a
+            href="/jobs"
+            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            New Job
+          </a>
+          <a
+            href="/bids"
+            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-yellow-600 hover:bg-yellow-700 transition-colors"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            New Bid
+          </a>
+          <a
+            href="/lodging"
+            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Add Lodging
+          </a>
           <a
             href="/concur"
-            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-blue-700"
+            class="inline-flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
           >
-            Convert Concur Export
+            Concur Converter
           </a>
           <a
             href="/reconciliation"
-            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-green-700"
+            class="inline-flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
           >
-            Run Reconciliation
+            Reconciliation
           </a>
-          <a
-            href="/users"
-            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
-          >
-            Manage Users
-          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Recent Jobs -->
+      <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div class="px-6 py-5">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Jobs</h2>
+          <div id="recent-jobs" class="space-y-3">
+            <div class="animate-pulse space-y-3">
+              <div class="h-16 bg-gray-200 rounded"></div>
+              <div class="h-16 bg-gray-200 rounded"></div>
+              <div class="h-16 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Bids -->
+      <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div class="px-6 py-5">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Active Bids</h2>
+          <div id="active-bids" class="space-y-3">
+            <div class="animate-pulse space-y-3">
+              <div class="h-16 bg-gray-200 rounded"></div>
+              <div class="h-16 bg-gray-200 rounded"></div>
+              <div class="h-16 bg-gray-200 rounded"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    import { toast } from '../utils/toast';
-    import { ErrorHandler } from '../utils/errorHandler';
-    
-    const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8080';
+    const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
     const token = localStorage.getItem('jbs_token');
 
     async function loadDashboard() {
-      const totalConversionsEl = document.getElementById('total-conversions');
-      const totalReconEl = document.getElementById('total-reconciliations');
-      const totalRowsEl = document.getElementById('total-rows');
-      const recentActivityEl = document.getElementById('recent-activity');
-      const conversionBreakdownEl = document.getElementById('conversion-breakdown');
-      const reconciliationBreakdownEl = document.getElementById('reconciliation-breakdown');
-      
       try {
-        // Fetch both conversion and reconciliation histories
-        const [conversionsRes, reconciliationsRes] = await Promise.all([
-          fetch(`${API_URL}/api/concur/history`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          }),
-          fetch(`${API_URL}/api/reconciliation/history`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          }),
+        // Fetch all data in parallel
+        const [jobsRes, bidsRes, lodgingRes, concurRes, reconRes] = await Promise.all([
+          fetch(`${API_URL}/jobs`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_URL}/bids`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_URL}/lodging`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_URL}/concur/history`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_URL}/reconciliation/history`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
 
-        if (!conversionsRes.ok || !reconciliationsRes.ok) {
-          if (conversionsRes.status === 401 || reconciliationsRes.status === 401) {
-            ErrorHandler.handleAuthError(conversionsRes);
-            return;
-          }
-          throw new Error('Failed to load dashboard data');
-        }
+        const jobs = jobsRes.ok ? await jobsRes.json() : [];
+        const bids = bidsRes.ok ? await bidsRes.json() : [];
+        const lodging = lodgingRes.ok ? await lodgingRes.json() : [];
+        const concurHistory = concurRes.ok ? await concurRes.json() : [];
+        const reconHistory = reconRes.ok ? await reconRes.json() : [];
 
-        const conversions = await conversionsRes.json();
-        const reconciliations = await reconciliationsRes.json();
+        // Update Jobs stats
+        const activeJobs = jobs.filter((j: any) => j.status === 'active').length;
+        document.getElementById('active-jobs')!.textContent = activeJobs.toString();
+        document.getElementById('total-jobs')!.textContent = `of ${jobs.length} total`;
 
-        // Calculate stats
-        const totalConversions = conversions.length;
-        const completedConversions = conversions.filter((j: any) => j.status === 'completed').length;
-        const failedConversions = conversions.filter((j: any) => j.status === 'failed').length;
+        // Update Bids stats
+        const activeBids = bids.filter((b: any) => b.status === 'prospecting' || b.status === 'submitted');
+        const pipelineValue = activeBids.reduce((sum: number, b: any) => sum + (parseFloat(b.bid_amount) || 0), 0);
+        document.getElementById('pipeline-value')!.textContent = `$${(pipelineValue / 1000).toFixed(0)}K`;
         
-        const totalReconciliations = reconciliations.length;
-        const completedReconciliations = reconciliations.filter((j: any) => j.status === 'completed').length;
-        const failedReconciliations = reconciliations.filter((j: any) => j.status === 'failed').length;
+        const bidsByStatus = {
+          prospecting: bids.filter((b: any) => b.status === 'prospecting').length,
+          submitted: bids.filter((b: any) => b.status === 'submitted').length,
+          won: bids.filter((b: any) => b.status === 'won').length
+        };
+        document.getElementById('bid-breakdown')!.textContent = 
+          `${bidsByStatus.prospecting} prospecting, ${bidsByStatus.submitted} submitted, ${bidsByStatus.won} won`;
+
+        // Update Lodging stats
+        const now = new Date();
+        const activeLodging = lodging.filter((l: any) => {
+          const checkIn = new Date(l.check_in_date);
+          const checkOut = l.check_out_date ? new Date(l.check_out_date) : null;
+          return now >= checkIn && (!checkOut || now <= checkOut);
+        });
+        document.getElementById('active-lodging')!.textContent = activeLodging.length.toString();
+
+        // Find upcoming checkouts (within 7 days)
+        const upcomingCheckouts = lodging.filter((l: any) => {
+          if (!l.check_out_date) return false;
+          const checkOut = new Date(l.check_out_date);
+          const daysUntil = Math.ceil((checkOut.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          return daysUntil >= 0 && daysUntil <= 7;
+        });
+        document.getElementById('upcoming-checkouts')!.textContent = 
+          upcomingCheckouts.length > 0 ? `${upcomingCheckouts.length} checkout${upcomingCheckouts.length > 1 ? 's' : ''} this week` : 'No upcoming checkouts';
+
+        // Update Finance stats
+        const totalFinance = concurHistory.length + reconHistory.length;
+        document.getElementById('finance-activity')!.textContent = totalFinance.toString();
+        document.getElementById('finance-breakdown')!.textContent = 
+          `${concurHistory.length} Concur, ${reconHistory.length} Reconciliation`;
+
+        // Render Recent Jobs
+        const recentJobs = jobs
+          .sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+          .slice(0, 3);
         
-        const totalRows = conversions.reduce((sum: number, job: any) => sum + (job.rows_processed || 0), 0);
-
-        // Update stats
-        if (totalConversionsEl) totalConversionsEl.textContent = totalConversions.toString();
-        if (totalReconEl) totalReconEl.textContent = totalReconciliations.toString();
-        if (totalRowsEl) totalRowsEl.textContent = totalRows.toString();
-        
-        if (conversionBreakdownEl) {
-          conversionBreakdownEl.innerHTML = `<span class="text-green-600">${completedConversions} ✓</span> <span class="text-red-600">${failedConversions} ✗</span>`;
-        }
-        if (reconciliationBreakdownEl) {
-          reconciliationBreakdownEl.innerHTML = `<span class="text-green-600">${completedReconciliations} ✓</span> <span class="text-red-600">${failedReconciliations} ✗</span>`;
-        }
-
-        // Combine and sort recent activity
-        const allActivity = [
-          ...conversions.map((j: any) => ({ ...j, type: 'conversion' })),
-          ...reconciliations.map((j: any) => ({ ...j, type: 'reconciliation' })),
-        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-         .slice(0, 5);
-
-        if (allActivity.length === 0) {
-          recentActivityEl!.innerHTML = '<p class="text-sm text-gray-500">No recent activity</p>';
-          return;
-        }
-
-        // Display recent activity
-        recentActivityEl!.innerHTML = allActivity.map((item: any) => {
-          const isConversion = item.type === 'conversion';
-          const statusColor = item.status === 'completed' ? 'bg-green-100 text-green-800' :
-                             item.status === 'failed' ? 'bg-red-100 text-red-800' :
-                             'bg-yellow-100 text-yellow-800';
-          
-          return `
-            <div class="flex justify-between items-center py-3 px-3 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
-              <div class="flex-1">
-                <div class="flex items-center space-x-2">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isConversion ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
-                    ${isConversion ? 'Conversion' : 'Reconciliation'}
-                  </span>
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">
-                    ${item.status}
-                  </span>
-                </div>
-                <p class="text-sm font-medium text-gray-900 mt-1">
-                  ${isConversion ? item.filename : `${item.bank_filename} + ${item.foundation_filename}`}
-                </p>
-                <p class="text-xs text-gray-500">${new Date(item.created_at).toLocaleString()}</p>
+        const recentJobsEl = document.getElementById('recent-jobs');
+        if (recentJobs.length === 0) {
+          recentJobsEl!.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No jobs yet</p>';
+        } else {
+          recentJobsEl!.innerHTML = recentJobs.map((job: any) => `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 truncate">${job.job_number}</p>
+                <p class="text-sm text-gray-600 truncate">${job.project_name || 'Untitled'}</p>
               </div>
-              <div class="flex items-center space-x-2">
-                ${item.status === 'completed' ? `
-                  <a href="${isConversion ? `/concur` : `/reconciliation`}" class="text-sm text-primary hover:text-blue-700">
-                    View
-                  </a>
-                ` : ''}
+              <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                job.status === 'active' ? 'bg-green-100 text-green-800' : 
+                job.status === 'completed' ? 'bg-blue-100 text-blue-800' : 
+                'bg-yellow-100 text-yellow-800'
+              }">${job.status}</span>
+            </div>
+          `).join('');
+        }
+
+        // Render Active Bids
+        const activeBidsList = bids
+          .filter((b: any) => b.status === 'prospecting' || b.status === 'submitted')
+          .sort((a: any, b: any) => {
+            if (!a.due_date) return 1;
+            if (!b.due_date) return -1;
+            return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+          })
+          .slice(0, 3);
+        
+        const activeBidsEl = document.getElementById('active-bids');
+        if (activeBidsList.length === 0) {
+          activeBidsEl!.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No active bids</p>';
+        } else {
+          activeBidsEl!.innerHTML = activeBidsList.map((bid: any) => `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 truncate">${bid.project_name}</p>
+                <p class="text-sm text-gray-600 truncate">${bid.client_name}</p>
+              </div>
+              <div class="ml-3 text-right">
+                <p class="text-sm font-semibold text-primary-600">$${(parseFloat(bid.bid_amount) / 1000).toFixed(0)}K</p>
+                ${bid.due_date ? `<p class="text-xs text-gray-500">${formatDate(bid.due_date)}</p>` : ''}
               </div>
             </div>
-          `;
-        }).join('');
-        
+          `).join('');
+        }
+
       } catch (error) {
-        console.error('Failed to load dashboard:', error);
-        if (totalConversionsEl) totalConversionsEl.textContent = '0';
-        if (totalReconEl) totalReconEl.textContent = '0';
-        if (totalRowsEl) totalRowsEl.textContent = '0';
-        ErrorHandler.handle(error, 'Failed to load dashboard');
+        console.error('Error loading dashboard:', error);
       }
     }
 
+    function formatDate(dateStr: string): string {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diffDays = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Tomorrow';
+      if (diffDays < 0) return 'Overdue';
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    // Load dashboard on page load
     loadDashboard();
   </script>
 </Layout>
+

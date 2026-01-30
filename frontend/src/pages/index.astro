@@ -7,6 +7,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8080; img-src 'self' data:;">
     <title>Login - JBS Portal</title>
     <link rel="stylesheet" href="/src/styles/global.css">
   </head>
@@ -50,7 +51,7 @@
           </div>
 
           <div id="error-message" class="hidden">
-            <p class="text-sm text-red-600 text-center"></p>
+            <p class="text-sm text-red-600 text-center font-medium"></p>
           </div>
 
           <div>
@@ -68,6 +69,12 @@
     <script>
       const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8080';
 
+      // Check if already logged in
+      const token = localStorage.getItem('jbs_token');
+      if (token) {
+        window.location.href = '/dashboard';
+      }
+
       document.getElementById('login-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -75,6 +82,11 @@
         const password = (document.getElementById('password') as HTMLInputElement).value;
         const errorDiv = document.getElementById('error-message');
         const errorText = errorDiv?.querySelector('p');
+
+        // Hide any previous errors
+        if (errorDiv) {
+          errorDiv.classList.add('hidden');
+        }
 
         try {
           const response = await fetch(`${API_URL}/api/login`, {
@@ -105,12 +117,6 @@
           }
         }
       });
-
-      // Check if already logged in
-      const token = localStorage.getItem('jbs_token');
-      if (token) {
-        window.location.href = '/dashboard';
-      }
     </script>
   </body>
 </html>
