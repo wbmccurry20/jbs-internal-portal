@@ -59,12 +59,12 @@ func ListLodging(c *gin.Context) {
 	for rows.Next() {
 		var l models.SuperintendentLodging
 		var sID, jID sql.NullInt64
-		var sName, jNumber, jName sql.NullString
+		var sName, jNumber, jName, location, propertyLink, address, jobsiteAddress sql.NullString
 
 		err := rows.Scan(
-			&l.ID, &l.SuperintendentID, &l.JobID, &l.Location,
-			&l.CheckInDate, &l.CheckOutDate, &l.PropertyLink,
-			&l.Address, &l.JobsiteAddress,
+			&l.ID, &l.SuperintendentID, &l.JobID, &location,
+			&l.CheckInDate, &l.CheckOutDate, &propertyLink,
+			&address, &jobsiteAddress,
 			&l.CreatedAt, &l.UpdatedAt,
 			&sID, &sName, &jID, &jNumber, &jName,
 		)
@@ -76,12 +76,12 @@ func ListLodging(c *gin.Context) {
 			"id":               l.ID,
 			"superintendent_id": l.SuperintendentID,
 			"job_id":           l.JobID,
-			"location":         l.Location,
+			"location":         location.String,
 			"check_in_date":    l.CheckInDate,
 			"check_out_date":   l.CheckOutDate,
-			"property_link":    l.PropertyLink,
-			"address":          l.Address,
-			"jobsite_address":  l.JobsiteAddress,
+			"property_link":    propertyLink.String,
+			"address":          address.String,
+			"jobsite_address":  jobsiteAddress.String,
 			"created_at":       l.CreatedAt,
 			"updated_at":       l.UpdatedAt,
 		}
