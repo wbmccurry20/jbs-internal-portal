@@ -62,15 +62,20 @@ Building a comprehensive internal portal for JBS Construction Group to replace S
 - **NEW**: Budget roll-up (job contract + lodging costs)
 
 ### Feature 4: State Licensing Management
-**Data Source**: OneDrive folder (not Smartsheet)  
-**Purpose**: Track licenses across multiple states with visual dashboard
+**Data Source**: Portal database (user input)  
+**Purpose**: Track licenses across multiple states with visual dashboard and compliance reporting
 
 **Key Capabilities**:
-- Interactive US map (click state to see licenses)
-- Color-coded status (active/expiring/expired)
-- Automatic sync from OneDrive Excel/CSV files
-- Expiration alerts and renewal tracking
-- State-by-state drill-down views
+- **Interactive US map** (click state to see all licenses)
+- **Color-coded status** (active/expiring soon/expired/not licensed)
+- **License CRUD** - Add, edit, delete licenses through portal forms
+- **Document upload** - Attach license PDFs/scans to records
+- **Expiration alerts** - Email notifications at 90/60/30 days
+- **Renewal tracking** - Track renewal status and costs
+- **Compliance dashboard** - At-a-glance view of all state compliance
+- **State-by-state drill-down** - Detailed view per state
+- **Reporting** - Export to Excel, renewal cost tracking, gap analysis
+- **Optional**: One-time CSV import if they have existing OneDrive data
 
 ### Feature 5: Password Manager
 **Purpose**: Secure team credential storage with role-based access
@@ -595,53 +600,53 @@ frontend/src/
   - Availability gaps
 - [ ] Availability gap detection service
 
-### **Week 3: State Licensing (OneDrive Integration)**
+### **Week 3: State Licensing (Portal-First Approach)**
 
-#### Days 11-12: OneDrive Setup & Backend
-**Prerequisites**:
-- [ ] Get Azure credentials from client
-  - AZURE_TENANT_ID
-  - AZURE_CLIENT_ID
-  - AZURE_CLIENT_SECRET
-  - API permissions granted
-
-**OneDrive Folder Structure** (confirmed):
-```
-/State Licensing/
-├── State 1/
-│   ├── [subdirectories - TBD]
-│   └── license files (Excel/PDF/etc)
-├── State 2/
-│   ├── [subdirectories - TBD]
-│   └── license files
-└── ...
-```
-
-- [ ] Document exact subdirectory structure
-- [ ] Document Excel/CSV file formats per state
+#### Days 11-12: License Management Backend
+**No OneDrive dependency** - Portal is the source of truth
 
 **Development**:
-- [ ] Microsoft Graph API client
-- [ ] OneDrive file listing
-- [ ] Excel/CSV file parser
-- [ ] License sync service (manual + scheduled)
-- [ ] State summary API endpoints
-  - `/api/licenses/state-summary` - All states with status
-  - `/api/licenses/state/:code` - Detail for one state
-  - `/api/licenses/expiring?days=90` - Expiring licenses
-- [ ] Background sync job (daily at 2 AM)
+- [ ] License API endpoints (CRUD)
+  - `GET /api/licenses` - List all licenses (with filters)
+  - `GET /api/licenses/:id` - Get license detail
+  - `POST /api/licenses` - Create new license
+  - `PUT /api/licenses/:id` - Update license
+  - `DELETE /api/licenses/:id` - Delete license
+  - `GET /api/licenses/state/:code` - All licenses for one state
+  - `GET /api/licenses/state-summary` - Summary of all 50 states
+  - `GET /api/licenses/expiring?days=90` - Expiring licenses
+- [ ] File upload service for license documents (PDFs)
+- [ ] Status calculation service (auto-set based on expiration date)
+- [ ] Email notification service for expiring licenses
+- [ ] Optional: CSV import script for one-time data migration
 
 #### Days 13-14: Licensing Frontend
 - [ ] Install react-simple-maps for US map
 - [ ] Interactive US state map component
-  - Color-coded by status
-  - Hover tooltips
-  - Click to drill down
-- [ ] State detail modal
-- [ ] License table view (toggle from map)
-- [ ] Filters and search
-- [ ] Sync button (manual trigger)
-- [ ] Expiration alerts
+  - Color-coded by status (green/yellow/red/gray)
+  - Hover tooltips with quick stats
+  - Click to drill down to state detail
+- [ ] State detail modal/page
+  - All licenses for that state
+  - Add new license button
+  - Edit/delete actions
+- [ ] License management page (table view)
+  - All licenses across all states
+  - Filter by state, type, status, expiration
+  - Sort by any column
+  - Search functionality
+  - Export to Excel button
+- [ ] Add/Edit license form
+  - State dropdown (all 50 states)
+  - License type dropdown
+  - Date pickers with validation
+  - File upload for license documents
+  - Auto-calculate status from dates
+- [ ] Compliance dashboard
+  - Stats cards (total states, expiring soon, expired)
+  - Upcoming renewals timeline
+  - Cost tracking
+- [ ] Expiration alerts widget
 
 ### **Week 4: Password Manager**
 
@@ -694,28 +699,30 @@ frontend/src/
 - [ ] Mobile responsiveness check
 - [ ] Performance optimization
 - [ ] Security audit
-- [ ] User acceptance testing with client
+- [ Email Notifications (for License Expiration Alerts)
 
-#### Day 24: Deployment
-- [ ] Production environment setup
-- [ ] Database migration on production
-- [ ] Import production data
-- [ ] SSL certificates
-- [ ] Deploy backend to Railway
-- [ ] Deploy frontend to Vercel
-- [ ] Configure CORS for production
-- [ ] Set up monitoring and logs
+**Status**: ⏳ To be configured
 
----
+**Options**:
+1. **SendGrid** (recommended)
+   - Free tier: 100 emails/day
+   - Simple API
+   - Email templates
+   
+2. **AWS SES**
+   - Pay per email
+   - More complex setup
 
-## 🔐 Required Credentials & Setup
+**Required `.env` variables**:
+```
+SENDGRID_API_KEY=...
+NOTIFICATION_EMAIL_FROM=licensing@jbsconstructiongroup.com
+ADMIN_EMAILS=kelsey@jbs.com,admin@jbs.com
+```
 
-### OneDrive / Microsoft Graph API
-
-**Status**: ⏳ Waiting on client
-
-**Steps**:
-1. Azure Portal → App Registrations → New registration
+**Notification Schedule**:
+- Daily check at 2 AM for licenses expiring in 90, 60, 30 days
+- Email digest to admins with upcoming expirationsre Portal → App Registrations → New registration
 2. Name: "JBS Portal OneDrive Integration"
 3. Copy Application (client) ID
 4. Copy Directory (tenant) ID
@@ -1068,7 +1075,7 @@ restartPolicyType = "ON_FAILURE"
 5. Import lodging data (11 records)
 6. Build bid management API
 7. Build lodging management API
-
+None! Can start building license management immediately with portal-first approach
 ### 🚧 Blocked
 - OneDrive integration (waiting on Azure credentials)
 
