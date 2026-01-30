@@ -417,6 +417,7 @@ import Layout from '../layouts/Layout.astro';
 
   // All the lodging functionality (same as original lodging.astro)
   const API_BASE_URL = 'http://localhost:8080/api';
+  const token = localStorage.getItem('jbs_token');
   let currentLodgingId: number | null = null;
   let lodgingToDelete: number | null = null;
   let allLodging: any[] = [];
@@ -425,7 +426,9 @@ import Layout from '../layouts/Layout.astro';
   async function loadLodging() {
     try {
       const response = await fetch(`${API_BASE_URL}/lodging`, {
-        credentials: 'include'
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (!response.ok) throw new Error('Failed to fetch lodging');
@@ -587,7 +590,9 @@ import Layout from '../layouts/Layout.astro';
   (window as any).editLodging = async (id: number) => {
     try {
       const response = await fetch(`${API_BASE_URL}/lodging/${id}`, {
-        credentials: 'include'
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (!response.ok) throw new Error('Failed to fetch lodging details');
@@ -652,9 +657,9 @@ import Layout from '../layouts/Layout.astro';
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        credentials: 'include',
         body: JSON.stringify(formData)
       });
       
@@ -690,7 +695,9 @@ import Layout from '../layouts/Layout.astro';
     try {
       const response = await fetch(`${API_BASE_URL}/lodging/${lodgingToDelete}`, {
         method: 'DELETE',
-        credentials: 'include'
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (!response.ok) throw new Error('Failed to delete lodging');
