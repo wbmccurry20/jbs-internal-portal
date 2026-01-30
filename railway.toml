@@ -4,6 +4,7 @@
 [build]
 builder = "nixpacks"
 buildCommand = "cd backend && go build -o server ./cmd/server"
+watchPatterns = ["backend/**"]
 
 [deploy]
 startCommand = "cd backend && ./server"
