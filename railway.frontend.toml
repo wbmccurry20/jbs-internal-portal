@@ -7,7 +7,6 @@ buildCommand = "cd frontend && npm ci && npm run build"
 
 [deploy]
 startCommand = "cd frontend && npm run start"
-healthcheckPath = "/"
-healthcheckTimeout = 300
+# Remove healthcheck - let Railway auto-detect readiness
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
