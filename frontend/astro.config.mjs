@@ -6,7 +6,9 @@ import node from '@astrojs/node';
 export default defineConfig({
   output: 'server',
   adapter: node({
-    mode: 'standalone'
+    mode: 'standalone',
+    host: '0.0.0.0', // Listen on all interfaces for Railway
+    port: 8080
   }),
   integrations: [react(), tailwind()],
   server: {
