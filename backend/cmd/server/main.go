@@ -95,6 +95,29 @@ func main() {
 		api.GET("/reconciliation/history", handlers.GetReconciliationHistory)
 		api.GET("/reconciliation/download/:id", handlers.DownloadReconciliationResult)
 		api.DELETE("/reconciliation/:id", handlers.DeleteReconciliationJob)
+
+		// Job routes
+		api.GET("/jobs", handlers.ListJobs)
+		api.GET("/jobs/:id", handlers.GetJob)
+		api.POST("/jobs", handlers.CreateJob)
+		api.PUT("/jobs/:id", handlers.UpdateJob)
+		api.DELETE("/jobs/:id", handlers.DeleteJob)
+		api.POST("/jobs/:id/updates", handlers.CreateJobUpdate)
+		api.GET("/jobs/:id/updates", handlers.ListJobUpdates)
+
+		// Bid routes
+		api.GET("/bids", handlers.ListBids)
+		api.GET("/bids/:id", handlers.GetBid)
+		api.POST("/bids", handlers.CreateBid)
+		api.PUT("/bids/:id", handlers.UpdateBid)
+		api.DELETE("/bids/:id", handlers.DeleteBid)
+
+		// Lodging routes
+		api.GET("/lodging", handlers.ListLodging)
+		api.GET("/lodging/:id", handlers.GetLodging)
+		api.POST("/lodging", handlers.CreateLodging)
+		api.PUT("/lodging/:id", handlers.UpdateLodging)
+		api.DELETE("/lodging/:id", handlers.DeleteLodging)
 	}
 
 	// Start server

@@ -1,0 +1,35 @@
+Client,Location,Due Date,Assigned To,Status,Building Connected,Plan Hub,Awarded
+Driven Brands,Chesterfield MI,10/08/25,Zane Curdes,Complete,,,Yes
+Franchisee,"Brooksville, FL",10/09/25,Zane Curdes,Complete,,,
+Auto Zone,"Weston, WV",10/10/25,Alex Silvers,Complete,,,No
+Auto Zone,"Wendell, NC",10/10/25,Alex Silvers,Complete,,,No
+Auto Zone,"Goodyear, AZ",10/16/25,Alex Silvers,Complete,,,
+Driven Brands,"Loveland, OH",10/16/25,Zane Curdes,Complete,,,Yes
+Auto Zone,"Stockton, CA",10/17/25,Alex Silvers,Complete,,,
+Auto Zone,"Busby, MD",10/17/25,Joe Dionne,Complete,,,
+Auto Zone,"Daytona Beach, FL",10/17/25,,Complete,,,
+Auto Zone,"Tuscaloosa, AL",10/24/25,,Complete,,,
+Franchisee,"Alamogorade, NM",10/24/25,Michael Fender,Complete,,,
+Auto Zone,"Pecan Grove, TX",10/28/25,,Complete,,,
+Auto Zone,"Seven Points, TX",10/28/25,,Complete,,,
+Auto Zone,"Port Huron, MI",10/29/25,,Complete,,,
+Auto Zone,"Waupaca, WI",10/31/25,,Not Started,,,
+Auto Zone,"Big Lake, MN",11/03/25,,Not Started,,,
+Driven Brands,"Ft Lauderdale, FL-DEMO",11/04/25,Joe Dionne,Complete,10/29/25,10/29/25,Yes
+Auto Zone,"Lufkin, TX",11/07/25,,Complete,,,
+Auto Zone,"Victorville, CA",11/11/25,,Complete,,,
+Auto Zone,"Vassar, MI",11/11/25,,Complete,10/24/25,10/24/25,
+Auto Zone,"Colton, CA",11/12/25,,Complete,,,
+Auto Zone,"Somerton, AZ",11/12/25,,Not Bidding,10/24/25,10/24/25,
+Auto Zone,"Killeen, TX",11/13/25,,Complete,10/24/25,10/24/25,
+Auto Zone,"Largo, FL",11/14/25,,Complete,,,
+Auto Zone,"Boaz, AL",11/14/25,,Complete,10/27/25,10/27/25,
+Auto Zone,"Crawfordsville, IN",11/14/25,,Not Bidding,10/29/25,10/29/25,
+Auto Zone,"Raleigh, NC",11/14/25,,Complete,10/29/25,10/29/25,
+Mister Car Wash,"Madison, TN",11/14/25,,Complete,11/05/25,11/05/25,
+Misc,"Chapel Hill, NC",11/17/25,Nick Silvers,Complete,11/07/25,11/07/25,
+Misc,"Mt. Airy, NC",11/17/25,Nick Silvers,Complete,11/07/25,11/07/25,Yes
+Auto Zone,"Tyler, TX",11/18/25,,Complete,,,
+Auto Zone,"Salem, NH",11/21/25,,Complete,10/31/25,10/31/25,
+,"Staunton, VA",12/01/25,,,11/21/25,11/21/25,
+,Moss Point MS ,12/01/25,,,11/21/25,11/21/25,

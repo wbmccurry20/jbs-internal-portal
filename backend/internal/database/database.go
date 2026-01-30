@@ -32,9 +32,14 @@ func Connect(databaseURL string) error {
 
 	log.Println("✅ Connected to database")
 	
-	// Run migrations
+	// Run migrations (old user-related migrations)
 	if err = runMigrations(); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+	
+	// Run new SQL file migrations
+	if err = RunMigrations(DB); err != nil {
+		return fmt.Errorf("failed to run SQL migrations: %w", err)
 	}
 
 	// Seed users
