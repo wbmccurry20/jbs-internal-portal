@@ -1,0 +1,282 @@
+---
+// Simplified US Map SVG with state paths
+// States positioned roughly geographically
+---
+
+<svg id="us-map-svg" viewBox="0 0 1000 600" class="w-full h-auto">
+  <defs>
+    <style>
+      .state-path {
+        stroke: #fff;
+        stroke-width: 1.5;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .state-path:hover {
+        opacity: 0.8;
+        stroke-width: 2.5;
+      }
+      .state-no-license { fill: #e5e7eb; }
+      .state-active { fill: #10b981; }
+      .state-expiring { fill: #f59e0b; }
+      .state-expired { fill: #ef4444; }
+    </style>
+  </defs>
+  
+  <!-- West Coast -->
+  <g id="WA" data-state="Washington">
+    <rect class="state-path state-no-license" x="50" y="30" width="80" height="60" rx="3"/>
+    <text x="90" y="65" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">WA</text>
+  </g>
+  
+  <g id="OR" data-state="Oregon">
+    <rect class="state-path state-no-license" x="50" y="95" width="80" height="60" rx="3"/>
+    <text x="90" y="130" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">OR</text>
+  </g>
+  
+  <g id="CA" data-state="California">
+    <rect class="state-path state-no-license" x="35" y="160" width="70" height="120" rx="3"/>
+    <text x="70" y="225" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">CA</text>
+  </g>
+  
+  <!-- Mountain States -->
+  <g id="MT" data-state="Montana">
+    <rect class="state-path state-no-license" x="150" y="30" width="100" height="60" rx="3"/>
+    <text x="200" y="65" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">MT</text>
+  </g>
+  
+  <g id="ID" data-state="Idaho">
+    <rect class="state-path state-no-license" x="135" y="95" width="70" height="100" rx="3"/>
+    <text x="170" y="150" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">ID</text>
+  </g>
+  
+  <g id="WY" data-state="Wyoming">
+    <rect class="state-path state-no-license" x="210" y="95" width="90" height="65" rx="3"/>
+    <text x="255" y="132" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">WY</text>
+  </g>
+  
+  <g id="NV" data-state="Nevada">
+    <rect class="state-path state-no-license" x="110" y="165" width="70" height="100" rx="3"/>
+    <text x="145" y="220" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">NV</text>
+  </g>
+  
+  <g id="UT" data-state="Utah">
+    <rect class="state-path state-no-license" x="185" y="165" width="70" height="90" rx="3"/>
+    <text x="220" y="215" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">UT</text>
+  </g>
+  
+  <g id="CO" data-state="Colorado">
+    <rect class="state-path state-no-license" x="260" y="165" width="90" height="80" rx="3"/>
+    <text x="305" y="210" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">CO</text>
+  </g>
+  
+  <g id="AZ" data-state="Arizona">
+    <rect class="state-path state-no-license" x="185" y="260" width="70" height="80" rx="3"/>
+    <text x="220" y="305" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">AZ</text>
+  </g>
+  
+  <g id="NM" data-state="New Mexico">
+    <rect class="state-path state-no-license" x="260" y="250" width="80" height="90" rx="3"/>
+    <text x="300" y="300" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">NM</text>
+  </g>
+  
+  <!-- Great Plains -->
+  <g id="ND" data-state="North Dakota">
+    <rect class="state-path state-no-license" x="305" y="30" width="90" height="55" rx="3"/>
+    <text x="350" y="62" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">ND</text>
+  </g>
+  
+  <g id="SD" data-state="South Dakota">
+    <rect class="state-path state-no-license" x="305" y="90" width="90" height="55" rx="3"/>
+    <text x="350" y="122" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">SD</text>
+  </g>
+  
+  <g id="NE" data-state="Nebraska">
+    <rect class="state-path state-no-license" x="355" y="150" width="90" height="50" rx="3"/>
+    <text x="400" y="180" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">NE</text>
+  </g>
+  
+  <g id="KS" data-state="Kansas">
+    <rect class="state-path state-no-license" x="355" y="205" width="90" height="50" rx="3"/>
+    <text x="400" y="235" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">KS</text>
+  </g>
+  
+  <g id="OK" data-state="Oklahoma">
+    <rect class="state-path state-no-license" x="345" y="260" width="100" height="50" rx="3"/>
+    <text x="395" y="290" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">OK</text>
+  </g>
+  
+  <g id="TX" data-state="Texas">
+    <rect class="state-path state-no-license" x="345" y="315" width="120" height="120" rx="3"/>
+    <text x="405" y="380" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">TX</text>
+  </g>
+  
+  <!-- Midwest -->
+  <g id="MN" data-state="Minnesota">
+    <rect class="state-path state-no-license" x="400" y="35" width="75" height="90" rx="3"/>
+    <text x="437" y="85" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">MN</text>
+  </g>
+  
+  <g id="IA" data-state="Iowa">
+    <rect class="state-path state-no-license" x="450" y="130" width="75" height="60" rx="3"/>
+    <text x="487" y="165" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">IA</text>
+  </g>
+  
+  <g id="MO" data-state="Missouri">
+    <rect class="state-path state-no-license" x="450" y="195" width="75" height="75" rx="3"/>
+    <text x="487" y="237" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">MO</text>
+  </g>
+  
+  <g id="AR" data-state="Arkansas">
+    <rect class="state-path state-no-license" x="450" y="275" width="75" height="65" rx="3"/>
+    <text x="487" y="312" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">AR</text>
+  </g>
+  
+  <g id="LA" data-state="Louisiana">
+    <rect class="state-path state-no-license" x="470" y="345" width="75" height="60" rx="3"/>
+    <text x="507" y="380" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">LA</text>
+  </g>
+  
+  <g id="WI" data-state="Wisconsin">
+    <rect class="state-path state-no-license" x="480" y="45" width="65" height="80" rx="3"/>
+    <text x="512" y="90" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">WI</text>
+  </g>
+  
+  <g id="IL" data-state="Illinois">
+    <rect class="state-path state-no-license" x="530" y="130" width="50" height="100" rx="3"/>
+    <text x="555" y="185" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">IL</text>
+  </g>
+  
+  <g id="MI" data-state="Michigan">
+    <rect class="state-path state-no-license" x="550" y="45" width="70" height="90" rx="3"/>
+    <text x="585" y="95" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">MI</text>
+  </g>
+  
+  <g id="IN" data-state="Indiana">
+    <rect class="state-path state-no-license" x="585" y="140" width="50" height="80" rx="3"/>
+    <text x="610" y="185" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">IN</text>
+  </g>
+  
+  <g id="OH" data-state="Ohio">
+    <rect class="state-path state-no-license" x="640" y="135" width="60" height="75" rx="3"/>
+    <text x="670" y="177" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">OH</text>
+  </g>
+  
+  <g id="KY" data-state="Kentucky">
+    <rect class="state-path state-no-license" x="585" y="225" width="100" height="45" rx="3"/>
+    <text x="635" y="252" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">KY</text>
+  </g>
+  
+  <g id="TN" data-state="Tennessee">
+    <rect class="state-path state-no-license" x="550" y="275" width="120" height="45" rx="3"/>
+    <text x="610" y="302" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">TN</text>
+  </g>
+  
+  <g id="MS" data-state="Mississippi">
+    <rect class="state-path state-no-license" x="550" y="325" width="50" height="80" rx="3"/>
+    <text x="575" y="370" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">MS</text>
+  </g>
+  
+  <g id="AL" data-state="Alabama">
+    <rect class="state-path state-no-license" x="605" y="325" width="50" height="85" rx="3"/>
+    <text x="630" y="372" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">AL</text>
+  </g>
+  
+  <!-- Southeast -->
+  <g id="WV" data-state="West Virginia">
+    <rect class="state-path state-no-license" x="705" y="175" width="60" height="60" rx="3"/>
+    <text x="735" y="210" text-anchor="middle" fill="white" font-size="12" font-weight="bold" pointer-events="none">WV</text>
+  </g>
+  
+  <g id="VA" data-state="Virginia">
+    <rect class="state-path state-no-license" x="720" y="240" width="90" height="50" rx="3"/>
+    <text x="765" y="270" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">VA</text>
+  </g>
+  
+  <g id="NC" data-state="North Carolina">
+    <rect class="state-path state-no-license" x="710" y="295" width="110" height="50" rx="3"/>
+    <text x="765" y="325" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">NC</text>
+  </g>
+  
+  <g id="SC" data-state="South Carolina">
+    <rect class="state-path state-no-license" x="730" y="350" width="80" height="50" rx="3"/>
+    <text x="770" y="380" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">SC</text>
+  </g>
+  
+  <g id="GA" data-state="Georgia">
+    <rect class="state-path state-no-license" x="660" y="355" width="65" height="95" rx="3"/>
+    <text x="692" y="407" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">GA</text>
+  </g>
+  
+  <g id="FL" data-state="Florida">
+    <rect class="state-path state-no-license" x="730" y="405" width="70" height="110" rx="3"/>
+    <text x="765" y="465" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">FL</text>
+  </g>
+  
+  <!-- Northeast -->
+  <g id="PA" data-state="Pennsylvania">
+    <rect class="state-path state-no-license" x="770" y="135" width="90" height="55" rx="3"/>
+    <text x="815" y="167" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">PA</text>
+  </g>
+  
+  <g id="NY" data-state="New York">
+    <rect class="state-path state-no-license" x="785" y="75" width="95" height="55" rx="3"/>
+    <text x="832" y="107" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">NY</text>
+  </g>
+  
+  <g id="VT" data-state="Vermont">
+    <rect class="state-path state-no-license" x="885" y="50" width="35" height="50" rx="3"/>
+    <text x="902" y="80" text-anchor="middle" fill="white" font-size="12" font-weight="bold" pointer-events="none">VT</text>
+  </g>
+  
+  <g id="NH" data-state="New Hampshire">
+    <rect class="state-path state-no-license" x="885" y="105" width="35" height="45" rx="3"/>
+    <text x="902" y="132" text-anchor="middle" fill="white" font-size="11" font-weight="bold" pointer-events="none">NH</text>
+  </g>
+  
+  <g id="ME" data-state="Maine">
+    <rect class="state-path state-no-license" x="925" y="30" width="50" height="85" rx="3"/>
+    <text x="950" y="77" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">ME</text>
+  </g>
+  
+  <g id="MA" data-state="Massachusetts">
+    <rect class="state-path state-no-license" x="885" y="155" width="70" height="30" rx="3"/>
+    <text x="920" y="175" text-anchor="middle" fill="white" font-size="12" font-weight="bold" pointer-events="none">MA</text>
+  </g>
+  
+  <g id="RI" data-state="Rhode Island">
+    <rect class="state-path state-no-license" x="920" y="190" width="35" height="25" rx="3"/>
+    <text x="937" y="207" text-anchor="middle" fill="white" font-size="10" font-weight="bold" pointer-events="none">RI</text>
+  </g>
+  
+  <g id="CT" data-state="Connecticut">
+    <rect class="state-path state-no-license" x="865" y="190" width="50" height="30" rx="3"/>
+    <text x="890" y="210" text-anchor="middle" fill="white" font-size="12" font-weight="bold" pointer-events="none">CT</text>
+  </g>
+  
+  <g id="NJ" data-state="New Jersey">
+    <rect class="state-path state-no-license" x="865" y="155" width="35" height="60" rx="3"/>
+    <text x="882" y="190" text-anchor="middle" fill="white" font-size="12" font-weight="bold" pointer-events="none">NJ</text>
+  </g>
+  
+  <g id="DE" data-state="Delaware">
+    <rect class="state-path state-no-license" x="830" y="195" width="30" height="40" rx="3"/>
+    <text x="845" y="220" text-anchor="middle" fill="white" font-size="11" font-weight="bold" pointer-events="none">DE</text>
+  </g>
+  
+  <g id="MD" data-state="Maryland">
+    <rect class="state-path state-no-license" x="770" y="195" width="55" height="40" rx="3"/>
+    <text x="797" y="220" text-anchor="middle" fill="white" font-size="12" font-weight="bold" pointer-events="none">MD</text>
+  </g>
+  
+  <!-- Alaska & Hawaii -->
+  <g id="AK" data-state="Alaska">
+    <rect class="state-path state-no-license" x="50" y="450" width="100" height="70" rx="3"/>
+    <text x="100" y="490" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">AK</text>
+  </g>
+  
+  <g id="HI" data-state="Hawaii">
+    <rect class="state-path state-no-license" x="180" y="480" width="80" height="40" rx="3"/>
+    <text x="220" y="505" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">HI</text>
+  </g>
+</svg>

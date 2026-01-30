@@ -10,6 +10,16 @@ import (
 	"github.com/wbmccurry20/jbs-internal-portal/internal/database"
 )
 
+// LICENSE MANAGEMENT HANDLERS
+// 
+// Current: Portal-first CRUD operations for manual license entry
+// Future: OneDrive sync integration
+//   - Auto-import license PDFs from Azure OneDrive folder
+//   - Parse metadata from file names or embedded text
+//   - Store onedrive_file_path for reference
+//   - Sync status tracking (last_synced_at)
+//   - Bi-directional sync: portal updates → OneDrive, OneDrive changes → portal
+
 // ListLicenses returns all licenses with optional filters
 func ListLicenses(c *gin.Context) {
 	query := `

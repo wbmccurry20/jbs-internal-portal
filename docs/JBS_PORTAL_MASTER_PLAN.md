@@ -92,20 +92,40 @@ Building a comprehensive internal portal for JBS Construction Group to replace S
 - **NEW**: Budget roll-up (job contract + lodging costs)
 
 ### Feature 4: State Licensing Management
-**Data Source**: Portal database (user input)  
+**Current Mode**: Portal-first manual entry (demo with 5 sample licenses)  
+**Future Mode**: OneDrive sync integration (pending Azure credentials)  
 **Purpose**: Track licenses across multiple states with visual dashboard and compliance reporting
 
-**Key Capabilities**:
-- **Interactive US map** (click state to see all licenses)
-- **Color-coded status** (active/expiring soon/expired/not licensed)
-- **License CRUD** - Add, edit, delete licenses through portal forms
-- **Document upload** - Attach license PDFs/scans to records
-- **Expiration alerts** - Email notifications at 90/60/30 days
-- **Renewal tracking** - Track renewal status and costs
-- **Compliance dashboard** - At-a-glance view of all state compliance
-- **State-by-state drill-down** - Detailed view per state
-- **Reporting** - Export to Excel, renewal cost tracking, gap analysis
-- **Optional**: One-time CSV import if they have existing OneDrive data
+**Implemented Features** ✅:
+- ✅ **Interactive US SVG map** - Click any state to add/edit licenses
+- ✅ **Color-coded status** - Green (active), Yellow (expiring), Red (expired), Gray (no license)
+- ✅ **License CRUD** - Full Create, Read, Update, Delete through portal
+- ✅ **Stats dashboard** - Total states, active, expiring, expired counts
+- ✅ **Hover tooltips** - See license details on state hover
+- ✅ **Sample data** - 5 demo licenses seeded (CA, TX, FL, AZ, NV)
+
+**Pending Azure Credentials** 🔐:
+- ⏳ **OneDrive sync** - Auto-import license PDFs from Azure folder
+- ⏳ **Document storage** - Link PDF files to license records  
+- ⏳ **Bi-directional sync** - Portal updates → OneDrive, OneDrive → Portal
+- ⏳ **Metadata parsing** - Extract license info from filenames/OCR
+- ⏳ **Sync logging** - Track import history and errors
+
+**Future Enhancements** 🚀:
+- Email notifications at 90/60/30 days before expiration
+- Export to Excel report
+- Renewal cost tracking and budgeting
+- Compliance reporting dashboard
+- Document upload through portal UI
+
+**Transition Plan**:
+1. Demo phase: Use manual CRUD with sample data
+2. When Azure ready: Run `cleanup_demo_licenses.go` to clear demo data
+3. Configure Azure credentials in .env
+4. Enable OneDrive sync to import real license files
+5. Portal becomes hybrid: manual entry + auto-sync
+
+**Documentation**: See `/docs/ONEDRIVE_INTEGRATION.md` for full implementation plan
 
 ### Feature 5: Password Manager
 **Purpose**: Secure team credential storage with role-based access
