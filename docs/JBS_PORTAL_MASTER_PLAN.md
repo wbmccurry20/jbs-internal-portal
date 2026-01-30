@@ -81,15 +81,26 @@ Building a comprehensive internal portal for JBS Construction Group to replace S
 
 ### Feature 3: Superintendent Housing Management
 **Replaces**: Smartsheet (AirBnbs)  
-**Purpose**: Track temporary lodging for traveling superintendents
+**Purpose**: Track temporary lodging for traveling superintendents  
+**Client Priority**: ⭐ Kelsey requested Superintendents page as primary navigation item (replaces standalone Lodging)
 
-**Key Capabilities**:
-- **NEW**: AirBnb booking tracking
-- **NEW**: Link lodging to specific jobs
-- **NEW**: Check-in/out date management
-- **NEW**: Cost tracking per job
-- **NEW**: Calendar view of who's where
-- **NEW**: Budget roll-up (job contract + lodging costs)
+**Implemented Features** ✅:
+- ✅ **Lodging tracking** - Full CRUD for superintendent accommodations
+- ✅ **Job association** - Link lodging to specific projects
+- ✅ **Check-in/out dates** - Track reservation periods
+- ✅ **Cost tracking** - Per-night and total costs
+- ✅ **Status filtering** - Active, upcoming, completed
+- ✅ **Search & sort** - By superintendent, location, dates, cost
+- ✅ **Tabbed interface** - Superintendents page with Lodging + Schedule tabs
+
+**Upcoming Features** 🚀:
+- **Superintendent Schedule View** - Calendar/Gantt showing job assignments
+- **Assignment linking** - Connect schedule to lodging automatically
+- **Conflict detection** - Flag overlapping superintendent assignments
+- **Availability tracking** - Time-off and vacation management
+- **Drag-drop reassignment** - Visual schedule editing
+- **Calendar view** - Enhanced lodging calendar (placeholder exists)
+- **Budget roll-up** - Job contract + lodging costs summary
 
 ### Feature 4: State Licensing Management
 **Current Mode**: Portal-first manual entry (demo with 5 sample licenses)  
