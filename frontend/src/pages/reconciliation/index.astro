@@ -164,10 +164,6 @@ import Layout from '../../layouts/Layout.astro';
 
   <script>
     const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || (import.meta.env.DEV ? 'http://localhost:8080' : '');
-    if (!API_URL) {
-      console.error('PUBLIC_API_URL environment variable is required in production');
-      return;
-    }
     const token = localStorage.getItem('jbs_token');
 
     // Redirect to login if not authenticated
