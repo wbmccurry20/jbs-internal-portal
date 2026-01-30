@@ -78,46 +78,46 @@ func main() {
 		api.GET("/user", handlers.GetCurrentUser)
 		api.POST("/change-password", handlers.ChangeOwnPassword)
 
-		// User management routes (support account only)
-		api.GET("/users", handlers.ListUsers)
-		api.POST("/users", handlers.CreateUser)
-		api.DELETE("/users/:id", handlers.DeleteUser)
-		api.POST("/users/:id/reset-password", handlers.ResetUserPassword)
+		// User management routes (owner and support only)
+		api.GET("/users", middleware.RequireRole("owner", "support"), handlers.ListUsers)
+		api.POST("/users", middleware.RequireRole("owner", "support"), handlers.CreateUser)
+		api.DELETE("/users/:id", middleware.RequireRole("owner", "support"), handlers.DeleteUser)
+		api.POST("/users/:id/reset-password", middleware.RequireRole("owner", "support"), handlers.ResetUserPassword)
 
-		// Concur conversion routes (with upload rate limiting)
-		api.POST("/concur/upload", middleware.RateLimitUpload(), handlers.UploadConcurFile)
-		api.GET("/concur/history", handlers.GetConversionHistory)
-		api.GET("/download/:id", handlers.DownloadConversionResult)
-		api.DELETE("/concur/:id", handlers.DeleteConversionJob)
+		// Concur conversion routes (finance and owner only, with upload rate limiting)
+		api.POST("/concur/upload", middleware.RequireRole("finance", "owner", "support"), middleware.RateLimitUpload(), handlers.UploadConcurFile)
+		api.GET("/concur/history", middleware.RequireRole("finance", "owner", "support"), handlers.GetConversionHistory)
+		api.GET("/download/:id", middleware.RequireRole("finance", "owner", "support"), handlers.DownloadConversionResult)
+		api.DELETE("/concur/:id", middleware.RequireRole("finance", "owner", "support"), handlers.DeleteConversionJob)
 
-		// Reconciliation routes (with upload rate limiting)
-		api.POST("/reconciliation/upload", middleware.RateLimitUpload(), handlers.UploadReconciliationFiles)
-		api.GET("/reconciliation/history", handlers.GetReconciliationHistory)
-		api.GET("/reconciliation/download/:id", handlers.DownloadReconciliationResult)
-		api.DELETE("/reconciliation/:id", handlers.DeleteReconciliationJob)
+		// Reconciliation routes (finance and owner only, with upload rate limiting)
+		api.POST("/reconciliation/upload", middleware.RequireRole("finance", "owner", "support"), middleware.RateLimitUpload(), handlers.UploadReconciliationFiles)
+		api.GET("/reconciliation/history", middleware.RequireRole("finance", "owner", "support"), handlers.GetReconciliationHistory)
+		api.GET("/reconciliation/download/:id", middleware.RequireRole("finance", "owner", "support"), handlers.DownloadReconciliationResult)
+		api.DELETE("/reconciliation/:id", middleware.RequireRole("finance", "owner", "support"), handlers.DeleteReconciliationJob)
 
-		// Job routes
+		// Job routes (delete requires owner or support)
 		api.GET("/jobs", handlers.ListJobs)
 		api.GET("/jobs/:id", handlers.GetJob)
 		api.POST("/jobs", handlers.CreateJob)
 		api.PUT("/jobs/:id", handlers.UpdateJob)
-		api.DELETE("/jobs/:id", handlers.DeleteJob)
+		api.DELETE("/jobs/:id", middleware.RequireRole("owner", "support"), handlers.DeleteJob)
 		api.POST("/jobs/:id/updates", handlers.CreateJobUpdate)
 		api.GET("/jobs/:id/updates", handlers.ListJobUpdates)
 
-		// Bid routes
+		// Bid routes (archive requires owner or support)
 		api.GET("/bids", handlers.ListBids)
 		api.GET("/bids/:id", handlers.GetBid)
 		api.POST("/bids", handlers.CreateBid)
 		api.PUT("/bids/:id", handlers.UpdateBid)
-		api.DELETE("/bids/:id", handlers.DeleteBid)
+		api.DELETE("/bids/:id", middleware.RequireRole("owner", "support"), handlers.DeleteBid)
 
-		// Lodging routes
+		// Lodging routes (delete requires owner or support)
 		api.GET("/lodging", handlers.ListLodging)
 		api.GET("/lodging/:id", handlers.GetLodging)
 		api.POST("/lodging", handlers.CreateLodging)
 		api.PUT("/lodging/:id", handlers.UpdateLodging)
-		api.DELETE("/lodging/:id", handlers.DeleteLodging)
+		api.DELETE("/lodging/:id", middleware.RequireRole("owner", "support"), handlers.DeleteLodging)
 	}
 
 	// Start server

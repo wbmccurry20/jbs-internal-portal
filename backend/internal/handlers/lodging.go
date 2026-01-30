@@ -50,7 +50,7 @@ func ListLodging(c *gin.Context) {
 
 	rows, err := database.DB.Query(query, args...)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch lodging: %v", err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch lodging"})
 		return
 	}
 	defer rows.Close()
@@ -304,13 +304,13 @@ func UpdateLodging(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Lodging updated successfully"})
 }
 
-// DeleteLodging deletes a lodging record
+// DeleteLodging soft-deletes a lodging record (marks as archived)
 func DeleteLodging(c *gin.Context) {
 	id := c.Param("id")
 
-	result, err := database.DB.Exec("DELETE FROM superintendent_lodging WHERE id = $1", id)
+	result, err := database.DB.Exec("UPDATE superintendent_lodging SET archived = true WHERE id = $1", id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete lodging"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to archive lodging"})
 		return
 	}
 
@@ -320,5 +320,5 @@ func DeleteLodging(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Lodging deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Lodging archived successfully"})
 }

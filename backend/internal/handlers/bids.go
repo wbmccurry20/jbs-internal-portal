@@ -70,7 +70,7 @@ func ListBids(c *gin.Context) {
 
 	rows, err := database.DB.Query(query, args...)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch bids: %v", err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch bids"})
 		return
 	}
 	defer rows.Close()

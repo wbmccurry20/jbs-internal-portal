@@ -57,11 +57,24 @@ func ListJobs(c *gin.Context) {
 		argPos++
 	}
 
+	// Filter archived jobs (default: show only non-archived)
+	if archived := c.Query("archived"); archived != "" {
+		isArchived := archived == "true"
+		query += fmt.Sprintf(" AND j.archived = $%d", argPos)
+		args = append(args, isArchived)
+		argPos++
+	} else {
+		// Default: only show non-archived
+		query += fmt.Sprintf(" AND j.archived = $%d", argPos)
+		args = append(args, false)
+		argPos++
+	}
+
 	query += " ORDER BY j.created_at DESC"
 
 	rows, err := database.DB.Query(query, args...)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch jobs: %v", err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch jobs"})
 		return
 	}
 	defer rows.Close()
@@ -399,15 +412,13 @@ func UpdateJob(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Job updated successfully"})
 }
 
-// DeleteJob soft-deletes a job (marks as inactive)
+// DeleteJob soft-deletes a job (marks as archived)
 func DeleteJob(c *gin.Context) {
 	id := c.Param("id")
 
-	// For now, we'll do a hard delete since we don't have an archived column
-	// In production, you'd add an 'archived' boolean column
-	result, err := database.DB.Exec("DELETE FROM jobs WHERE id = $1", id)
+	result, err := database.DB.Exec("UPDATE jobs SET archived = true WHERE id = $1", id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete job"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to archive job"})
 		return
 	}
 
@@ -417,7 +428,7 @@ func DeleteJob(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Job deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Job archived successfully"})
 }
 
 // CreateJobUpdate adds a new update/note to a job

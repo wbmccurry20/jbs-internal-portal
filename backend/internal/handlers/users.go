@@ -59,9 +59,9 @@ func CreateUser(c *gin.Context) {
 	}
 
 	// Validate role
-	validRoles := map[string]bool{"employee": true, "owner": true, "accountant": true}
+	validRoles := map[string]bool{"employee": true, "owner": true, "finance": true, "support": true}
 	if !validRoles[req.Role] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role. Must be employee, owner, or accountant"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role. Must be employee, owner, finance, or support"})
 		return
 	}
 
