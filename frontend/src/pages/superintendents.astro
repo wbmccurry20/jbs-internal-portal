@@ -460,8 +460,10 @@ import Layout from '../layouts/Layout.astro';
     }
     
     const html = lodging.map(lodge => {
-      const checkinDate = new Date(lodge.checkin_date);
-      const checkoutDate = lodge.checkout_date ? new Date(lodge.checkout_date) : null;
+      const superintendentName = lodge.superintendent?.name || 'Unknown';
+      const jobName = lodge.job?.job_name || null;
+      const checkinDate = new Date(lodge.check_in_date);
+      const checkoutDate = lodge.check_out_date ? new Date(lodge.check_out_date) : null;
       const today = new Date();
       
       let status = 'upcoming';
@@ -480,36 +482,40 @@ import Layout from '../layouts/Layout.astro';
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
-                <h3 class="text-lg font-semibold text-gray-900">${lodge.superintendent}</h3>
+                <h3 class="text-lg font-semibold text-gray-900">${superintendentName}</h3>
                 <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} capitalize">
                   ${status}
                 </span>
               </div>
               
               <div class="space-y-2">
-                ${lodge.job_name ? `
+                ${jobName ? `
                   <div class="flex items-center text-sm text-gray-600">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
-                    ${lodge.job_name}
+                    ${jobName}
                   </div>
                 ` : ''}
                 
-                <div class="flex items-center text-sm text-gray-600">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                  </svg>
-                  ${lodge.property_name}
-                </div>
+                ${lodge.location ? `
+                  <div class="flex items-center text-sm text-gray-600">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    ${lodge.location}
+                  </div>
+                ` : ''}
                 
-                <div class="flex items-center text-sm text-gray-600">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  ${lodge.city}, ${lodge.state}
-                </div>
+                ${lodge.address ? `
+                  <div class="flex items-center text-sm text-gray-600">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    ${lodge.address}
+                  </div>
+                ` : ''}
                 
                 <div class="flex items-center text-sm text-gray-600">
                   <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,15 +523,6 @@ import Layout from '../layouts/Layout.astro';
                   </svg>
                   ${checkinDate.toLocaleDateString()} - ${checkoutDate ? checkoutDate.toLocaleDateString() : 'Ongoing'}
                 </div>
-                
-                ${lodge.total_cost ? `
-                  <div class="flex items-center text-sm font-medium text-gray-900">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    $${parseFloat(lodge.total_cost).toFixed(2)}
-                  </div>
-                ` : ''}
               </div>
             </div>
             
@@ -739,10 +736,10 @@ import Layout from '../layouts/Layout.astro';
     const searchTerm = searchInput?.value.toLowerCase();
     if (searchTerm) {
       filtered = filtered.filter(lodge => 
-        lodge.superintendent?.toLowerCase().includes(searchTerm) ||
-        lodge.property_name?.toLowerCase().includes(searchTerm) ||
-        lodge.city?.toLowerCase().includes(searchTerm) ||
-        lodge.job_name?.toLowerCase().includes(searchTerm)
+        lodge.superintendent?.name?.toLowerCase().includes(searchTerm) ||
+        lodge.location?.toLowerCase().includes(searchTerm) ||
+        lodge.address?.toLowerCase().includes(searchTerm) ||
+        lodge.job?.job_name?.toLowerCase().includes(searchTerm)
       );
     }
     
@@ -751,8 +748,8 @@ import Layout from '../layouts/Layout.astro';
     if (status) {
       const today = new Date();
       filtered = filtered.filter(lodge => {
-        const checkinDate = new Date(lodge.checkin_date);
-        const checkoutDate = lodge.checkout_date ? new Date(lodge.checkout_date) : null;
+        const checkinDate = new Date(lodge.check_in_date);
+        const checkoutDate = lodge.check_out_date ? new Date(lodge.check_out_date) : null;
         
         if (status === 'active') {
           return checkinDate <= today && (!checkoutDate || checkoutDate >= today);
@@ -769,15 +766,18 @@ import Layout from '../layouts/Layout.astro';
     const sortBy = sortSelect?.value;
     filtered.sort((a, b) => {
       if (sortBy === 'checkin') {
-        return new Date(a.checkin_date).getTime() - new Date(b.checkin_date).getTime();
+        return new Date(a.check_in_date).getTime() - new Date(b.check_in_date).getTime();
       } else if (sortBy === 'checkout') {
-        if (!a.checkout_date) return 1;
-        if (!b.checkout_date) return -1;
-        return new Date(a.checkout_date).getTime() - new Date(b.checkout_date).getTime();
+        if (!a.check_out_date) return 1;
+        if (!b.check_out_date) return -1;
+        return new Date(a.check_out_date).getTime() - new Date(b.check_out_date).getTime();
       } else if (sortBy === 'super') {
-        return (a.superintendent || '').localeCompare(b.superintendent || '');
+        const aName = a.superintendent?.name || '';
+        const bName = b.superintendent?.name || '';
+        return aName.localeCompare(bName);
       } else if (sortBy === 'cost') {
-        return parseFloat(b.total_cost || '0') - parseFloat(a.total_cost || '0');
+        // Cost tracking not yet in schema, default to 0
+        return 0;
       }
       return 0;
     });
