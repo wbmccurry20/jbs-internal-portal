@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -41,6 +42,7 @@ func main() {
 	router.Use(middleware.SecurityHeaders())
 	router.Use(middleware.RequestLogger())
 	router.Use(middleware.RateLimitGeneral())
+	router.Use(middleware.QueryLogger(500 * time.Millisecond)) // Log requests slower than 500ms
 
 	// CORS middleware
 	router.Use(func(c *gin.Context) {
