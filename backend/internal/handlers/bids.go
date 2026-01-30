@@ -79,13 +79,13 @@ func ListBids(c *gin.Context) {
 	for rows.Next() {
 		var b models.Bid
 		var cID, jID sql.NullInt64
-		var cName, jNumber, jName, awarded sql.NullString
+		var cName, jNumber, jName, awarded, notes sql.NullString
 
 		err := rows.Scan(
 			&b.ID, &b.ClientID, &b.Location, &b.City, &b.State,
 			&b.DueDate, &b.AssignedToID, &b.Status,
 			&b.BuildingConnectedDate, &b.PlanHubDate,
-			&awarded, &b.BidAmount, &b.Notes, &b.JobID, &b.Archived,
+			&awarded, &b.BidAmount, &notes, &b.JobID, &b.Archived,
 			&b.CreatedAt, &b.UpdatedAt,
 			&cID, &cName, &jID, &jNumber, &jName,
 		)
@@ -107,7 +107,7 @@ func ListBids(c *gin.Context) {
 			"plan_hub_date":          b.PlanHubDate,
 			"awarded":                awarded.String,
 			"bid_amount":             b.BidAmount,
-			"notes":                  b.Notes,
+			"notes":                  notes.String,
 			"job_id":                 b.JobID,
 			"archived":               b.Archived,
 			"created_at":             b.CreatedAt,
