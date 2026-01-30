@@ -26,6 +26,7 @@ func ListLicenses(c *gin.Context) {
 		SELECT 
 			id, state, license_type, license_number, entity_name,
 			issue_date, expiration_date, status, renewal_fee, notes,
+			city, is_city_license, is_active,
 			created_at, updated_at
 		FROM state_licenses
 		WHERE 1=1
@@ -70,12 +71,15 @@ func ListLicenses(c *gin.Context) {
 			status                                                   sql.NullString
 			renewalFee                                              sql.NullFloat64
 			notes                                                    sql.NullString
+			city                                                     sql.NullString
+			isCityLicense, isActive                                 sql.NullBool
 			createdAt, updatedAt                                    time.Time
 		)
 
 		err := rows.Scan(
 			&id, &state, &licenseType, &licenseNumber, &entityName,
 			&issueDate, &expirationDate, &status, &renewalFee, &notes,
+			&city, &isCityLicense, &isActive,
 			&createdAt, &updatedAt,
 		)
 		if err != nil {
@@ -91,6 +95,9 @@ func ListLicenses(c *gin.Context) {
 			"status":         status.String,
 			"renewal_fee":    renewalFee.Float64,
 			"notes":          notes.String,
+			"city":           city.String,
+			"is_city_license": isCityLicense.Bool,
+			"is_active":      isActive.Bool,
 			"created_at":     createdAt,
 			"updated_at":     updatedAt,
 		}
@@ -116,7 +123,9 @@ func GetStateSummary(c *gin.Context) {
 			COUNT(*) as total_licenses,
 			COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
 			COUNT(CASE WHEN status = 'expiring' THEN 1 END) as expiring,
-			COUNT(CASE WHEN status = 'expired' THEN 1 END) as expired
+			COUNT(CASE WHEN status = 'expired' THEN 1 END) as expired,
+			COUNT(CASE WHEN is_city_license = true THEN 1 END) as city_licenses,
+			COUNT(CASE WHEN is_city_license = false OR is_city_license IS NULL THEN 1 END) as state_licenses
 		FROM state_licenses
 		GROUP BY state
 		ORDER BY state
@@ -132,19 +141,21 @@ func GetStateSummary(c *gin.Context) {
 	var summary []map[string]interface{}
 	for rows.Next() {
 		var state string
-		var total, active, expiring, expired int
+		var total, active, expiring, expired, cityLicenses, stateLicenses int
 
-		err := rows.Scan(&state, &total, &active, &expiring, &expired)
+		err := rows.Scan(&state, &total, &active, &expiring, &expired, &cityLicenses, &stateLicenses)
 		if err != nil {
 			continue
 		}
 
 		summary = append(summary, map[string]interface{}{
-			"state":    state,
-			"total":    total,
-			"active":   active,
-			"expiring": expiring,
-			"expired":  expired,
+			"state":          state,
+			"total":          total,
+			"active":         active,
+			"expiring":       expiring,
+			"expired":        expired,
+			"city_licenses":  cityLicenses,
+			"state_licenses": stateLicenses,
 		})
 	}
 

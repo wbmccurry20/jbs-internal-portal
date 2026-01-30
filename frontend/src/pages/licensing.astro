@@ -189,6 +189,9 @@ import USMap from '../components/USMap.astro';
       status: string;
       renewal_fee: number;
       notes: string | null;
+      city: string | null;
+      is_city_license: boolean;
+      is_active: boolean;
     }
 
     // Load licenses
@@ -214,6 +217,7 @@ import USMap from '../components/USMap.astro';
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License #</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiration</th>
@@ -223,8 +227,11 @@ import USMap from '../components/USMap.astro';
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               ${licenses.map((license: License) => `
-                <tr>
+                <tr class="${license.is_city_license ? 'bg-blue-50' : ''}">
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${license.state}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${license.is_city_license ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">${license.city || 'City'}</span>` : '-'}
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.license_type}</td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.license_number || '-'}</td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${license.expiration_date || '-'}</td>
