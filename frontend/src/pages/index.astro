@@ -7,7 +7,6 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8080; img-src 'self' data:;">
     <title>Login - JBS Portal</title>
     <link rel="stylesheet" href="/src/styles/global.css">
   </head>
@@ -67,8 +66,8 @@
     </div>
 
     <script>
-      const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8080';
-
+      const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || (import.meta.env.DEV ? 'http://localhost:8080' : '');
+      
       // Check if already logged in
       const token = localStorage.getItem('jbs_token');
       if (token) {
@@ -86,6 +85,16 @@
         // Hide any previous errors
         if (errorDiv) {
           errorDiv.classList.add('hidden');
+        }
+
+        // Check API URL is configured
+        if (!API_URL) {
+          console.error('PUBLIC_API_URL environment variable is required in production');
+          if (errorDiv && errorText) {
+            errorDiv.classList.remove('hidden');
+            errorText.textContent = 'Configuration error. Please contact support.';
+          }
+          return;
         }
 
         try {

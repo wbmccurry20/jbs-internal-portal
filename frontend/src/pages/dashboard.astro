@@ -189,7 +189,11 @@ import Layout from '../layouts/Layout.astro';
   </div>
 
   <script>
-    const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
+    const API_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
+    if (!API_URL) {
+      console.error('PUBLIC_API_URL environment variable is required in production');
+      return;
+    }
     const token = localStorage.getItem('jbs_token');
 
     async function loadDashboard() {

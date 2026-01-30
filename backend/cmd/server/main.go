@@ -135,6 +135,11 @@ func main() {
 func getAllowedOrigins() []string {
 	origins := os.Getenv("ALLOWED_ORIGINS")
 	if origins == "" {
+		// In production, ALLOWED_ORIGINS must be explicitly set
+		if os.Getenv("GIN_MODE") == "release" {
+			log.Fatal("ALLOWED_ORIGINS environment variable is required in production mode")
+		}
+		// Development fallback
 		return []string{"http://localhost:4321"}
 	}
 	return strings.Split(origins, ",")

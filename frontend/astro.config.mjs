@@ -11,10 +11,7 @@ export default defineConfig({
   integrations: [react(), tailwind()],
   server: {
     port: 4321,
-    host: true, // Allow external connections
-    headers: {
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8080 https://fonts.googleapis.com; img-src 'self' data:;"
-    }
+    host: true // Allow external connections
   },
   vite: {
     server: {
