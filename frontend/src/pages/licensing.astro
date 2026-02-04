@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import USMap from '../components/USMap.astro';
+import USMapClean from '../components/USMapClean.astro';
 ---
 
 <Layout>
@@ -38,31 +38,9 @@ import USMap from '../components/USMap.astro';
       </div>
     </div>
 
-    <!-- US Map View -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold text-gray-900">License Coverage Map</h2>
-        <div class="flex items-center space-x-4 text-sm">
-          <div class="flex items-center">
-            <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
-            <span>Active</span>
-          </div>
-          <div class="flex items-center">
-            <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
-            <span>Expiring</span>
-          </div>
-          <div class="flex items-center">
-            <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
-            <span>Expired</span>
-          </div>
-          <div class="flex items-center">
-            <div class="w-4 h-4 bg-gray-200 rounded mr-2"></div>
-            <span>No License</span>
-          </div>
-        </div>
-      </div>
-      <USMap />
-      <div id="state-tooltip" class="hidden absolute bg-gray-900 text-white text-sm rounded px-3 py-2 shadow-lg pointer-events-none z-10"></div>
+    <!-- License Dashboard -->
+    <div>
+      <USMapClean />
     </div>
 
     <!-- License List -->
@@ -194,6 +172,9 @@ import USMap from '../components/USMap.astro';
       is_active: boolean;
     }
 
+    // Track current licenses globally
+    let currentLicenses: License[] = [];
+
     // Load licenses
     async function loadLicenses() {
       try {
@@ -204,6 +185,7 @@ import USMap from '../components/USMap.astro';
         if (!response.ok) throw new Error('Failed to load licenses');
 
         const licenses: License[] = await response.json();
+        currentLicenses = licenses; // Store for later access
         loading.classList.add('hidden');
 
         if (licenses.length === 0) {
@@ -261,6 +243,9 @@ import USMap from '../components/USMap.astro';
       } catch (error: any) {
         loading.classList.add('hidden');
         container.innerHTML = '<div class="text-center py-12 text-red-500">Failed to load licenses</div>';
+        
+        // Still render empty grid even if API fails
+        renderUSMap([]);
       }
     }
 
@@ -291,78 +276,42 @@ import USMap from '../components/USMap.astro';
     };
 
     function renderUSMap(licenses: License[]) {
-      const licenseMap = new Map<string, License>();
-      licenses.forEach(l => licenseMap.set(l.state, l));
-
-      const tooltip = document.getElementById('state-tooltip')!;
-      
-      // Update SVG state colors and add interactivity
-      document.querySelectorAll('g[data-state]').forEach(stateGroup => {
-        const stateName = (stateGroup as HTMLElement).dataset.state!;
-        const stateAbbr = stateToAbbr[stateName];
-        const statePath = stateGroup.querySelector('.state-path');
-        
-        if (!statePath) return;
-        
-        const license = licenseMap.get(stateAbbr);
-        
-        // Remove all status classes
-        statePath.classList.remove('state-no-license', 'state-active', 'state-expiring', 'state-expired');
-        
-        // Add appropriate class based on license status
-        if (license) {
-          if (license.status === 'active') statePath.classList.add('state-active');
-          else if (license.status === 'expiring') statePath.classList.add('state-expiring');
-          else if (license.status === 'expired') statePath.classList.add('state-expired');
-          else statePath.classList.add('state-no-license');
-        } else {
-          statePath.classList.add('state-no-license');
-        }
-        
-        // Click handler - open add/edit modal
-        stateGroup.addEventListener('click', () => {
-          if (license) {
-            // Edit existing license
-            editLicense(license);
-          } else {
-            // Add new license for this state
-            form.reset();
-            (document.getElementById('license-id') as HTMLInputElement).value = '';
-            (document.getElementById('state') as HTMLSelectElement).value = stateAbbr;
-            document.getElementById('modal-title')!.textContent = `Add License - ${stateName}`;
-            modal.classList.remove('hidden');
-          }
-        });
-        
-        // Hover tooltips
-        stateGroup.addEventListener('mouseenter', (e) => {
-          tooltip.innerHTML = `
-            <div class="font-semibold">${stateName} (${stateAbbr})</div>
-            ${license ? `
-              <div class="mt-1 text-xs space-y-1">
-                <div><strong>Status:</strong> ${license.status}</div>
-                <div><strong>Type:</strong> ${license.license_type}</div>
-                ${license.license_number ? `<div><strong>License #:</strong> ${license.license_number}</div>` : ''}
-                ${license.expiration_date ? `<div><strong>Expires:</strong> ${license.expiration_date}</div>` : ''}
-              </div>
-              <div class="mt-2 text-xs text-gray-300">Click to edit</div>
-            ` : '<div class="text-xs mt-1">No license<br/><span class="text-gray-300">Click to add</span></div>'}
-          `;
-          
-          tooltip.classList.remove('hidden');
-        });
-        
-        stateGroup.addEventListener('mousemove', (e) => {
-          const event = e as MouseEvent;
-          tooltip.style.left = (event.pageX + 10) + 'px';
-          tooltip.style.top = (event.pageY + 10) + 'px';
-        });
-        
-        stateGroup.addEventListener('mouseleave', () => {
-          tooltip.classList.add('hidden');
-        });
-      });
+      if (typeof (window as any).renderCleanMap === 'function') {
+        (window as any).renderCleanMap(licenses);
+      }
     }
+    
+    // Make editLicense globally accessible for state cards
+    (window as any).editLicense = function(stateCode: string, stateName: string) {
+      const licenseMap = new Map<string, License>();
+      currentLicenses.forEach(l => licenseMap.set(l.state, l));
+      
+      const license = licenseMap.get(stateCode);
+      
+      if (license) {
+        // Edit existing license
+        (document.getElementById('license-id') as HTMLInputElement).value = String(license.id);
+        (document.getElementById('state') as HTMLSelectElement).value = license.state;
+        (document.getElementById('license-type') as HTMLInputElement).value = license.license_type;
+        (document.getElementById('license-number') as HTMLInputElement).value = license.license_number || '';
+        (document.getElementById('entity-name') as HTMLInputElement).value = license.entity_name || '';
+        (document.getElementById('issue-date') as HTMLInputElement).value = license.issue_date || '';
+        (document.getElementById('expiration-date') as HTMLInputElement).value = license.expiration_date || '';
+        (document.getElementById('status') as HTMLSelectElement).value = license.status;
+        (document.getElementById('renewal-fee') as HTMLInputElement).value = String(license.renewal_fee || 0);
+        (document.getElementById('notes') as HTMLTextAreaElement).value = license.notes || '';
+        
+        document.getElementById('modal-title')!.textContent = `Edit License - ${stateName}`;
+      } else {
+        // Add new license for this state
+        form.reset();
+        (document.getElementById('license-id') as HTMLInputElement).value = '';
+        (document.getElementById('state') as HTMLSelectElement).value = stateCode;
+        document.getElementById('modal-title')!.textContent = `Add License - ${stateName}`;
+      }
+      
+      modal.classList.remove('hidden');
+    };
     
     function editLicense(license: License) {
       (document.getElementById('license-id') as HTMLInputElement).value = String(license.id);
@@ -453,5 +402,10 @@ import USMap from '../components/USMap.astro';
 
     // Initial load
     loadLicenses();
+    
+    // Render empty map immediately
+    if (typeof (window as any).renderCleanMap === 'function') {
+      (window as any).renderCleanMap([]);
+    }
   </script>
 </Layout>

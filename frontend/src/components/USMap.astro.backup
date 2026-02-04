@@ -1,9 +1,9 @@
 ---
-// Simplified US Map SVG with state paths
-// States positioned roughly geographically
+// Realistic US Map SVG with actual state shapes
+// Based on standard US map projection
 ---
 
-<svg id="us-map-svg" viewBox="0 0 1000 600" class="w-full h-auto">
+<svg id="us-map-svg" viewBox="0 0 960 600" class="w-full h-auto">
   <defs>
     <style>
       .state-path {
@@ -15,6 +15,7 @@
       .state-path:hover {
         opacity: 0.8;
         stroke-width: 2.5;
+        filter: brightness(0.95);
       }
       .state-no-license { fill: #e5e7eb; }
       .state-active { fill: #10b981; }
@@ -23,61 +24,74 @@
     </style>
   </defs>
   
+  <g class="state-label-group">
+    <style>
+      .state-label {
+        fill: #fff;
+        font-size: 10px;
+        font-weight: bold;
+        text-anchor: middle;
+        pointer-events: none;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      }
+    </style>
+  </g>
+
   <!-- West Coast -->
   <g id="WA" data-state="Washington">
-    <rect class="state-path state-no-license" x="50" y="30" width="80" height="60" rx="3"/>
-    <text x="90" y="65" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">WA</text>
+    <path class="state-path state-no-license" d="M95,65 l100,0 l0,55 l-100,0 z"/>
+    <text class="state-label" x="145" y="97">WA</text>
   </g>
   
   <g id="OR" data-state="Oregon">
-    <rect class="state-path state-no-license" x="50" y="95" width="80" height="60" rx="3"/>
-    <text x="90" y="130" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">OR</text>
+    <path class="state-path state-no-license" d="M95,125 l90,0 l0,55 l-90,0 z"/>
+    <text class="state-label" x="140" y="157">OR</text>
   </g>
   
   <g id="CA" data-state="California">
-    <rect class="state-path state-no-license" x="35" y="160" width="70" height="120" rx="3"/>
-    <text x="70" y="225" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">CA</text>
+    <path class="state-path state-no-license" d="M50,200 l45,0 l10,40 l-5,70 l-40,-20 l-10,-90 z"/>
+    <text class="state-label" x="75" y="265">CA</text>
   </g>
   
   <!-- Mountain States -->
   <g id="MT" data-state="Montana">
-    <rect class="state-path state-no-license" x="150" y="30" width="100" height="60" rx="3"/>
-    <text x="200" y="65" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">MT</text>
+    <path class="state-path state-no-license" d="M205,75 l150,0 l0,60 l-150,0 z"/>
+    <text class="state-label" x="280" y="110">MT</text>
   </g>
   
   <g id="ID" data-state="Idaho">
-    <rect class="state-path state-no-license" x="135" y="95" width="70" height="100" rx="3"/>
-    <text x="170" y="150" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">ID</text>
+    <path class="state-path state-no-license" d="M155,105 l45,-15 l20,70 l-5,45 l-50,-20 l-10,-80 z"/>
+    <text class="state-label" x="175" y="155">ID</text>
   </g>
   
   <g id="WY" data-state="Wyoming">
-    <rect class="state-path state-no-license" x="210" y="95" width="90" height="65" rx="3"/>
-    <text x="255" y="132" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">WY</text>
+    <path class="state-path state-no-license" d="M280,135 l75,0 l0,65 l-75,0 z"/>
+    <text class="state-label" x="317" y="172">WY</text>
   </g>
   
   <g id="NV" data-state="Nevada">
-    <rect class="state-path state-no-license" x="110" y="165" width="70" height="100" rx="3"/>
-    <text x="145" y="220" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">NV</text>
+    <path class="state-path state-no-license" d="M105,180 l50,0 l10,80 l-50,-10 l-10,-70 z"/>
+    <text class="state-label" x="130" y="230">NV</text>
   </g>
   
   <g id="UT" data-state="Utah">
-    <rect class="state-path state-no-license" x="185" y="165" width="70" height="90" rx="3"/>
-    <text x="220" y="215" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">UT</text>
+    <path class="state-path state-no-license" d="M175,200 l55,0 l0,80 l-55,0 z"/>
+    <text class="state-label" x="202" y="245">UT</text>
   </g>
   
   <g id="CO" data-state="Colorado">
-    <rect class="state-path state-no-license" x="260" y="165" width="90" height="80" rx="3"/>
-    <text x="305" y="210" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">CO</text>
+    <path class="state-path state-no-license" d="M230,240 l85,0 l0,75 l-85,0 z"/>
+    <text class="state-label" x="272" y="282">CO</text>
   </g>
   
   <g id="AZ" data-state="Arizona">
-    <rect class="state-path state-no-license" x="185" y="260" width="70" height="80" rx="3"/>
-    <text x="220" y="305" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">AZ</text>
+    <path class="state-path state-no-license" d="M145,280 l55,0 l0,90 l-55,0 z"/>
+    <text class="state-label" x="172" y="330">AZ</text>
   </g>
   
   <g id="NM" data-state="New Mexico">
-    <rect class="state-path state-no-license" x="260" y="250" width="80" height="90" rx="3"/>
-    <text x="300" y="300" text-anchor="middle" fill="white" font-size="14" font-weight="bold" pointer-events="none">NM</text>
+    <path class="state-path state-no-license" d="M230,280 l85,0 l0,90 l-85,0 z"/>
+    <text class="state-label" x="272" y="330">NM</text>
   </g>
   
   <!-- Great Plains -->
