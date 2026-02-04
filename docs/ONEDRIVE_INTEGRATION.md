@@ -6,19 +6,12 @@ The license management feature is currently in **portal-first mode** with manual
 
 ---
 
-## Demo Data vs Production Data
+## Production Data Management
 
-### Current Demo Setup
-- Sample licenses seeded via `scripts/seed_licenses.go`
-- 5 demo licenses (CA, TX, FL, AZ, NV)
-- Manual add/edit/delete through portal UI
-
-### Before OneDrive Import
-Run cleanup script to remove demo data:
-```bash
-cd backend
-go run scripts/cleanup_demo_licenses.go
-```
+### Current Setup
+- License management via portal UI (CRUD operations)
+- Manual data entry through licensing page
+- Interactive US map visualization
 
 ---
 
