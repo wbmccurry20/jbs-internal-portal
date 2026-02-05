@@ -168,7 +168,15 @@ func seedUsers() error {
 		}
 
 		if exists {
-			log.Printf("  ✓ User already exists: %s", u.Email)
+			// Update role if user exists
+			_, err = DB.Exec(
+				"UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE email = $2",
+				u.Role, u.Email,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to update user %s role: %w", u.Email, err)
+			}
+			log.Printf("  ✓ Updated user role: %s -> %s", u.Email, u.Role)
 			continue
 		}
 
