@@ -149,13 +149,13 @@ func seedUsers() error {
 			Email:    "emily.simpson@jbsconstructiongroup.com",
 			Password: "password123",
 			Name:     "Emily Simpson",
-			Role:     "employee",
+			Role:     "owner",
 		},
 		{
 			Email:    "shelby@jbsconstructiongroup.com",
 			Password: "password123",
 			Name:     "Shelby Fender",
-			Role:     "employee",
+			Role:     "owner",
 		},
 	}
 
