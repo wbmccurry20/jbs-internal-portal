@@ -122,7 +122,7 @@ curl -X POST https://jbs-backend-XXXX.railway.app/api/login \
 After first deployment, 3 users will be automatically created:
 
 1. **emily.simpson@jbsconstructiongroup.com** / password123
-2. **shelby.fender@jbsconstructiongroup.com** / password123
+2. **shelby@jbsconstructiongroup.com** / password123
 3. **hello@itwill.dev** / (from SUPPORT_PASSWORD env var) - Backdoor access
 
 ### Database Migrations
