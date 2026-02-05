@@ -45,12 +45,15 @@ func UploadReconciliationFiles(c *gin.Context) {
 	}
 
 	// Validate file extensions
-	bankExt := filepath.Ext(bankFile.Filename)
-	foundationExt := filepath.Ext(foundationFile.Filename)
+	bankExt := strings.ToLower(filepath.Ext(bankFile.Filename))
+	foundationExt := strings.ToLower(filepath.Ext(foundationFile.Filename))
 	
-	validExts := map[string]bool{".csv": true, ".xlsx": true, ".xls": true}
+	// Only support CSV and modern Excel (.xlsx) - not legacy .xls format
+	validExts := map[string]bool{".csv": true, ".xlsx": true}
 	if !validExts[bankExt] || !validExts[foundationExt] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Only CSV and Excel files are supported"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Only CSV and XLSX files are supported. Please convert XLS files to XLSX format.",
+		})
 		return
 	}
 
@@ -61,9 +64,12 @@ func UploadReconciliationFiles(c *gin.Context) {
 	// Create upload directory
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
-		uploadDir = "./uploads"
+		uploadDir = "/tmp/uploads"
 	}
-	os.MkdirAll(uploadDir, 0755)
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create upload directory: %s", err.Error())})
+		return
+	}
 
 	// Generate unique filenames
 	timestamp := time.Now().Format("20060102_150405")
@@ -233,7 +239,7 @@ func DownloadReconciliationResult(c *gin.Context) {
 	// Validate path to prevent directory traversal
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
-		uploadDir = "./uploads"
+		uploadDir = "/tmp/uploads"
 	}
 	cleanPath := filepath.Clean(outputPath)
 	absUploadDir, _ := filepath.Abs(uploadDir)
@@ -297,7 +303,7 @@ func DeleteReconciliationJob(c *gin.Context) {
 	if outputPath != "" {
 		uploadDir := os.Getenv("UPLOAD_DIR")
 		if uploadDir == "" {
-			uploadDir = "./uploads"
+			uploadDir = "/tmp/uploads"
 		}
 		cleanPath := filepath.Clean(outputPath)
 		absUploadDir, _ := filepath.Abs(uploadDir)

@@ -47,7 +47,7 @@ func UploadConcurFile(c *gin.Context) {
 	// Create upload directory if it doesn't exist
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
-		uploadDir = "./uploads"
+		uploadDir = "/tmp/uploads"
 	}
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		c.JSON(500, gin.H{"error": "Failed to create upload directory"})
@@ -181,7 +181,7 @@ func DownloadConversionResult(c *gin.Context) {
 	// Validate path to prevent directory traversal
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
-		uploadDir = "./uploads"
+		uploadDir = "/tmp/uploads"
 	}
 	cleanPath := filepath.Clean(outputPath)
 	absUploadDir, _ := filepath.Abs(uploadDir)
@@ -245,7 +245,7 @@ func DeleteConversionJob(c *gin.Context) {
 	if outputPath != "" {
 		uploadDir := os.Getenv("UPLOAD_DIR")
 		if uploadDir == "" {
-			uploadDir = "./uploads"
+			uploadDir = "/tmp/uploads"
 		}
 		cleanPath := filepath.Clean(outputPath)
 		absUploadDir, _ := filepath.Abs(uploadDir)

@@ -363,8 +363,10 @@ func (e *ReconciliationEngine) calculateMatchScore(bankTxn models.BankTransactio
 func LoadBankTransactions(filePath string) ([]models.BankTransaction, error) {
 	ext := strings.ToLower(filePath[strings.LastIndex(filePath, "."):])
 	
-	if ext == ".xlsx" || ext == ".xls" {
+	if ext == ".xlsx" {
 		return loadBankFromExcel(filePath)
+	} else if ext == ".xls" {
+		return nil, fmt.Errorf("legacy .xls format is not supported - please convert to .xlsx or save as CSV")
 	}
 	return loadBankFromCSV(filePath)
 }
@@ -433,7 +435,11 @@ func loadBankFromCSV(filePath string) ([]models.BankTransaction, error) {
 func loadBankFromExcel(filePath string) ([]models.BankTransaction, error) {
 	f, err := excelize.OpenFile(filePath)
 	if err != nil {
-		return nil, err
+		// Provide more helpful error message
+		if strings.Contains(err.Error(), "not supported") || strings.Contains(err.Error(), "workbook") {
+			return nil, fmt.Errorf("Excel file format not supported - please ensure file is saved as .xlsx (not .xls). Error: %v", err)
+		}
+		return nil, fmt.Errorf("failed to open Excel file: %v", err)
 	}
 	defer f.Close()
 
@@ -495,8 +501,19 @@ func loadBankFromExcel(filePath string) ([]models.BankTransaction, error) {
 	return transactions, nil
 }
 
-// LoadFoundationTransactions loads foundation transactions from CSV file
+// LoadFoundationTransactions loads foundation transactions from CSV or Excel file
 func LoadFoundationTransactions(filePath string) ([]models.FoundationTransaction, error) {
+	ext := strings.ToLower(filePath[strings.LastIndex(filePath, "."):])
+	
+	if ext == ".xlsx" {
+		return loadFoundationFromExcel(filePath)
+	} else if ext == ".xls" {
+		return nil, fmt.Errorf("legacy .xls format is not supported - please convert to .xlsx or save as CSV")
+	}
+	return loadFoundationFromCSV(filePath)
+}
+
+func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -524,6 +541,82 @@ func LoadFoundationTransactions(filePath string) ([]models.FoundationTransaction
 
 	for i := 1; i < len(records); i++ {
 		row := records[i]
+		
+		dateStr := getColumn(row, colMap, "Date")
+		amountStr := getColumn(row, colMap, "Amount")
+
+		if dateStr == "" || amountStr == "" {
+			continue
+		}
+
+		date, err := parseDate(dateStr)
+		if err != nil {
+			continue
+		}
+
+		amount, err := strconv.ParseFloat(strings.TrimSpace(amountStr), 64)
+		if err != nil {
+			continue
+		}
+
+		trxNoStr := getColumn(row, colMap, "Trx No")
+		var trxNo int
+		if trxNoStr != "" {
+			trxNo, _ = strconv.Atoi(strings.TrimSpace(trxNoStr))
+		}
+
+		transactions = append(transactions, models.FoundationTransaction{
+			Transaction: models.Transaction{
+				Date:        date,
+				Amount:      amount,
+				Description: getColumn(row, colMap, "Description"),
+				Reference:   getColumn(row, colMap, "Trx No"),
+			},
+			VendorName:        getColumn(row, colMap, "Vendor Name"),
+			TransactionNumber: trxNo,
+			JobNumber:         getColumn(row, colMap, "Job No"),
+		})
+	}
+
+	return transactions, nil
+}
+
+func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, error) {
+	f, err := excelize.OpenFile(filePath)
+	if err != nil {
+		// Provide more helpful error message
+		if strings.Contains(err.Error(), "not supported") || strings.Contains(err.Error(), "workbook") {
+			return nil, fmt.Errorf("Excel file format not supported - please ensure file is saved as .xlsx (not .xls). Error: %v", err)
+		}
+		return nil, fmt.Errorf("failed to open Excel file: %v", err)
+	}
+	defer f.Close()
+
+	sheets := f.GetSheetList()
+	if len(sheets) == 0 {
+		return nil, fmt.Errorf("no sheets in Excel file")
+	}
+
+	rows, err := f.GetRows(sheets[0])
+	if err != nil {
+		return nil, err
+	}
+
+	if len(rows) == 0 {
+		return nil, fmt.Errorf("empty Excel file")
+	}
+
+	// Map headers
+	header := rows[0]
+	colMap := make(map[string]int)
+	for i, col := range header {
+		colMap[strings.TrimSpace(col)] = i
+	}
+
+	transactions := make([]models.FoundationTransaction, 0)
+
+	for i := 1; i < len(rows); i++ {
+		row := rows[i]
 		
 		dateStr := getColumn(row, colMap, "Date")
 		amountStr := getColumn(row, colMap, "Amount")
