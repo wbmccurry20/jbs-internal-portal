@@ -152,7 +152,7 @@ func seedUsers() error {
 			Role:     "employee",
 		},
 		{
-			Email:    "shelby.fender@jbsconstructiongroup.com",
+			Email:    "shelby@jbsconstructiongroup.com",
 			Password: "password123",
 			Name:     "Shelby Fender",
 			Role:     "employee",
