@@ -379,9 +379,15 @@ func loadBankFromCSV(filePath string) ([]models.BankTransaction, error) {
 	defer file.Close()
 
 	reader := csv.NewReader(file)
+	// Allow variable number of fields per row
+	reader.FieldsPerRecord = -1
+	// Be more flexible with CSV parsing
+	reader.TrimLeadingSpace = true
+	reader.LazyQuotes = true
+	
 	records, err := reader.ReadAll()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse CSV file: %v", err)
 	}
 
 	if len(records) == 0 {
@@ -521,9 +527,15 @@ func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, err
 	defer file.Close()
 
 	reader := csv.NewReader(file)
+	// Allow variable number of fields per row
+	reader.FieldsPerRecord = -1
+	// Be more flexible with CSV parsing
+	reader.TrimLeadingSpace = true
+	reader.LazyQuotes = true
+	
 	records, err := reader.ReadAll()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse CSV file: %v", err)
 	}
 
 	if len(records) == 0 {
