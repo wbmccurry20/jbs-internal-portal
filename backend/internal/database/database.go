@@ -238,15 +238,23 @@ func seedSupportAccount() error {
 			}
 			
 			_, err = DB.Exec(
-				"UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
-				string(hash), existingID,
+				"UPDATE users SET password = $1, role = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3",
+				string(hash), "owner", existingID,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to update support account password: %w", err)
 			}
-			log.Printf("  ✓ Updated support account password: %s", supportEmail)
+			log.Printf("  ✓ Updated support account password and role: %s", supportEmail)
 		} else {
-			log.Printf("  ✓ Support account exists: %s", supportEmail)
+			// Password matches but update role to owner if needed
+			_, err = DB.Exec(
+				"UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND role != $1",
+				"owner", existingID,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to update support account role: %w", err)
+			}
+			log.Printf("  ✓ Support account exists with owner role: %s", supportEmail)
 		}
 		return nil
 	}
@@ -259,7 +267,7 @@ func seedSupportAccount() error {
 
 	_, err = DB.Exec(
 		"INSERT INTO users (email, password, name, role) VALUES ($1, $2, $3, $4)",
-		supportEmail, string(hash), supportName, "employee",
+		supportEmail, string(hash), supportName, "owner",
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create support account: %w", err)
