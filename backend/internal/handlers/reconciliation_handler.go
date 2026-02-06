@@ -48,11 +48,11 @@ func UploadReconciliationFiles(c *gin.Context) {
 	bankExt := strings.ToLower(filepath.Ext(bankFile.Filename))
 	foundationExt := strings.ToLower(filepath.Ext(foundationFile.Filename))
 	
-	// Only support CSV and modern Excel (.xlsx) - not legacy .xls format
-	validExts := map[string]bool{".csv": true, ".xlsx": true}
+	// Support CSV and both modern (.xlsx) and legacy (.xls) Excel formats
+	validExts := map[string]bool{".csv": true, ".xlsx": true, ".xls": true}
 	if !validExts[bankExt] || !validExts[foundationExt] {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Only CSV and XLSX files are supported. Please convert XLS files to XLSX format.",
+			"error": "Only CSV, XLSX, and XLS files are supported.",
 		})
 		return
 	}

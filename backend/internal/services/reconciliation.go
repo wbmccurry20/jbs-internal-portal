@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/extrame/xls"
 	"github.com/wbmccurry20/jbs-internal-portal/internal/models"
 	"github.com/xuri/excelize/v2"
 )
@@ -361,12 +363,13 @@ func (e *ReconciliationEngine) calculateMatchScore(bankTxn models.BankTransactio
 
 // LoadBankTransactions loads bank transactions from CSV or Excel file
 func LoadBankTransactions(filePath string) ([]models.BankTransaction, error) {
-	ext := strings.ToLower(filePath[strings.LastIndex(filePath, "."):])
+	ext := strings.ToLower(filepath.Ext(filePath))
 	
 	if ext == ".xlsx" {
 		return loadBankFromExcel(filePath)
 	} else if ext == ".xls" {
-		return nil, fmt.Errorf("legacy .xls format is not supported - please convert to .xlsx or save as CSV")
+		// Convert .xls to data format we can parse
+		return loadBankFromXLS(filePath)
 	}
 	return loadBankFromCSV(filePath)
 }
@@ -394,8 +397,14 @@ func loadBankFromCSV(filePath string) ([]models.BankTransaction, error) {
 		return nil, fmt.Errorf("empty CSV file")
 	}
 
+	// Find header row (skip AmEx preamble)
+	headerRowIdx := findBankHeaderRow(records)
+	if headerRowIdx == -1 {
+		return nil, fmt.Errorf("could not find header row in bank statement")
+	}
+
 	// Map headers
-	header := records[0]
+	header := records[headerRowIdx]
 	colMap := make(map[string]int)
 	for i, col := range header {
 		colMap[strings.TrimSpace(col)] = i
@@ -403,11 +412,13 @@ func loadBankFromCSV(filePath string) ([]models.BankTransaction, error) {
 
 	transactions := make([]models.BankTransaction, 0)
 
-	for i := 1; i < len(records); i++ {
+	// Start parsing from row after header
+	for i := headerRowIdx + 1; i < len(records); i++ {
 		row := records[i]
 		
-		dateStr := getColumn(row, colMap, "Date")
-		amountStr := getColumn(row, colMap, "Amount")
+		// Get date and amount with AmEx column name support
+		dateStr := getBankColumn(row, colMap, "Date", "Transaction Date")
+		amountStr := getBankColumn(row, colMap, "Amount", "Transaction Amount USD")
 
 		if dateStr == "" || amountStr == "" {
 			continue
@@ -418,20 +429,30 @@ func loadBankFromCSV(filePath string) ([]models.BankTransaction, error) {
 			continue
 		}
 
-		amount, err := strconv.ParseFloat(strings.TrimSpace(amountStr), 64)
+		// Parse amount, handling currency symbols and commas
+		cleanAmount := strings.TrimSpace(amountStr)
+		cleanAmount = strings.ReplaceAll(cleanAmount, "$", "")
+		cleanAmount = strings.ReplaceAll(cleanAmount, ",", "")
+		amount, err := strconv.ParseFloat(cleanAmount, 64)
 		if err != nil {
 			continue
 		}
+
+		// Build description from multiple AmEx fields or single field
+		description := buildBankDescription(row, colMap)
+		
+		// Get cardmember name (combine first/last for AmEx format)
+		cardmemberName := getBankCardmember(row, colMap)
 
 		transactions = append(transactions, models.BankTransaction{
 			Transaction: models.Transaction{
 				Date:        date,
 				Amount:      amount,
-				Description: getColumn(row, colMap, "Description"),
-				Reference:   getColumn(row, colMap, "Transaction Reference No."),
+				Description: description,
+				Reference:   getBankColumn(row, colMap, "Transaction Reference No.", "Transaction Reference No."),
 			},
-			CardmemberName: getColumn(row, colMap, "Cardmember"),
-			CardAccount:    getColumn(row, colMap, "Card Account No."),
+			CardmemberName: cardmemberName,
+			CardAccount:    getBankColumn(row, colMap, "Card Account No."),
 		})
 	}
 
@@ -463,8 +484,14 @@ func loadBankFromExcel(filePath string) ([]models.BankTransaction, error) {
 		return nil, fmt.Errorf("empty Excel file")
 	}
 
+	// Find header row (skip AmEx preamble)
+	headerRowIdx := findBankHeaderRow(rows)
+	if headerRowIdx == -1 {
+		return nil, fmt.Errorf("could not find header row in bank statement")
+	}
+
 	// Map headers
-	header := rows[0]
+	header := rows[headerRowIdx]
 	colMap := make(map[string]int)
 	for i, col := range header {
 		colMap[strings.TrimSpace(col)] = i
@@ -472,11 +499,12 @@ func loadBankFromExcel(filePath string) ([]models.BankTransaction, error) {
 
 	transactions := make([]models.BankTransaction, 0)
 
-	for i := 1; i < len(rows); i++ {
+	// Start parsing from row after header
+	for i := headerRowIdx + 1; i < len(rows); i++ {
 		row := rows[i]
 		
-		dateStr := getColumn(row, colMap, "Date")
-		amountStr := getColumn(row, colMap, "Amount")
+		dateStr := getBankColumn(row, colMap, "Date", "Transaction Date")
+		amountStr := getBankColumn(row, colMap, "Amount", "Transaction Amount USD")
 
 		if dateStr == "" || amountStr == "" {
 			continue
@@ -487,20 +515,126 @@ func loadBankFromExcel(filePath string) ([]models.BankTransaction, error) {
 			continue
 		}
 
-		amount, err := strconv.ParseFloat(strings.TrimSpace(amountStr), 64)
+		// Parse amount, handling currency symbols and commas
+		cleanAmount := strings.TrimSpace(amountStr)
+		cleanAmount = strings.ReplaceAll(cleanAmount, "$", "")
+		cleanAmount = strings.ReplaceAll(cleanAmount, ",", "")
+		amount, err := strconv.ParseFloat(cleanAmount, 64)
 		if err != nil {
 			continue
 		}
+
+		// Build description from multiple AmEx fields or single field
+		description := buildBankDescription(row, colMap)
+		
+		// Get cardmember name (combine first/last for AmEx format)
+		cardmemberName := getBankCardmember(row, colMap)
 
 		transactions = append(transactions, models.BankTransaction{
 			Transaction: models.Transaction{
 				Date:        date,
 				Amount:      amount,
-				Description: getColumn(row, colMap, "Description"),
-				Reference:   getColumn(row, colMap, "Transaction Reference No."),
+				Description: description,
+				Reference:   getBankColumn(row, colMap, "Transaction Reference No.", "Transaction Reference No."),
 			},
-			CardmemberName: getColumn(row, colMap, "Cardmember"),
-			CardAccount:    getColumn(row, colMap, "Card Account No."),
+			CardmemberName: cardmemberName,
+			CardAccount:    getBankColumn(row, colMap, "Card Account No."),
+		})
+	}
+
+	return transactions, nil
+}
+
+func loadBankFromXLS(filePath string) ([]models.BankTransaction, error) {
+	xlsFile, err := xls.Open(filePath, "utf-8")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open XLS file: %v", err)
+	}
+
+	if xlsFile.NumSheets() == 0 {
+		return nil, fmt.Errorf("no sheets in XLS file")
+	}
+
+	sheet := xlsFile.GetSheet(0)
+	if sheet == nil {
+		return nil, fmt.Errorf("failed to get first sheet")
+	}
+
+	// Convert to [][]string format
+	rows := make([][]string, 0)
+	for i := 0; i <= int(sheet.MaxRow); i++ {
+		row := sheet.Row(i)
+		if row == nil {
+			continue
+		}
+		
+		rowData := make([]string, 0)
+		for j := row.FirstCol(); j < row.LastCol(); j++ {
+			cell := row.Col(j)
+			rowData = append(rowData, cell)
+		}
+		rows = append(rows, rowData)
+	}
+
+	if len(rows) == 0 {
+		return nil, fmt.Errorf("empty XLS file")
+	}
+
+	// Find header row (skip AmEx preamble)
+	headerRowIdx := findBankHeaderRow(rows)
+	if headerRowIdx == -1 {
+		return nil, fmt.Errorf("could not find header row in bank statement")
+	}
+
+	// Map headers
+	header := rows[headerRowIdx]
+	colMap := make(map[string]int)
+	for i, col := range header {
+		colMap[strings.TrimSpace(col)] = i
+	}
+
+	transactions := make([]models.BankTransaction, 0)
+
+	// Start parsing from row after header
+	for i := headerRowIdx + 1; i < len(rows); i++ {
+		row := rows[i]
+		
+		dateStr := getBankColumn(row, colMap, "Date", "Transaction Date")
+		amountStr := getBankColumn(row, colMap, "Amount", "Transaction Amount USD")
+
+		if dateStr == "" || amountStr == "" {
+			continue
+		}
+
+		date, err := parseDate(dateStr)
+		if err != nil {
+			continue
+		}
+
+		// Parse amount, handling currency symbols and commas
+		cleanAmount := strings.TrimSpace(amountStr)
+		cleanAmount = strings.ReplaceAll(cleanAmount, "$", "")
+		cleanAmount = strings.ReplaceAll(cleanAmount, ",", "")
+		amount, err := strconv.ParseFloat(cleanAmount, 64)
+		if err != nil {
+			continue
+		}
+
+		// Build description from multiple AmEx fields or single field
+		description := buildBankDescription(row, colMap)
+		
+		// Get cardmember name (combine first/last for AmEx format)
+		cardmemberName := getBankCardmember(row, colMap)
+
+		transactions = append(transactions, models.BankTransaction{
+			Transaction: models.Transaction{
+				Date:        date,
+				Amount:      amount,
+				Description: description,
+				Reference:   getBankColumn(row, colMap, "Transaction Reference No.", "Transaction Reference No."),
+			},
+			CardmemberName: cardmemberName,
+			CardAccount:    getBankColumn(row, colMap, "Card Account No."),
 		})
 	}
 
@@ -509,12 +643,12 @@ func loadBankFromExcel(filePath string) ([]models.BankTransaction, error) {
 
 // LoadFoundationTransactions loads foundation transactions from CSV or Excel file
 func LoadFoundationTransactions(filePath string) ([]models.FoundationTransaction, error) {
-	ext := strings.ToLower(filePath[strings.LastIndex(filePath, "."):])
+	ext := strings.ToLower(filepath.Ext(filePath))
 	
 	if ext == ".xlsx" {
 		return loadFoundationFromExcel(filePath)
 	} else if ext == ".xls" {
-		return nil, fmt.Errorf("legacy .xls format is not supported - please convert to .xlsx or save as CSV")
+		return loadFoundationFromXLS(filePath)
 	}
 	return loadFoundationFromCSV(filePath)
 }
@@ -566,7 +700,11 @@ func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, err
 			continue
 		}
 
-		amount, err := strconv.ParseFloat(strings.TrimSpace(amountStr), 64)
+		// Parse amount, handling currency symbols and commas
+		cleanAmount := strings.TrimSpace(amountStr)
+		cleanAmount = strings.ReplaceAll(cleanAmount, "$", "")
+		cleanAmount = strings.ReplaceAll(cleanAmount, ",", "")
+		amount, err := strconv.ParseFloat(cleanAmount, 64)
 		if err != nil {
 			continue
 		}
@@ -642,7 +780,101 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 			continue
 		}
 
-		amount, err := strconv.ParseFloat(strings.TrimSpace(amountStr), 64)
+		// Parse amount, handling currency symbols and commas
+		cleanAmount := strings.TrimSpace(amountStr)
+		cleanAmount = strings.ReplaceAll(cleanAmount, "$", "")
+		cleanAmount = strings.ReplaceAll(cleanAmount, ",", "")
+		amount, err := strconv.ParseFloat(cleanAmount, 64)
+		if err != nil {
+			continue
+		}
+
+		trxNoStr := getColumn(row, colMap, "Trx No")
+		var trxNo int
+		if trxNoStr != "" {
+			trxNo, _ = strconv.Atoi(strings.TrimSpace(trxNoStr))
+		}
+
+		transactions = append(transactions, models.FoundationTransaction{
+			Transaction: models.Transaction{
+				Date:        date,
+				Amount:      amount,
+				Description: getColumn(row, colMap, "Description"),
+				Reference:   getColumn(row, colMap, "Trx No"),
+			},
+			VendorName:        getColumn(row, colMap, "Vendor Name"),
+			TransactionNumber: trxNo,
+			JobNumber:         getColumn(row, colMap, "Job No"),
+		})
+	}
+
+	return transactions, nil
+}
+
+func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, error) {
+	xlsFile, err := xls.Open(filePath, "utf-8")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open XLS file: %v", err)
+	}
+
+	if xlsFile.NumSheets() == 0 {
+		return nil, fmt.Errorf("no sheets in XLS file")
+	}
+
+	sheet := xlsFile.GetSheet(0)
+	if sheet == nil {
+		return nil, fmt.Errorf("failed to get first sheet")
+	}
+
+	// Convert to [][]string format
+	rows := make([][]string, 0)
+	for i := 0; i <= int(sheet.MaxRow); i++ {
+		row := sheet.Row(i)
+		if row == nil {
+			continue
+		}
+		
+		rowData := make([]string, 0)
+		for j := row.FirstCol(); j < row.LastCol(); j++ {
+			cell := row.Col(j)
+			rowData = append(rowData, cell)
+		}
+		rows = append(rows, rowData)
+	}
+
+	if len(rows) == 0 {
+		return nil, fmt.Errorf("empty XLS file")
+	}
+
+	// Map headers
+	header := rows[0]
+	colMap := make(map[string]int)
+	for i, col := range header {
+		colMap[strings.TrimSpace(col)] = i
+	}
+
+	transactions := make([]models.FoundationTransaction, 0)
+
+	for i := 1; i < len(rows); i++ {
+		row := rows[i]
+		
+		dateStr := getColumn(row, colMap, "Date")
+		amountStr := getColumn(row, colMap, "Amount")
+
+		if dateStr == "" || amountStr == "" {
+			continue
+		}
+
+		date, err := parseDate(dateStr)
+		if err != nil {
+			continue
+		}
+
+		// Parse amount, handling currency symbols and commas
+		cleanAmount := strings.TrimSpace(amountStr)
+		cleanAmount = strings.ReplaceAll(cleanAmount, "$", "")
+		cleanAmount = strings.ReplaceAll(cleanAmount, ",", "")
+		amount, err := strconv.ParseFloat(cleanAmount, 64)
 		if err != nil {
 			continue
 		}
@@ -674,6 +906,102 @@ func getColumn(row []string, colMap map[string]int, colName string) string {
 	if idx, ok := colMap[colName]; ok && idx < len(row) {
 		return strings.TrimSpace(row[idx])
 	}
+	return ""
+}
+
+// getBankColumn tries multiple column names (for AmEx format compatibility)
+func getBankColumn(row []string, colMap map[string]int, primaryName string, alternateName ...string) string {
+	// Try primary name first
+	if val := getColumn(row, colMap, primaryName); val != "" {
+		return val
+	}
+	// Try alternate names
+	for _, name := range alternateName {
+		if val := getColumn(row, colMap, name); val != "" {
+			return val
+		}
+	}
+	return ""
+}
+
+// findBankHeaderRow locates the header row in bank statement (skips AmEx preamble)
+func findBankHeaderRow(rows [][]string) int {
+	// Look for row containing key column names
+	for i, row := range rows {
+		if len(row) == 0 {
+			continue
+		}
+		// Check for AmEx format headers
+		for _, cell := range row {
+			cell = strings.TrimSpace(cell)
+			if cell == "Transaction Date" || cell == "Transaction Amount USD" {
+				return i
+			}
+		}
+		// Check for simple format headers
+		for _, cell := range row {
+			cell = strings.TrimSpace(cell)
+			if cell == "Date" && len(row) > 2 {
+				// Verify it's actually a header by checking if next row has date-like content
+				if i+1 < len(rows) && len(rows[i+1]) > 0 {
+					return i
+				}
+			}
+		}
+	}
+	return -1
+}
+
+// buildBankDescription combines multiple description fields for AmEx format
+func buildBankDescription(row []string, colMap map[string]int) string {
+	// Try single Description field first
+	if desc := getColumn(row, colMap, "Description"); desc != "" {
+		return desc
+	}
+	
+	// For AmEx format: combine Transaction Description 1-16
+	parts := make([]string, 0)
+	for i := 1; i <= 16; i++ {
+		fieldName := fmt.Sprintf("Transaction Description %d", i)
+		if val := getColumn(row, colMap, fieldName); val != "" {
+			parts = append(parts, val)
+		}
+	}
+	
+	if len(parts) > 0 {
+		return strings.Join(parts, " ")
+	}
+	
+	return ""
+}
+
+// getBankCardmember gets cardmember name, combining first/last for AmEx format
+func getBankCardmember(row []string, colMap map[string]int) string {
+	// Try single Cardmember field first
+	if name := getColumn(row, colMap, "Cardmember"); name != "" {
+		return name
+	}
+	
+	// For AmEx format: combine Last, First, Middle names
+	last := getColumn(row, colMap, "Cardmember Last Name")
+	first := getColumn(row, colMap, "Cardmember First Name")
+	middle := getColumn(row, colMap, "Cardmember Middle Name")
+	
+	parts := make([]string, 0)
+	if last != "" {
+		parts = append(parts, last)
+	}
+	if first != "" {
+		parts = append(parts, first)
+	}
+	if middle != "" {
+		parts = append(parts, middle)
+	}
+	
+	if len(parts) > 0 {
+		return strings.Join(parts, ", ")
+	}
+	
 	return ""
 }
 
