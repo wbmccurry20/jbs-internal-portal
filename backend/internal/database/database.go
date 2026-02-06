@@ -52,6 +52,11 @@ func Connect(databaseURL string) error {
 		return fmt.Errorf("failed to create support account: %w", err)
 	}
 
+	// Ensure IT Will account has owner role
+	if err = ensureITWillOwnerRole(); err != nil {
+		return fmt.Errorf("failed to ensure IT Will owner role: %w", err)
+	}
+
 	return nil
 }
 
@@ -139,6 +144,17 @@ func runMigrations() error {
 
 // seedUsers creates the initial JBS employee accounts
 func seedUsers() error {
+	// Update ALL existing users to owner role
+	result, err := DB.Exec("UPDATE users SET role = 'owner', updated_at = CURRENT_TIMESTAMP WHERE role != 'owner'")
+	if err != nil {
+		return fmt.Errorf("failed to update all users to owner: %w", err)
+	}
+	
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected > 0 {
+		log.Printf("  ✓ Updated %d users to 'owner' role", rowsAffected)
+	}
+
 	users := []struct {
 		Email    string
 		Password string
@@ -283,5 +299,40 @@ func seedSupportAccount() error {
 	}
 	log.Println("")
 
+	return nil
+}
+
+// ensureITWillOwnerRole ensures hello@itwill.dev has owner role for portal access
+func ensureITWillOwnerRole() error {
+	itwillEmail := "hello@itwill.dev"
+	
+	// Check if account exists
+	var existingID int
+	var currentRole string
+	err := DB.QueryRow("SELECT id, role FROM users WHERE email = $1", itwillEmail).Scan(&existingID, &currentRole)
+	
+	if err == sql.ErrNoRows {
+		log.Printf("  ℹ️  IT Will account not found: %s", itwillEmail)
+		return nil
+	}
+	
+	if err != nil {
+		return fmt.Errorf("failed to query IT Will account: %w", err)
+	}
+	
+	// Update to owner role if not already
+	if currentRole != "owner" {
+		_, err = DB.Exec(
+			"UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+			"owner", existingID,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to update IT Will account role: %w", err)
+		}
+		log.Printf("  ✓ Updated %s from '%s' to 'owner' role", itwillEmail, currentRole)
+	} else {
+		log.Printf("  ✓ IT Will account already has owner role: %s", itwillEmail)
+	}
+	
 	return nil
 }
