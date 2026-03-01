@@ -28,7 +28,6 @@ func makeFoundationTx(date time.Time, desc string, amount float64) models.Founda
 }
 
 func TestReconciliationEngine_ExactMatch(t *testing.T) {
-	t.Skip("Skipping - requires actual reconciliation engine implementation")
 	engine := NewReconciliationEngine(3, 0.01)
 	
 	bankTrans := []models.BankTransaction{
@@ -53,7 +52,6 @@ func TestReconciliationEngine_ExactMatch(t *testing.T) {
 }
 
 func TestReconciliationEngine_NoMatches(t *testing.T) {
-	t.Skip("Skipping - requires actual reconciliation engine implementation")
 	engine := NewReconciliationEngine(3, 0.01)
 	
 	bankTrans := []models.BankTransaction{
@@ -78,7 +76,6 @@ func TestReconciliationEngine_NoMatches(t *testing.T) {
 }
 
 func TestReconciliationEngine_DateTolerance(t *testing.T) {
-	t.Skip("Skipping - requires actual reconciliation engine implementation")
 	engine := NewReconciliationEngine(3, 0.01)
 	
 	bankTrans := []models.BankTransaction{

@@ -688,8 +688,9 @@ func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, err
 	for i := 1; i < len(records); i++ {
 		row := records[i]
 		
-		dateStr := getColumn(row, colMap, "Date")
-		amountStr := getColumn(row, colMap, "Amount")
+		// Support multiple column name formats (Foundation exports vary)
+		dateStr := getBankColumn(row, colMap, "Date", "Trx Date", "Inv Date")
+		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount")
 
 		if dateStr == "" || amountStr == "" {
 			continue
@@ -709,7 +710,7 @@ func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, err
 			continue
 		}
 
-		trxNoStr := getColumn(row, colMap, "Trx No")
+		trxNoStr := getBankColumn(row, colMap, "Trx No", "Transaction Number")
 		var trxNo int
 		if trxNoStr != "" {
 			trxNo, _ = strconv.Atoi(strings.TrimSpace(trxNoStr))
@@ -719,12 +720,12 @@ func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, err
 			Transaction: models.Transaction{
 				Date:        date,
 				Amount:      amount,
-				Description: getColumn(row, colMap, "Description"),
-				Reference:   getColumn(row, colMap, "Trx No"),
+				Description: getBankColumn(row, colMap, "Description", "Trx Description"),
+				Reference:   getBankColumn(row, colMap, "Trx No", "Transaction Number"),
 			},
-			VendorName:        getColumn(row, colMap, "Vendor Name"),
+			VendorName:        getBankColumn(row, colMap, "Vendor Name", "VendorName"),
 			TransactionNumber: trxNo,
-			JobNumber:         getColumn(row, colMap, "Job No"),
+			JobNumber:         getBankColumn(row, colMap, "Job No", "Job Number"),
 		})
 	}
 
@@ -768,8 +769,9 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 	for i := 1; i < len(rows); i++ {
 		row := rows[i]
 		
-		dateStr := getColumn(row, colMap, "Date")
-		amountStr := getColumn(row, colMap, "Amount")
+		// Support multiple column name formats (Foundation exports vary)
+		dateStr := getBankColumn(row, colMap, "Date", "Trx Date", "Inv Date")
+		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount")
 
 		if dateStr == "" || amountStr == "" {
 			continue
@@ -789,7 +791,7 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 			continue
 		}
 
-		trxNoStr := getColumn(row, colMap, "Trx No")
+		trxNoStr := getBankColumn(row, colMap, "Trx No", "Transaction Number")
 		var trxNo int
 		if trxNoStr != "" {
 			trxNo, _ = strconv.Atoi(strings.TrimSpace(trxNoStr))
@@ -799,12 +801,12 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 			Transaction: models.Transaction{
 				Date:        date,
 				Amount:      amount,
-				Description: getColumn(row, colMap, "Description"),
-				Reference:   getColumn(row, colMap, "Trx No"),
+				Description: getBankColumn(row, colMap, "Description", "Trx Description"),
+				Reference:   getBankColumn(row, colMap, "Trx No", "Transaction Number"),
 			},
-			VendorName:        getColumn(row, colMap, "Vendor Name"),
+			VendorName:        getBankColumn(row, colMap, "Vendor Name", "VendorName"),
 			TransactionNumber: trxNo,
-			JobNumber:         getColumn(row, colMap, "Job No"),
+			JobNumber:         getBankColumn(row, colMap, "Job No", "Job Number"),
 		})
 	}
 
@@ -858,8 +860,9 @@ func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, err
 	for i := 1; i < len(rows); i++ {
 		row := rows[i]
 		
-		dateStr := getColumn(row, colMap, "Date")
-		amountStr := getColumn(row, colMap, "Amount")
+		// Support multiple column name formats (Foundation exports vary)
+		dateStr := getBankColumn(row, colMap, "Date", "Trx Date", "Inv Date")
+		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount")
 
 		if dateStr == "" || amountStr == "" {
 			continue
@@ -879,7 +882,7 @@ func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, err
 			continue
 		}
 
-		trxNoStr := getColumn(row, colMap, "Trx No")
+		trxNoStr := getBankColumn(row, colMap, "Trx No", "Transaction Number")
 		var trxNo int
 		if trxNoStr != "" {
 			trxNo, _ = strconv.Atoi(strings.TrimSpace(trxNoStr))
@@ -889,12 +892,12 @@ func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, err
 			Transaction: models.Transaction{
 				Date:        date,
 				Amount:      amount,
-				Description: getColumn(row, colMap, "Description"),
-				Reference:   getColumn(row, colMap, "Trx No"),
+				Description: getBankColumn(row, colMap, "Description", "Trx Description"),
+				Reference:   getBankColumn(row, colMap, "Trx No", "Transaction Number"),
 			},
-			VendorName:        getColumn(row, colMap, "Vendor Name"),
+			VendorName:        getBankColumn(row, colMap, "Vendor Name", "VendorName"),
 			TransactionNumber: trxNo,
-			JobNumber:         getColumn(row, colMap, "Job No"),
+			JobNumber:         getBankColumn(row, colMap, "Job No", "Job Number"),
 		})
 	}
 
