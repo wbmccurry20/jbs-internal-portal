@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"time"
 
