@@ -42,9 +42,13 @@ func ListUsers(c *gin.Context) {
 	for rows.Next() {
 		var user UserResponse
 		if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.Role, &user.CreatedAt); err != nil {
+			log.Printf("Warning: failed to scan user row: %v", err)
 			continue
 		}
 		users = append(users, user)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("Warning: error iterating user rows: %v", err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"users": users})
@@ -59,9 +63,9 @@ func CreateUser(c *gin.Context) {
 	}
 
 	// Validate role
-	validRoles := map[string]bool{"employee": true, "owner": true, "finance": true, "support": true}
+	validRoles := map[string]bool{"employee": true, "trainee": true, "owner": true, "finance": true, "support": true}
 	if !validRoles[req.Role] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role. Must be employee, owner, finance, or support"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role. Must be employee, trainee, owner, finance, or support"})
 		return
 	}
 

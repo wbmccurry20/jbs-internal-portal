@@ -416,7 +416,7 @@ import Layout from '../layouts/Layout.astro';
   });
 
   // All the lodging functionality (same as original lodging.astro)
-  const API_BASE_URL = 'http://localhost:8080/api';
+  const API_BASE_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
   const token = localStorage.getItem('jbs_token');
   let currentLodgingId: number | null = null;
   let lodgingToDelete: number | null = null;

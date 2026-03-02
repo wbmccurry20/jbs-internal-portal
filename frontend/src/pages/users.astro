@@ -33,7 +33,7 @@ import Layout from '../layouts/Layout.astro';
             <option value="employee">Employee</option>
             <option value="trainee">Trainee</option>
             <option value="owner">Owner</option>
-            <option value="accountant">Accountant</option>
+            <option value="finance">Finance / Accountant</option>
           </select>
         </div>
         <div class="md:col-span-2">
@@ -102,20 +102,41 @@ import Layout from '../layouts/Layout.astro';
 
         const users = await listUsers();
 
-        tbody!.innerHTML = users.map(user => `
-          <tr>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.name}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.role}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(user.created_at).toLocaleDateString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-              ${user.email !== 'hello@itwill.dev' ? `
-                <button onclick="resetPassword(${user.id})" class="text-yellow-600 hover:text-yellow-900">Reset Password</button>
-                <button onclick="deleteUserConfirm(${user.id}, '${user.email}')" class="text-red-600 hover:text-red-900">Delete</button>
-              ` : '<span class="text-gray-400">Protected</span>'}
-            </td>
-          </tr>
-        `).join('');
+        tbody!.innerHTML = users.map(user => {
+          const safeId = Number(user.id);
+          const safeName = escapeHtml(user.name);
+          const safeEmail = escapeHtml(user.email);
+          const safeRole = escapeHtml(user.role);
+          const safeDate = new Date(user.created_at).toLocaleDateString();
+          const isProtected = user.email === 'hello@itwill.dev';
+
+          const actions = isProtected
+            ? '<span class="text-gray-400">Protected</span>'
+            : `<button data-action="reset" data-id="${safeId}" class="text-yellow-600 hover:text-yellow-900">Reset Password</button>
+               <button data-action="delete" data-id="${safeId}" data-email="${safeEmail}" class="text-red-600 hover:text-red-900">Delete</button>`;
+
+          return `<tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${safeName}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${safeEmail}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${safeRole}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${safeDate}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">${actions}</td>
+          </tr>`;
+        }).join('');
+
+        // Attach event listeners instead of inline onclick handlers
+        tbody!.querySelectorAll('[data-action="reset"]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = Number((btn as HTMLElement).dataset.id);
+            (window as any).resetPassword(id);
+          });
+        });
+        tbody!.querySelectorAll('[data-action="delete"]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const el = btn as HTMLElement;
+            (window as any).deleteUserConfirm(Number(el.dataset.id), el.dataset.email || '');
+          });
+        });
       } catch (error) {
         loadingDiv!.textContent = 'Failed to load users';
         loadingDiv?.classList.remove('hidden');
@@ -176,6 +197,12 @@ import Layout from '../layouts/Layout.astro';
         ErrorHandler.handleValidationError('Password', 'Must be at least 8 characters');
       }
     };
+
+    function escapeHtml(str: string): string {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
 
     loadUsers();
   </script>

@@ -155,7 +155,7 @@ import Layout from '../../layouts/Layout.astro';
   </div>
 
   <script>
-    const API_BASE = (import.meta.env?.PUBLIC_API_URL || localStorage.getItem('api_base_url') || 'http://localhost:8080/api').replace(/\/api$/, '/api');
+    const API_BASE = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
     const token = localStorage.getItem('jbs_token');
     if (!token) window.location.href = '/';
 

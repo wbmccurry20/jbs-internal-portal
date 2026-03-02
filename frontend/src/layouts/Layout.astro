@@ -1,4 +1,5 @@
 ---
+import '../styles/global.css';
 const title = 'JBS Internal Portal';
 ---
 
@@ -11,7 +12,6 @@ const title = 'JBS Internal Portal';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/styles/global.css">
   </head>
   <body class="bg-gray-50 min-h-screen font-sans">
     <nav class="bg-white shadow-md">
@@ -259,9 +259,6 @@ const title = 'JBS Internal Portal';
 
       // Logout function
       function logout(reason?: string) {
-        if (reason) {
-          console.log('Auto-logout:', reason);
-        }
         localStorage.removeItem('jbs_token');
         localStorage.removeItem('jbs_user');
         window.location.href = '/';

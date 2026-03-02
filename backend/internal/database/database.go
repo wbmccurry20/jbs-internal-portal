@@ -144,17 +144,6 @@ func runMigrations() error {
 
 // seedUsers creates the initial JBS employee accounts
 func seedUsers() error {
-	// Update ALL existing users to owner role
-	result, err := DB.Exec("UPDATE users SET role = 'owner', updated_at = CURRENT_TIMESTAMP WHERE role != 'owner'")
-	if err != nil {
-		return fmt.Errorf("failed to update all users to owner: %w", err)
-	}
-	
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected > 0 {
-		log.Printf("  ✓ Updated %d users to 'owner' role", rowsAffected)
-	}
-
 	users := []struct {
 		Email    string
 		Password string

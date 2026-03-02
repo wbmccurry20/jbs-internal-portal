@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -43,6 +44,9 @@ func ListTrainingPrograms(c *gin.Context) {
 			continue
 		}
 		programs = append(programs, p)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("Warning: error iterating program rows: %v", err)
 	}
 
 	if programs == nil {
@@ -99,6 +103,9 @@ func GetTrainingProgram(c *gin.Context) {
 		}
 		p.Items = append(p.Items, item)
 	}
+	if err := rows.Err(); err != nil {
+		log.Printf("Warning: error iterating schedule item rows: %v", err)
+	}
 
 	// Get resources
 	resRows, err := database.DB.Query(`
@@ -120,6 +127,9 @@ func GetTrainingProgram(c *gin.Context) {
 			continue
 		}
 		p.Resources = append(p.Resources, r)
+	}
+	if err := resRows.Err(); err != nil {
+		log.Printf("Warning: error iterating resource rows: %v", err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"program": p})
@@ -257,9 +267,26 @@ func CreateScheduleItem(c *gin.Context) {
 
 // UpdateScheduleItem updates a schedule item
 func UpdateScheduleItem(c *gin.Context) {
+	programID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid program ID"})
+		return
+	}
+
 	itemID, err := strconv.Atoi(c.Param("itemId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
+		return
+	}
+
+	// Verify item belongs to this program
+	var ownerProgramID int
+	if err := database.DB.QueryRow("SELECT program_id FROM training_schedule_items WHERE id = $1", itemID).Scan(&ownerProgramID); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Schedule item not found"})
+		return
+	}
+	if ownerProgramID != programID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Item does not belong to this program"})
 		return
 	}
 
@@ -302,9 +329,26 @@ func UpdateScheduleItem(c *gin.Context) {
 
 // DeleteScheduleItem removes a schedule item
 func DeleteScheduleItem(c *gin.Context) {
+	programID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid program ID"})
+		return
+	}
+
 	itemID, err := strconv.Atoi(c.Param("itemId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
+		return
+	}
+
+	// Verify item belongs to this program
+	var ownerProgramID int
+	if err := database.DB.QueryRow("SELECT program_id FROM training_schedule_items WHERE id = $1", itemID).Scan(&ownerProgramID); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Schedule item not found"})
+		return
+	}
+	if ownerProgramID != programID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Item does not belong to this program"})
 		return
 	}
 
@@ -341,6 +385,12 @@ func BulkUpdateScheduleItems(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Items array is required"})
+		return
+	}
+
+	// Limit bulk updates to prevent abuse (52 weeks * 5 days * ~5 items max = 1300)
+	if len(req.Items) > 1500 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Too many items (max 1500)"})
 		return
 	}
 
@@ -418,6 +468,9 @@ func ListAssignments(c *gin.Context) {
 		a.StartDate = startDate.Format("2006-01-02")
 		assignments = append(assignments, a)
 	}
+	if err := rows.Err(); err != nil {
+		log.Printf("Warning: error iterating assignment rows: %v", err)
+	}
 
 	if assignments == nil {
 		assignments = []models.TraineeAssignment{}
@@ -482,6 +535,15 @@ func UpdateAssignment(c *gin.Context) {
 	if req.StartDate != "" {
 		if _, err := time.Parse("2006-01-02", req.StartDate); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date format"})
+			return
+		}
+	}
+
+	// Validate status
+	if req.Status != "" {
+		validStatuses := map[string]bool{"active": true, "completed": true, "paused": true, "cancelled": true}
+		if !validStatuses[req.Status] {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status. Must be active, completed, paused, or cancelled"})
 			return
 		}
 	}
@@ -560,9 +622,26 @@ func CreateResource(c *gin.Context) {
 
 // UpdateResource updates a resource
 func UpdateResource(c *gin.Context) {
+	programID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid program ID"})
+		return
+	}
+
 	resID, err := strconv.Atoi(c.Param("resourceId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid resource ID"})
+		return
+	}
+
+	// Verify resource belongs to this program
+	var ownerProgramID int
+	if err := database.DB.QueryRow("SELECT program_id FROM training_resources WHERE id = $1", resID).Scan(&ownerProgramID); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Resource not found"})
+		return
+	}
+	if ownerProgramID != programID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Resource does not belong to this program"})
 		return
 	}
 
@@ -592,9 +671,26 @@ func UpdateResource(c *gin.Context) {
 
 // DeleteResource removes a resource
 func DeleteResource(c *gin.Context) {
+	programID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid program ID"})
+		return
+	}
+
 	resID, err := strconv.Atoi(c.Param("resourceId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid resource ID"})
+		return
+	}
+
+	// Verify resource belongs to this program
+	var ownerProgramID int
+	if err := database.DB.QueryRow("SELECT program_id FROM training_resources WHERE id = $1", resID).Scan(&ownerProgramID); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Resource not found"})
+		return
+	}
+	if ownerProgramID != programID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Resource does not belong to this program"})
 		return
 	}
 
@@ -737,6 +833,9 @@ func buildTraineeCalendar(assignment models.TraineeAssignment, startDate time.Ti
 			dayTitles[key] = item.DayTitle
 		}
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	// Get resources
 	resRows, err := database.DB.Query(`
@@ -757,6 +856,9 @@ func buildTraineeCalendar(assignment models.TraineeAssignment, startDate time.Ti
 			continue
 		}
 		resources = append(resources, r)
+	}
+	if err := resRows.Err(); err != nil {
+		return nil, err
 	}
 
 	// Build calendar days

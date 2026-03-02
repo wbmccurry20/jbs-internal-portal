@@ -97,11 +97,8 @@ export async function cachedFetch<T>(
   // Check cache first
   const cached = cache.get(url);
   if (cached) {
-    console.log(`[Cache HIT] ${url}`);
     return cached;
   }
-  
-  console.log(`[Cache MISS] ${url}`);
   const response = await fetch(url, options);
   
   if (!response.ok) {

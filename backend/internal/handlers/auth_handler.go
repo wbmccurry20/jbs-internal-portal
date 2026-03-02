@@ -28,8 +28,8 @@ func Login(c *gin.Context) {
 		&user.Role, &user.CreatedAt, &user.UpdatedAt)
 
 	// Prevent timing attacks: always hash password even if user doesn't exist
-	// This ensures consistent response time
-	dummyHash := "$2a$14$LKWvvvvvvvvvvvvvvvvvvuO.UpVvvvvvvvvvvvvvvvvvvvvvvvvv" // Dummy bcrypt hash
+	// This ensures consistent response time (valid bcrypt hash of random string)
+	dummyHash := "$2a$14$rBLKhUB/PKHn.rczVGFz8eQf9JOyBMby0Dl/5VT1.Pc0INMWUMp2q"
 	if err == sql.ErrNoRows {
 		// Hash dummy password to maintain consistent timing
 		auth.CheckPasswordHash(req.Password, dummyHash)
