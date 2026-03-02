@@ -8,11 +8,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  // Build CSP with environment-aware backend URL
+  // Build CSP with environment-aware backend URL (origin only, no path)
   const isDev = import.meta.env.DEV;
-  const backendUrl = isDev 
+  const rawUrl = isDev 
     ? 'http://localhost:8080' 
     : (import.meta.env.PUBLIC_API_URL || 'https://jbs-internal-portal-production.up.railway.app');
+  let backendUrl = rawUrl;
+  try {
+    const parsed = new URL(rawUrl);
+    backendUrl = `${parsed.protocol}//${parsed.host}`;
+  } catch { /* use rawUrl as-is */ }
   
   response.headers.set(
     'Content-Security-Policy',
