@@ -63,6 +63,13 @@ const title = 'JBS Internal Portal';
                 Licensing
               </a>
 
+              <a href="/training" class="nav-link group" id="nav-training-admin">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                Training
+              </a>
+
               <!-- Finance Tools dropdown -->
               <div class="relative group">
                 <button class="nav-link inline-flex items-center">
@@ -134,6 +141,7 @@ const title = 'JBS Internal Portal';
           <a href="/bids" class="mobile-nav-link">Bids</a>
           <a href="/superintendents" class="mobile-nav-link">Superintendents</a>
           <a href="/licensing" class="mobile-nav-link">Licensing</a>
+          <a href="/training" class="mobile-nav-link" id="mobile-nav-training">Training</a>
           <div class="border-t border-gray-200 my-2"></div>
           <a href="/concur" class="mobile-nav-link">Concur Converter</a>
           <a href="/reconciliation" class="mobile-nav-link">Reconciliation</a>
@@ -191,6 +199,20 @@ const title = 'JBS Internal Portal';
               ? names[0][0] + names[names.length - 1][0]
               : names[0][0];
             initialsEl.textContent = initials.toUpperCase();
+          }
+
+          // Training nav: trainees go to schedule, admins go to management
+          const trainingNav = document.getElementById('nav-training-admin');
+          const mobileTrainingNav = document.getElementById('mobile-nav-training');
+          if (user.role === 'trainee') {
+            if (trainingNav) {
+              trainingNav.setAttribute('href', '/training/schedule');
+              trainingNav.querySelector('svg')?.nextSibling && (trainingNav.lastChild!.textContent = ' My Training');
+            }
+            if (mobileTrainingNav) {
+              mobileTrainingNav.setAttribute('href', '/training/schedule');
+              mobileTrainingNav.textContent = 'My Training';
+            }
           }
         } catch (error) {
           console.error('Error parsing user data:', error);

@@ -1,0 +1,422 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout>
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Training Programs</h1>
+        <p class="mt-1 text-sm text-gray-500">Manage new-hire training schedules and assignments</p>
+      </div>
+      <div class="flex space-x-3">
+        <button id="new-program-btn" class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          New Program
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200">
+      <nav class="-mb-px flex space-x-8">
+        <button id="tab-programs" class="tab-btn active border-primary-500 text-primary-600 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">
+          Programs
+        </button>
+        <button id="tab-assignments" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">
+          Trainee Assignments
+        </button>
+      </nav>
+    </div>
+
+    <!-- Programs Tab -->
+    <div id="programs-content">
+      <div id="programs-loading" class="text-center py-12 text-gray-500">Loading programs...</div>
+      <div id="programs-empty" class="hidden text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900">No training programs yet</h3>
+        <p class="mt-1 text-sm text-gray-500">Create your first training program to get started.</p>
+      </div>
+      <div id="programs-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+
+    <!-- Assignments Tab -->
+    <div id="assignments-content" class="hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">Trainee Assignments</h2>
+        <button id="new-assignment-btn" class="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+          </svg>
+          Assign Trainee
+        </button>
+      </div>
+      <div id="assignments-loading" class="text-center py-12 text-gray-500">Loading assignments...</div>
+      <div id="assignments-empty" class="hidden text-center py-12">
+        <p class="text-gray-500">No trainees assigned yet. Create a program first, then assign trainees.</p>
+      </div>
+      <div id="assignments-list" class="hidden space-y-3"></div>
+    </div>
+
+    <!-- New Program Modal -->
+    <div id="program-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-xl rounded-xl bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900" id="program-modal-title">New Training Program</h3>
+          <button id="close-program-modal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <form id="program-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Program Name *</label>
+            <input type="text" id="program-name" required placeholder="e.g., APM 30-Day Onboarding" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea id="program-description" rows="3" placeholder="Brief description of this training program..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Duration (weeks)</label>
+            <input type="number" id="program-weeks" value="4" min="1" max="52" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div class="flex justify-end space-x-3 pt-2">
+            <button type="button" id="cancel-program" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">Create Program</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Assign Trainee Modal -->
+    <div id="assignment-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-xl rounded-xl bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Assign Trainee to Program</h3>
+          <button id="close-assignment-modal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <form id="assignment-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Training Program *</label>
+            <select id="assign-program" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">Select a program...</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Trainee *</label>
+            <select id="assign-user" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">Select a user...</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
+            <input type="date" id="assign-start-date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea id="assign-notes" rows="2" placeholder="Optional notes..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+          </div>
+          <div class="flex justify-end space-x-3 pt-2">
+            <button type="button" id="cancel-assignment" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">Assign Trainee</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = (import.meta.env?.PUBLIC_API_URL || localStorage.getItem('api_base_url') || 'http://localhost:8080/api').replace(/\/api$/, '/api');
+    const token = localStorage.getItem('jbs_token');
+    
+    if (!token) window.location.href = '/';
+
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+
+    // Tab switching
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const programsContent = document.getElementById('programs-content')!;
+    const assignmentsContent = document.getElementById('assignments-content')!;
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => {
+          b.classList.remove('active', 'border-primary-500', 'text-primary-600');
+          b.classList.add('border-transparent', 'text-gray-500');
+        });
+        btn.classList.add('active', 'border-primary-500', 'text-primary-600');
+        btn.classList.remove('border-transparent', 'text-gray-500');
+
+        const isPrograms = btn.id === 'tab-programs';
+        programsContent.classList.toggle('hidden', !isPrograms);
+        assignmentsContent.classList.toggle('hidden', isPrograms);
+
+        if (!isPrograms) loadAssignments();
+      });
+    });
+
+    // === Programs ===
+    let allPrograms: any[] = [];
+
+    async function loadPrograms() {
+      try {
+        const res = await fetch(`${API_BASE}/training/programs`, { headers });
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        allPrograms = data.programs || [];
+        renderPrograms();
+      } catch (e) {
+        document.getElementById('programs-loading')!.textContent = 'Failed to load programs';
+      }
+    }
+
+    function renderPrograms() {
+      const loading = document.getElementById('programs-loading')!;
+      const empty = document.getElementById('programs-empty')!;
+      const grid = document.getElementById('programs-grid')!;
+
+      loading.classList.add('hidden');
+
+      if (allPrograms.length === 0) {
+        empty.classList.remove('hidden');
+        grid.classList.add('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      grid.classList.remove('hidden');
+
+      grid.innerHTML = allPrograms.map(p => `
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+          <div class="p-6">
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="text-lg font-semibold text-gray-900">${escapeHtml(p.name)}</h3>
+              <span class="px-2 py-1 text-xs font-medium rounded-full ${p.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
+                ${p.is_active ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            <p class="text-sm text-gray-600 mb-4 line-clamp-2">${escapeHtml(p.description || 'No description')}</p>
+            <div class="flex items-center text-sm text-gray-500 space-x-4 mb-4">
+              <span class="flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                ${p.duration_weeks} weeks
+              </span>
+              <span class="flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                ${p.assignment_count} trainee${p.assignment_count !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div class="flex space-x-2">
+              <a href="/training/program?id=${p.id}" class="flex-1 text-center px-3 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 text-sm font-medium transition-colors">
+                Edit Schedule
+              </a>
+              <button onclick="deleteProgram(${p.id}, '${escapeHtml(p.name)}')" class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // New Program Modal
+    document.getElementById('new-program-btn')!.addEventListener('click', () => {
+      document.getElementById('program-modal')!.classList.remove('hidden');
+    });
+    document.getElementById('close-program-modal')!.addEventListener('click', () => {
+      document.getElementById('program-modal')!.classList.add('hidden');
+    });
+    document.getElementById('cancel-program')!.addEventListener('click', () => {
+      document.getElementById('program-modal')!.classList.add('hidden');
+    });
+
+    document.getElementById('program-form')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = (document.getElementById('program-name') as HTMLInputElement).value;
+      const description = (document.getElementById('program-description') as HTMLTextAreaElement).value;
+      const weeks = parseInt((document.getElementById('program-weeks') as HTMLInputElement).value) || 4;
+
+      try {
+        const res = await fetch(`${API_BASE}/training/programs`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ name, description, duration_weeks: weeks })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error);
+        }
+        const data = await res.json();
+        document.getElementById('program-modal')!.classList.add('hidden');
+        (document.getElementById('program-form') as HTMLFormElement).reset();
+        // Go directly to the program editor
+        window.location.href = `/training/program?id=${data.id}`;
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    });
+
+    // Delete program
+    (window as any).deleteProgram = async (id: number, name: string) => {
+      if (!confirm(`Delete "${name}" and all its schedule data? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`${API_BASE}/training/programs/${id}`, { method: 'DELETE', headers });
+        if (!res.ok) throw new Error('Failed to delete');
+        loadPrograms();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    };
+
+    // === Assignments ===
+    let allAssignments: any[] = [];
+
+    async function loadAssignments() {
+      try {
+        const res = await fetch(`${API_BASE}/training/assignments`, { headers });
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        allAssignments = data.assignments || [];
+        renderAssignments();
+      } catch (e) {
+        document.getElementById('assignments-loading')!.textContent = 'Failed to load assignments';
+      }
+    }
+
+    function renderAssignments() {
+      const loading = document.getElementById('assignments-loading')!;
+      const empty = document.getElementById('assignments-empty')!;
+      const list = document.getElementById('assignments-list')!;
+
+      loading.classList.add('hidden');
+
+      if (allAssignments.length === 0) {
+        empty.classList.remove('hidden');
+        list.classList.add('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      list.classList.remove('hidden');
+
+      list.innerHTML = allAssignments.map(a => {
+        const statusColors: Record<string, string> = {
+          active: 'bg-green-100 text-green-700',
+          completed: 'bg-blue-100 text-blue-700',
+          paused: 'bg-yellow-100 text-yellow-700'
+        };
+        return `
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold text-sm">
+                ${a.trainee_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+              </div>
+              <div>
+                <h4 class="font-medium text-gray-900">${escapeHtml(a.trainee_name)}</h4>
+                <p class="text-sm text-gray-500">${escapeHtml(a.program_name)} • Starts ${formatDate(a.start_date)}</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3">
+              <span class="px-2 py-1 text-xs font-medium rounded-full ${statusColors[a.status] || 'bg-gray-100 text-gray-600'}">
+                ${a.status}
+              </span>
+              <a href="/training/schedule?assignment=${a.id}" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                View Calendar →
+              </a>
+              <button onclick="deleteAssignment(${a.id})" class="text-red-500 hover:text-red-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Assignment Modal
+    document.getElementById('new-assignment-btn')!.addEventListener('click', async () => {
+      // Populate dropdowns
+      const programSelect = document.getElementById('assign-program') as HTMLSelectElement;
+      programSelect.innerHTML = '<option value="">Select a program...</option>' +
+        allPrograms.filter(p => p.is_active).map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+
+      // Load users
+      try {
+        const res = await fetch(`${API_BASE}/users`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          const userSelect = document.getElementById('assign-user') as HTMLSelectElement;
+          userSelect.innerHTML = '<option value="">Select a user...</option>' +
+            (data.users || []).map((u: any) => `<option value="${u.id}">${escapeHtml(u.name)} (${escapeHtml(u.email)})</option>`).join('');
+        }
+      } catch (e) {}
+
+      document.getElementById('assignment-modal')!.classList.remove('hidden');
+    });
+
+    document.getElementById('close-assignment-modal')!.addEventListener('click', () => {
+      document.getElementById('assignment-modal')!.classList.add('hidden');
+    });
+    document.getElementById('cancel-assignment')!.addEventListener('click', () => {
+      document.getElementById('assignment-modal')!.classList.add('hidden');
+    });
+
+    document.getElementById('assignment-form')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const program_id = parseInt((document.getElementById('assign-program') as HTMLSelectElement).value);
+      const user_id = parseInt((document.getElementById('assign-user') as HTMLSelectElement).value);
+      const start_date = (document.getElementById('assign-start-date') as HTMLInputElement).value;
+      const notes = (document.getElementById('assign-notes') as HTMLTextAreaElement).value;
+
+      try {
+        const res = await fetch(`${API_BASE}/training/assignments`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ program_id, user_id, start_date, notes })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error);
+        }
+        document.getElementById('assignment-modal')!.classList.add('hidden');
+        (document.getElementById('assignment-form') as HTMLFormElement).reset();
+        loadAssignments();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    });
+
+    (window as any).deleteAssignment = async (id: number) => {
+      if (!confirm('Remove this trainee assignment?')) return;
+      try {
+        const res = await fetch(`${API_BASE}/training/assignments/${id}`, { method: 'DELETE', headers });
+        if (!res.ok) throw new Error('Failed to delete');
+        loadAssignments();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    };
+
+    function escapeHtml(str: string) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function formatDate(dateStr: string) {
+      const d = new Date(dateStr + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Load initial data
+    loadPrograms();
+  </script>
+</Layout>

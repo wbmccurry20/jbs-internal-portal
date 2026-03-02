@@ -1,0 +1,269 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout>
+  <div id="no-assignment" class="hidden text-center py-20">
+    <svg class="mx-auto h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+    </svg>
+    <h2 class="mt-4 text-xl font-semibold text-gray-700">No Training Program Assigned</h2>
+    <p class="mt-2 text-gray-500">Contact your administrator to get started with your training program.</p>
+  </div>
+
+  <div id="calendar-view" class="hidden space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900" id="cal-title"></h1>
+        <p class="mt-1 text-sm text-gray-500" id="cal-subtitle"></p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button id="btn-today" class="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition-colors">
+          Today
+        </button>
+        <div id="resources-toggle" class="hidden">
+          <button id="show-resources" class="px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 text-sm font-medium transition-colors">
+            📎 Resources
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm font-medium text-gray-700">Training Progress</span>
+        <span class="text-sm text-gray-500" id="progress-text"></span>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-3">
+        <div id="progress-bar" class="bg-primary-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Week Tabs -->
+    <div class="flex items-center space-x-2 overflow-x-auto pb-2" id="cal-week-tabs"></div>
+
+    <!-- Calendar Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4" id="cal-grid"></div>
+
+    <!-- Resources Panel -->
+    <div id="resources-panel" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">📎 Training Resources</h3>
+      <div id="resources-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+    </div>
+  </div>
+
+  <div id="loading" class="text-center py-20">
+    <div class="inline-flex items-center space-x-2 text-gray-500">
+      <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span>Loading your training schedule...</span>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = (import.meta.env?.PUBLIC_API_URL || localStorage.getItem('api_base_url') || 'http://localhost:8080/api').replace(/\/api$/, '/api');
+    const token = localStorage.getItem('jbs_token');
+    if (!token) window.location.href = '/';
+
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+
+    // Check if viewing specific assignment (admin) or own calendar (trainee)
+    const params = new URLSearchParams(window.location.search);
+    const assignmentId = params.get('assignment');
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+    let calendar: any = null;
+    let currentWeek = 1;
+
+    async function loadCalendar() {
+      try {
+        const url = assignmentId
+          ? `${API_BASE}/training/assignments/${assignmentId}/calendar`
+          : `${API_BASE}/training/my-calendar`;
+
+        const res = await fetch(url, { headers });
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+
+        document.getElementById('loading')!.classList.add('hidden');
+
+        if (!data.calendar) {
+          document.getElementById('no-assignment')!.classList.remove('hidden');
+          return;
+        }
+
+        calendar = data.calendar;
+        currentWeek = calendar.current_week || 1;
+        renderCalendar();
+        document.getElementById('calendar-view')!.classList.remove('hidden');
+      } catch (e) {
+        document.getElementById('loading')!.innerHTML = '<p class="text-red-500">Failed to load training schedule</p>';
+      }
+    }
+
+    function renderCalendar() {
+      const { assignment, program, days, resources, total_weeks } = calendar;
+
+      // Header
+      document.getElementById('cal-title')!.textContent = program.name;
+      document.getElementById('cal-subtitle')!.textContent =
+        `${assignment.trainee_name} • Started ${formatDate(assignment.start_date)}`;
+
+      // Progress
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const startDate = new Date(assignment.start_date + 'T00:00:00');
+      const totalDays = total_weeks * 5; // business days
+      const daysPassed = days.filter((d: any) => d.is_past || d.is_today).length;
+      const pct = Math.min(100, Math.round((daysPassed / totalDays) * 100));
+
+      document.getElementById('progress-text')!.textContent = `Week ${currentWeek} of ${total_weeks} • ${pct}% complete`;
+      (document.getElementById('progress-bar') as HTMLElement).style.width = `${pct}%`;
+
+      // Week tabs
+      const tabsEl = document.getElementById('cal-week-tabs')!;
+      tabsEl.innerHTML = '';
+      for (let w = 1; w <= total_weeks; w++) {
+        const btn = document.createElement('button');
+        const isCurrentWeek = w === currentWeek;
+        btn.className = `px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          isCurrentWeek ? 'bg-primary-600 text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+        }`;
+        btn.textContent = `Week ${w}`;
+        btn.addEventListener('click', () => {
+          currentWeek = w;
+          renderCalendar();
+        });
+        tabsEl.appendChild(btn);
+      }
+
+      // Calendar grid
+      const grid = document.getElementById('cal-grid')!;
+      grid.innerHTML = '';
+
+      const weekDays = days.filter((d: any) => d.week === currentWeek);
+
+      weekDays.forEach((day: any) => {
+        const dateObj = new Date(day.date + 'T00:00:00');
+        const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        let borderClass = 'border-gray-200';
+        let headerBg = 'bg-gray-50';
+        if (day.is_today) {
+          borderClass = 'border-primary-400 ring-2 ring-primary-100';
+          headerBg = 'bg-primary-50';
+        } else if (day.is_past) {
+          borderClass = 'border-gray-100';
+        }
+
+        const col = document.createElement('div');
+        col.className = `bg-white rounded-xl shadow-sm border ${borderClass} flex flex-col`;
+
+        col.innerHTML = `
+          <div class="px-4 py-3 ${headerBg} rounded-t-xl border-b border-gray-100">
+            <div class="flex justify-between items-center">
+              <h3 class="font-semibold text-gray-900 text-sm">${dayNames[day.day_of_week - 1]}</h3>
+              <span class="text-xs ${day.is_today ? 'text-primary-600 font-bold' : 'text-gray-400'}">${dateStr}</span>
+            </div>
+            ${day.day_title ? `<p class="text-xs text-primary-600 font-semibold mt-1">${escapeHtml(day.day_title)}</p>` : ''}
+            ${day.is_today ? '<span class="inline-block mt-1 px-2 py-0.5 bg-primary-600 text-white text-xs rounded-full font-medium">TODAY</span>' : ''}
+          </div>
+          <div class="flex-1 p-3 space-y-2">
+            ${day.items.length === 0
+              ? `<p class="text-xs text-gray-400 text-center py-4">${day.is_past ? 'No scheduled items' : 'Free day'}</p>`
+              : day.items.map((item: any) => `
+                <div class="p-2.5 rounded-lg border ${item.is_highlight ? 'border-yellow-300 bg-yellow-50' : day.is_past ? 'border-gray-100 bg-gray-50' : 'border-gray-100 bg-white'} transition-colors">
+                  <div class="flex items-start">
+                    ${day.is_past ? '<span class="text-green-500 mr-1.5 mt-0.5 flex-shrink-0">✓</span>' : '<span class="text-gray-300 mr-1.5 mt-0.5 flex-shrink-0">•</span>'}
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm ${item.is_highlight ? 'font-bold text-yellow-800' : day.is_past ? 'text-gray-500' : 'font-medium text-gray-800'}">${escapeHtml(item.title)}</p>
+                      ${item.description ? `<p class="text-xs text-gray-500 mt-0.5">${escapeHtml(item.description)}</p>` : ''}
+                      ${item.link_url ? `
+                        <a href="${escapeHtml(item.link_url)}" target="_blank" rel="noopener"
+                           class="inline-flex items-center mt-1.5 px-2.5 py-1 bg-primary-50 text-primary-700 rounded-md text-xs font-medium hover:bg-primary-100 transition-colors">
+                          🔗 ${escapeHtml(item.link_label || 'Open Link')}
+                        </a>
+                      ` : ''}
+                    </div>
+                    ${item.time_slot !== 'all-day' ? `<span class="text-xs ${day.is_past ? 'text-gray-300' : 'text-gray-400'} ml-1 flex-shrink-0">${item.time_slot === 'morning' ? 'AM' : 'PM'}</span>` : ''}
+                  </div>
+                </div>
+              `).join('')
+            }
+          </div>
+        `;
+        grid.appendChild(col);
+      });
+
+      // Resources
+      if (resources && resources.length > 0) {
+        document.getElementById('resources-toggle')!.classList.remove('hidden');
+        const resList = document.getElementById('resources-list')!;
+        resList.innerHTML = resources.map((r: any) => `
+          <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener"
+             class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-primary-50 transition-colors group">
+            <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-sm mr-3">
+              ${getCategoryIcon(r.category)}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900 group-hover:text-primary-700">${escapeHtml(r.title)}</p>
+              <p class="text-xs text-gray-500">${escapeHtml(r.category)}</p>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 group-hover:text-primary-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+            </svg>
+          </a>
+        `).join('');
+      }
+    }
+
+    // Today button
+    document.getElementById('btn-today')!.addEventListener('click', () => {
+      if (calendar) {
+        currentWeek = calendar.current_week || 1;
+        renderCalendar();
+        // Scroll today's card into view
+        setTimeout(() => {
+          const todayCard = document.querySelector('[class*="ring-primary"]');
+          todayCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
+    });
+
+    // Resources toggle
+    document.getElementById('show-resources')!.addEventListener('click', () => {
+      document.getElementById('resources-panel')!.classList.toggle('hidden');
+    });
+
+    function getCategoryIcon(category: string): string {
+      const icons: Record<string, string> = {
+        'Safety': '🦺',
+        'Training': '📚',
+        'Policy': '📋',
+        'Software': '💻',
+        'General': '📎',
+      };
+      return icons[category] || '📎';
+    }
+
+    function escapeHtml(str: string) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    function formatDate(dateStr: string) {
+      const d = new Date(dateStr + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    loadCalendar();
+  </script>
+</Layout>

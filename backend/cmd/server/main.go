@@ -127,6 +127,35 @@ func main() {
 		api.POST("/licenses", handlers.CreateLicense)
 		api.PUT("/licenses/:id", handlers.UpdateLicense)
 		api.DELETE("/licenses/:id", middleware.RequireRole("owner", "support"), handlers.DeleteLicense)
+
+		// Training portal routes
+		// Trainee view (any authenticated user)
+		api.GET("/training/my-calendar", handlers.GetMyTrainingCalendar)
+
+		// Admin training management (owner and support only)
+		api.GET("/training/programs", middleware.RequireRole("owner", "support"), handlers.ListTrainingPrograms)
+		api.GET("/training/programs/:id", middleware.RequireRole("owner", "support"), handlers.GetTrainingProgram)
+		api.POST("/training/programs", middleware.RequireRole("owner", "support"), handlers.CreateTrainingProgram)
+		api.PUT("/training/programs/:id", middleware.RequireRole("owner", "support"), handlers.UpdateTrainingProgram)
+		api.DELETE("/training/programs/:id", middleware.RequireRole("owner", "support"), handlers.DeleteTrainingProgram)
+
+		// Schedule items (owner and support only)
+		api.POST("/training/programs/:id/items", middleware.RequireRole("owner", "support"), handlers.CreateScheduleItem)
+		api.PUT("/training/programs/:id/items/:itemId", middleware.RequireRole("owner", "support"), handlers.UpdateScheduleItem)
+		api.DELETE("/training/programs/:id/items/:itemId", middleware.RequireRole("owner", "support"), handlers.DeleteScheduleItem)
+		api.PUT("/training/programs/:id/items", middleware.RequireRole("owner", "support"), handlers.BulkUpdateScheduleItems)
+
+		// Resources (owner and support only)
+		api.POST("/training/programs/:id/resources", middleware.RequireRole("owner", "support"), handlers.CreateResource)
+		api.PUT("/training/programs/:id/resources/:resourceId", middleware.RequireRole("owner", "support"), handlers.UpdateResource)
+		api.DELETE("/training/programs/:id/resources/:resourceId", middleware.RequireRole("owner", "support"), handlers.DeleteResource)
+
+		// Trainee assignments (owner and support only)
+		api.GET("/training/assignments", middleware.RequireRole("owner", "support"), handlers.ListAssignments)
+		api.POST("/training/assignments", middleware.RequireRole("owner", "support"), handlers.CreateAssignment)
+		api.PUT("/training/assignments/:id", middleware.RequireRole("owner", "support"), handlers.UpdateAssignment)
+		api.DELETE("/training/assignments/:id", middleware.RequireRole("owner", "support"), handlers.DeleteAssignment)
+		api.GET("/training/assignments/:id/calendar", middleware.RequireRole("owner", "support"), handlers.GetTraineeCalendar)
 	}
 
 	// Start server

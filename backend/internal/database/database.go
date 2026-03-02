@@ -173,6 +173,12 @@ func seedUsers() error {
 			Name:     "Shelby Fender",
 			Role:     "owner",
 		},
+		{
+			Email:    "jessica.bitner@jbsconstructiongroup.com",
+			Password: "password123",
+			Name:     "Jessica Bitner",
+			Role:     "owner",
+		},
 	}
 
 	for _, u := range users {

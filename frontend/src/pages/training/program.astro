@@ -1,0 +1,459 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout>
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+      <div>
+        <a href="/training" class="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">← Back to Training Programs</a>
+        <h1 class="text-3xl font-bold text-gray-900" id="program-title">Loading...</h1>
+        <p class="mt-1 text-sm text-gray-500" id="program-desc"></p>
+      </div>
+      <div class="flex space-x-3">
+        <button id="edit-program-btn" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium text-sm">
+          Edit Details
+        </button>
+        <button id="manage-resources-btn" class="px-4 py-2 text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100 font-medium text-sm">
+          📎 Resources
+        </button>
+      </div>
+    </div>
+
+    <!-- Week Tabs -->
+    <div class="flex items-center space-x-2 overflow-x-auto pb-2" id="week-tabs"></div>
+
+    <!-- Schedule Grid -->
+    <div class="grid grid-cols-5 gap-4" id="schedule-grid">
+      <!-- Mon-Fri columns rendered by JS -->
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="item-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-10 mx-auto p-6 border w-full max-w-lg shadow-xl rounded-xl bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900" id="item-modal-title">Add Schedule Item</h3>
+          <button id="close-item-modal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <form id="item-form" class="space-y-4">
+          <input type="hidden" id="item-id" value="">
+          <input type="hidden" id="item-week" value="">
+          <input type="hidden" id="item-dow" value="">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Task / Activity *</label>
+            <input type="text" id="item-title" required placeholder="e.g., Meeting with Nick and Jessica" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Day Theme</label>
+            <input type="text" id="item-day-title" placeholder="e.g., Site Visit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Time Slot</label>
+              <select id="item-time-slot" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                <option value="all-day">All Day</option>
+                <option value="morning">Morning</option>
+                <option value="afternoon">Afternoon</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
+              <input type="number" id="item-sort" value="0" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea id="item-description" rows="2" placeholder="Additional details..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Link URL</label>
+              <input type="url" id="item-link-url" placeholder="https://..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Link Label</label>
+              <input type="text" id="item-link-label" placeholder="e.g., Open Training" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+          </div>
+          <div class="flex items-center">
+            <input type="checkbox" id="item-highlight" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+            <label for="item-highlight" class="ml-2 text-sm text-gray-700">Highlight this item (e.g., 30-DAY KPIs)</label>
+          </div>
+          <div class="flex justify-end space-x-3 pt-2">
+            <button type="button" id="cancel-item" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+            <button type="button" id="delete-item-btn" class="hidden px-4 py-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 font-medium">Delete</button>
+            <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium" id="item-submit-btn">Add Item</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Program Details Modal -->
+    <div id="edit-program-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-xl rounded-xl bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Edit Program Details</h3>
+          <button id="close-edit-program" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <form id="edit-program-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Program Name *</label>
+            <input type="text" id="edit-name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea id="edit-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Duration (weeks)</label>
+            <input type="number" id="edit-weeks" min="1" max="52" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div class="flex items-center">
+            <input type="checkbox" id="edit-active" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+            <label for="edit-active" class="ml-2 text-sm text-gray-700">Active</label>
+          </div>
+          <div class="flex justify-end space-x-3 pt-2">
+            <button type="button" id="cancel-edit-program" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Resources Modal -->
+    <div id="resources-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-10 mx-auto p-6 border w-full max-w-2xl shadow-xl rounded-xl bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Training Resources & Links</h3>
+          <button id="close-resources" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div id="resources-list" class="space-y-3 mb-4 max-h-64 overflow-y-auto"></div>
+        <form id="resource-form" class="border-t border-gray-200 pt-4 space-y-3">
+          <h4 class="text-sm font-medium text-gray-700">Add Resource</h4>
+          <div class="grid grid-cols-2 gap-3">
+            <input type="text" id="res-title" required placeholder="Resource title" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
+            <input type="url" id="res-url" required placeholder="https://..." class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
+            <select id="res-category" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
+              <option value="General">General</option>
+              <option value="Safety">Safety</option>
+              <option value="Training">Training</option>
+              <option value="Policy">Policy</option>
+              <option value="Software">Software</option>
+            </select>
+            <button type="submit" class="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium">Add Resource</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = (import.meta.env?.PUBLIC_API_URL || localStorage.getItem('api_base_url') || 'http://localhost:8080/api').replace(/\/api$/, '/api');
+    const token = localStorage.getItem('jbs_token');
+    if (!token) window.location.href = '/';
+
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+
+    // Get program ID from URL
+    const params = new URLSearchParams(window.location.search);
+    const programId = params.get('id');
+    if (!programId) window.location.href = '/training';
+
+    let program: any = null;
+    let currentWeek = 1;
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+    async function loadProgram() {
+      try {
+        const res = await fetch(`${API_BASE}/training/programs/${programId}`, { headers });
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        program = data.program;
+        renderProgram();
+      } catch (e) {
+        document.getElementById('program-title')!.textContent = 'Program not found';
+      }
+    }
+
+    function renderProgram() {
+      document.getElementById('program-title')!.textContent = program.name;
+      document.getElementById('program-desc')!.textContent = program.description || '';
+
+      // Week tabs
+      const tabsEl = document.getElementById('week-tabs')!;
+      tabsEl.innerHTML = '';
+      for (let w = 1; w <= program.duration_weeks; w++) {
+        const btn = document.createElement('button');
+        btn.className = `px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          w === currentWeek ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+        }`;
+        btn.textContent = `Week ${w}`;
+        btn.addEventListener('click', () => {
+          currentWeek = w;
+          renderProgram();
+        });
+        tabsEl.appendChild(btn);
+      }
+
+      // Schedule grid
+      const grid = document.getElementById('schedule-grid')!;
+      grid.innerHTML = '';
+
+      for (let dow = 1; dow <= 5; dow++) {
+        const dayItems = (program.items || []).filter(
+          (i: any) => i.week_number === currentWeek && i.day_of_week === dow
+        );
+
+        // Get day title from items
+        const dayTitle = dayItems.find((i: any) => i.day_title)?.day_title || '';
+
+        const col = document.createElement('div');
+        col.className = 'bg-white rounded-xl shadow-sm border border-gray-200 min-h-[300px] flex flex-col';
+
+        col.innerHTML = `
+          <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-xl">
+            <h3 class="font-semibold text-gray-900 text-sm">${dayNames[dow - 1]}</h3>
+            ${dayTitle ? `<p class="text-xs text-primary-600 font-medium mt-0.5">${escapeHtml(dayTitle)}</p>` : ''}
+          </div>
+          <div class="flex-1 p-3 space-y-2" id="day-${dow}-items">
+            ${dayItems.length === 0 ? '<p class="text-xs text-gray-400 text-center py-4">No items</p>' : ''}
+            ${dayItems.map((item: any) => `
+              <div class="group relative p-2 rounded-lg border ${item.is_highlight ? 'border-yellow-300 bg-yellow-50' : 'border-gray-100 hover:border-gray-200 bg-white hover:bg-gray-50'} cursor-pointer transition-colors"
+                   onclick="editItem(${item.id})">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm ${item.is_highlight ? 'font-bold text-yellow-800' : 'font-medium text-gray-800'} leading-tight">${escapeHtml(item.title)}</p>
+                    ${item.description ? `<p class="text-xs text-gray-500 mt-0.5 line-clamp-2">${escapeHtml(item.description)}</p>` : ''}
+                    ${item.link_url ? `<span class="inline-flex items-center text-xs text-primary-600 mt-1">🔗 ${escapeHtml(item.link_label || 'Link')}</span>` : ''}
+                  </div>
+                  ${item.time_slot !== 'all-day' ? `<span class="text-xs text-gray-400 ml-1 flex-shrink-0">${item.time_slot === 'morning' ? 'AM' : 'PM'}</span>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="p-2 border-t border-gray-100">
+            <button onclick="addItem(${currentWeek}, ${dow})" class="w-full py-1.5 text-xs text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors font-medium">
+              + Add Item
+            </button>
+          </div>
+        `;
+        grid.appendChild(col);
+      }
+    }
+
+    // Add Item
+    (window as any).addItem = (week: number, dow: number) => {
+      (document.getElementById('item-id') as HTMLInputElement).value = '';
+      (document.getElementById('item-week') as HTMLInputElement).value = String(week);
+      (document.getElementById('item-dow') as HTMLInputElement).value = String(dow);
+      (document.getElementById('item-title') as HTMLInputElement).value = '';
+      (document.getElementById('item-day-title') as HTMLInputElement).value = '';
+      (document.getElementById('item-time-slot') as HTMLSelectElement).value = 'all-day';
+      (document.getElementById('item-sort') as HTMLInputElement).value = '0';
+      (document.getElementById('item-description') as HTMLTextAreaElement).value = '';
+      (document.getElementById('item-link-url') as HTMLInputElement).value = '';
+      (document.getElementById('item-link-label') as HTMLInputElement).value = '';
+      (document.getElementById('item-highlight') as HTMLInputElement).checked = false;
+
+      document.getElementById('item-modal-title')!.textContent = `Add Item — ${dayNames[dow - 1]}, Week ${week}`;
+      document.getElementById('item-submit-btn')!.textContent = 'Add Item';
+      document.getElementById('delete-item-btn')!.classList.add('hidden');
+      document.getElementById('item-modal')!.classList.remove('hidden');
+    };
+
+    // Edit Item
+    (window as any).editItem = (itemId: number) => {
+      const item = program.items.find((i: any) => i.id === itemId);
+      if (!item) return;
+
+      (document.getElementById('item-id') as HTMLInputElement).value = String(item.id);
+      (document.getElementById('item-week') as HTMLInputElement).value = String(item.week_number);
+      (document.getElementById('item-dow') as HTMLInputElement).value = String(item.day_of_week);
+      (document.getElementById('item-title') as HTMLInputElement).value = item.title;
+      (document.getElementById('item-day-title') as HTMLInputElement).value = item.day_title || '';
+      (document.getElementById('item-time-slot') as HTMLSelectElement).value = item.time_slot;
+      (document.getElementById('item-sort') as HTMLInputElement).value = String(item.sort_order);
+      (document.getElementById('item-description') as HTMLTextAreaElement).value = item.description || '';
+      (document.getElementById('item-link-url') as HTMLInputElement).value = item.link_url || '';
+      (document.getElementById('item-link-label') as HTMLInputElement).value = item.link_label || '';
+      (document.getElementById('item-highlight') as HTMLInputElement).checked = item.is_highlight;
+
+      document.getElementById('item-modal-title')!.textContent = 'Edit Schedule Item';
+      document.getElementById('item-submit-btn')!.textContent = 'Save Changes';
+      document.getElementById('delete-item-btn')!.classList.remove('hidden');
+      document.getElementById('item-modal')!.classList.remove('hidden');
+    };
+
+    // Save Item
+    document.getElementById('item-form')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const itemId = (document.getElementById('item-id') as HTMLInputElement).value;
+      const body = {
+        week_number: parseInt((document.getElementById('item-week') as HTMLInputElement).value),
+        day_of_week: parseInt((document.getElementById('item-dow') as HTMLInputElement).value),
+        title: (document.getElementById('item-title') as HTMLInputElement).value,
+        day_title: (document.getElementById('item-day-title') as HTMLInputElement).value,
+        time_slot: (document.getElementById('item-time-slot') as HTMLSelectElement).value,
+        sort_order: parseInt((document.getElementById('item-sort') as HTMLInputElement).value) || 0,
+        description: (document.getElementById('item-description') as HTMLTextAreaElement).value,
+        link_url: (document.getElementById('item-link-url') as HTMLInputElement).value,
+        link_label: (document.getElementById('item-link-label') as HTMLInputElement).value,
+        is_highlight: (document.getElementById('item-highlight') as HTMLInputElement).checked,
+      };
+
+      try {
+        const url = itemId
+          ? `${API_BASE}/training/programs/${programId}/items/${itemId}`
+          : `${API_BASE}/training/programs/${programId}/items`;
+        const method = itemId ? 'PUT' : 'POST';
+
+        const res = await fetch(url, { method, headers, body: JSON.stringify(body) });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error);
+        }
+        document.getElementById('item-modal')!.classList.add('hidden');
+        loadProgram();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    });
+
+    // Delete Item
+    document.getElementById('delete-item-btn')!.addEventListener('click', async () => {
+      const itemId = (document.getElementById('item-id') as HTMLInputElement).value;
+      if (!itemId || !confirm('Delete this schedule item?')) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/training/programs/${programId}/items/${itemId}`, { method: 'DELETE', headers });
+        if (!res.ok) throw new Error('Failed to delete');
+        document.getElementById('item-modal')!.classList.add('hidden');
+        loadProgram();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    });
+
+    // Close modals
+    ['close-item-modal', 'cancel-item'].forEach(id => {
+      document.getElementById(id)!.addEventListener('click', () => {
+        document.getElementById('item-modal')!.classList.add('hidden');
+      });
+    });
+
+    // Edit Program Details
+    document.getElementById('edit-program-btn')!.addEventListener('click', () => {
+      (document.getElementById('edit-name') as HTMLInputElement).value = program.name;
+      (document.getElementById('edit-description') as HTMLTextAreaElement).value = program.description || '';
+      (document.getElementById('edit-weeks') as HTMLInputElement).value = String(program.duration_weeks);
+      (document.getElementById('edit-active') as HTMLInputElement).checked = program.is_active;
+      document.getElementById('edit-program-modal')!.classList.remove('hidden');
+    });
+
+    ['close-edit-program', 'cancel-edit-program'].forEach(id => {
+      document.getElementById(id)!.addEventListener('click', () => {
+        document.getElementById('edit-program-modal')!.classList.add('hidden');
+      });
+    });
+
+    document.getElementById('edit-program-form')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch(`${API_BASE}/training/programs/${programId}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({
+            name: (document.getElementById('edit-name') as HTMLInputElement).value,
+            description: (document.getElementById('edit-description') as HTMLTextAreaElement).value,
+            duration_weeks: parseInt((document.getElementById('edit-weeks') as HTMLInputElement).value),
+            is_active: (document.getElementById('edit-active') as HTMLInputElement).checked,
+          })
+        });
+        if (!res.ok) throw new Error('Failed to update');
+        document.getElementById('edit-program-modal')!.classList.add('hidden');
+        loadProgram();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    });
+
+    // Resources
+    document.getElementById('manage-resources-btn')!.addEventListener('click', () => {
+      renderResources();
+      document.getElementById('resources-modal')!.classList.remove('hidden');
+    });
+    document.getElementById('close-resources')!.addEventListener('click', () => {
+      document.getElementById('resources-modal')!.classList.add('hidden');
+    });
+
+    function renderResources() {
+      const list = document.getElementById('resources-list')!;
+      const resources = program.resources || [];
+      if (resources.length === 0) {
+        list.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No resources added yet</p>';
+        return;
+      }
+      list.innerHTML = resources.map((r: any) => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div class="flex-1 min-w-0">
+            <a href="${escapeHtml(r.url)}" target="_blank" class="text-sm font-medium text-primary-600 hover:text-primary-700">${escapeHtml(r.title)}</a>
+            <span class="ml-2 px-2 py-0.5 text-xs bg-gray-200 text-gray-600 rounded-full">${escapeHtml(r.category)}</span>
+          </div>
+          <button onclick="deleteResource(${r.id})" class="text-red-500 hover:text-red-700 ml-3">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('resource-form')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch(`${API_BASE}/training/programs/${programId}/resources`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            title: (document.getElementById('res-title') as HTMLInputElement).value,
+            url: (document.getElementById('res-url') as HTMLInputElement).value,
+            category: (document.getElementById('res-category') as HTMLSelectElement).value,
+          })
+        });
+        if (!res.ok) throw new Error('Failed to add');
+        (document.getElementById('resource-form') as HTMLFormElement).reset();
+        await loadProgram();
+        renderResources();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    });
+
+    (window as any).deleteResource = async (id: number) => {
+      if (!confirm('Delete this resource?')) return;
+      try {
+        await fetch(`${API_BASE}/training/programs/${programId}/resources/${id}`, { method: 'DELETE', headers });
+        await loadProgram();
+        renderResources();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    };
+
+    function escapeHtml(str: string) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    loadProgram();
+  </script>
+</Layout>
