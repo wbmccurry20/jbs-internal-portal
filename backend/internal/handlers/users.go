@@ -23,13 +23,14 @@ type UserResponse struct {
 	Email     string    `json:"email"`
 	Name      string    `json:"name"`
 	Role      string    `json:"role"`
+	Status    string    `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 // ListUsers returns all users (admin only)
 func ListUsers(c *gin.Context) {
 	rows, err := database.DB.Query(`
-		SELECT id, email, name, role, created_at 
+		SELECT id, email, name, role, COALESCE(status, 'active'), created_at 
 		FROM users 
 		ORDER BY created_at DESC
 	`)
@@ -42,7 +43,7 @@ func ListUsers(c *gin.Context) {
 	var users []UserResponse
 	for rows.Next() {
 		var user UserResponse
-		if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.Role, &user.CreatedAt); err != nil {
+		if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.Role, &user.Status, &user.CreatedAt); err != nil {
 			log.Printf("Warning: failed to scan user row: %v", err)
 			continue
 		}
@@ -64,9 +65,13 @@ func CreateUser(c *gin.Context) {
 	}
 
 	// Validate role
-	validRoles := map[string]bool{"employee": true, "trainee": true, "owner": true, "finance": true, "support": true}
+	validRoles := map[string]bool{
+		"executive": true, "hr_admin": true, "finance": true,
+		"project_manager": true, "construction_admin": true,
+		"trainee": true, "support": true,
+	}
 	if !validRoles[req.Role] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role. Must be employee, trainee, owner, finance, or support"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role. Must be executive, hr_admin, finance, project_manager, construction_admin, trainee, or support"})
 		return
 	}
 

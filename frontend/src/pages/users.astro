@@ -11,34 +11,34 @@ import Layout from '../layouts/Layout.astro';
       </a>
     </div>
 
-    <!-- Add User Form -->
+    <!-- Invite User Form -->
     <div class="bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">Create New User</h2>
-      <form id="create-user-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <h2 class="text-xl font-semibold mb-1">Invite New User</h2>
+      <p class="text-sm text-gray-500 mb-4">An email will be sent with a link to set their password.</p>
+      <form id="invite-user-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-          <input type="text" id="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          <input type="text" id="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" placeholder="e.g. John Smith" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input type="email" id="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Password (min 8 chars)</label>
-          <input type="password" id="password" required minlength="8" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+          <input type="email" id="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" placeholder="e.g. john@jbsconstructiongroup.com" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-          <select id="role" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
-            <option value="employee">Employee</option>
+          <select id="role" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+            <option value="">Select a role...</option>
+            <option value="executive">Executive</option>
+            <option value="hr_admin">HR Admin</option>
+            <option value="finance">Finance / Accounting</option>
+            <option value="project_manager">Project Manager</option>
+            <option value="construction_admin">Construction Admin</option>
             <option value="trainee">Trainee</option>
-            <option value="owner">Owner</option>
-            <option value="finance">Finance / Accountant</option>
           </select>
         </div>
-        <div class="md:col-span-2">
-          <button type="submit" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-700">
-            Create User
+        <div class="md:col-span-3">
+          <button type="submit" id="invite-btn" class="bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium">
+            Send Invite
           </button>
         </div>
       </form>
@@ -46,132 +46,208 @@ import Layout from '../layouts/Layout.astro';
 
     <!-- Users List -->
     <div class="bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">All Users</h2>
-      <div id="loading" class="text-center py-4">Loading users...</div>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">All Users</h2>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-gray-500" id="user-count"></span>
+          <select id="status-filter" class="text-sm border border-gray-300 rounded-md px-2 py-1">
+            <option value="all">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending Invite</option>
+          </select>
+        </div>
+      </div>
+      <div id="loading" class="text-center py-8">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p class="mt-2 text-sm text-gray-500">Loading users...</p>
+      </div>
       <div id="users-list" class="hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="users-tbody" class="bg-white divide-y divide-gray-200">
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody" class="bg-white divide-y divide-gray-200">
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    import { listUsers, createUser, deleteUser, resetUserPassword } from '../lib/api';
+    import { listUsers, deleteUser, resetUserPassword, inviteUser, resendInvite } from '../lib/api';
     import { toast } from '../utils/toast';
     import { ErrorHandler } from '../utils/errorHandler';
-    import { createTableSkeleton, setButtonLoading } from '../utils/loading';
+    import { setButtonLoading } from '../utils/loading';
 
     const token = localStorage.getItem('jbs_token');
     if (!token) {
       window.location.href = '/';
     }
 
-    // Load users
-    async function loadUsers() {
-      const tbody = document.getElementById('users-tbody');
-      const loadingDiv = document.getElementById('loading');
-      const usersListDiv = document.getElementById('users-list');
+    const roleLabels: Record<string, string> = {
+      'executive': 'Executive',
+      'hr_admin': 'HR Admin',
+      'finance': 'Finance',
+      'project_manager': 'Project Manager',
+      'construction_admin': 'Construction Admin',
+      'trainee': 'Trainee',
+      'support': 'IT Support',
+      'owner': 'Owner (Legacy)',
+      'employee': 'Employee (Legacy)',
+    };
 
-      try {
-        // Show skeleton
-        if (tbody) {
-          tbody.innerHTML = Array.from({ length: 5 }, () => `
-            <tr class="animate-pulse">
-              <td class="px-6 py-4"><div class="h-4 bg-gray-200 rounded w-32"></div></td>
-              <td class="px-6 py-4"><div class="h-4 bg-gray-200 rounded w-48"></div></td>
-              <td class="px-6 py-4"><div class="h-4 bg-gray-200 rounded w-24"></div></td>
-              <td class="px-6 py-4"><div class="h-4 bg-gray-200 rounded w-24"></div></td>
-              <td class="px-6 py-4"><div class="h-4 bg-gray-200 rounded w-32"></div></td>
-            </tr>
-          `).join('');
+    let allUsers: any[] = [];
+
+    function escapeHtml(str: string): string {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    function getStatusBadge(status: string): string {
+      if (status === 'active') {
+        return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>';
+      }
+      return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pending Invite</span>';
+    }
+
+    function renderUsers(users: any[]) {
+      const tbody = document.getElementById('users-tbody')!;
+      const countEl = document.getElementById('user-count')!;
+
+      const activeCount = users.filter((u: any) => (u.status || 'active') === 'active').length;
+      const pendingCount = users.filter((u: any) => u.status === 'pending').length;
+      countEl.textContent = `${activeCount} active, ${pendingCount} pending`;
+
+      const filter = (document.getElementById('status-filter') as HTMLSelectElement).value;
+      const filtered = filter === 'all' ? users : users.filter((u: any) => (u.status || 'active') === filter);
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">No users found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((user: any) => {
+        const safeId = Number(user.id);
+        const safeName = escapeHtml(user.name);
+        const safeEmail = escapeHtml(user.email);
+        const role = roleLabels[user.role] || escapeHtml(user.role);
+        const status = user.status || 'active';
+        const safeDate = new Date(user.created_at).toLocaleDateString();
+        const isProtected = user.email === 'hello@itwill.dev';
+
+        let actions = '';
+        if (isProtected) {
+          actions = '<span class="text-gray-400 text-xs">Protected</span>';
+        } else if (status === 'pending') {
+          actions = `
+            <button data-action="resend" data-id="${safeId}" data-email="${safeEmail}" class="text-primary hover:text-blue-700 text-sm font-medium">Resend Invite</button>
+            <button data-action="delete" data-id="${safeId}" data-email="${safeEmail}" class="text-red-600 hover:text-red-900 text-sm">Delete</button>`;
+        } else {
+          actions = `
+            <button data-action="reset" data-id="${safeId}" class="text-yellow-600 hover:text-yellow-900 text-sm">Reset Password</button>
+            <button data-action="delete" data-id="${safeId}" data-email="${safeEmail}" class="text-red-600 hover:text-red-900 text-sm">Delete</button>`;
         }
 
-        loadingDiv?.classList.add('hidden');
-        usersListDiv?.classList.remove('hidden');
+        return `<tr class="hover:bg-gray-50">
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${safeName}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${safeEmail}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${role}</td>
+          <td class="px-6 py-4 whitespace-nowrap">${getStatusBadge(status)}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${safeDate}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">${actions}</td>
+        </tr>`;
+      }).join('');
 
-        const users = await listUsers();
-
-        tbody!.innerHTML = users.map(user => {
-          const safeId = Number(user.id);
-          const safeName = escapeHtml(user.name);
-          const safeEmail = escapeHtml(user.email);
-          const safeRole = escapeHtml(user.role);
-          const safeDate = new Date(user.created_at).toLocaleDateString();
-          const isProtected = user.email === 'hello@itwill.dev';
-
-          const actions = isProtected
-            ? '<span class="text-gray-400">Protected</span>'
-            : `<button data-action="reset" data-id="${safeId}" class="text-yellow-600 hover:text-yellow-900">Reset Password</button>
-               <button data-action="delete" data-id="${safeId}" data-email="${safeEmail}" class="text-red-600 hover:text-red-900">Delete</button>`;
-
-          return `<tr>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${safeName}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${safeEmail}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${safeRole}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${safeDate}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">${actions}</td>
-          </tr>`;
-        }).join('');
-
-        // Attach event listeners instead of inline onclick handlers
-        tbody!.querySelectorAll('[data-action="reset"]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const id = Number((btn as HTMLElement).dataset.id);
-            (window as any).resetPassword(id);
-          });
+      // Attach event listeners
+      tbody.querySelectorAll('[data-action="resend"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const el = btn as HTMLElement;
+          const id = Number(el.dataset.id);
+          const email = el.dataset.email || '';
+          try {
+            await resendInvite(id);
+            toast.success(`Invite resent to ${email}`);
+          } catch (error) {
+            ErrorHandler.handle(error, 'Failed to resend invite');
+          }
         });
-        tbody!.querySelectorAll('[data-action="delete"]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const el = btn as HTMLElement;
-            (window as any).deleteUserConfirm(Number(el.dataset.id), el.dataset.email || '');
-          });
+      });
+
+      tbody.querySelectorAll('[data-action="reset"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = Number((btn as HTMLElement).dataset.id);
+          handleResetPassword(id);
         });
+      });
+
+      tbody.querySelectorAll('[data-action="delete"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const el = btn as HTMLElement;
+          handleDeleteUser(Number(el.dataset.id), el.dataset.email || '');
+        });
+      });
+    }
+
+    async function loadUsers() {
+      const loadingDiv = document.getElementById('loading')!;
+      const usersListDiv = document.getElementById('users-list')!;
+
+      try {
+        allUsers = await listUsers();
+        loadingDiv.classList.add('hidden');
+        usersListDiv.classList.remove('hidden');
+        renderUsers(allUsers);
       } catch (error) {
-        loadingDiv!.textContent = 'Failed to load users';
-        loadingDiv?.classList.remove('hidden');
+        loadingDiv.innerHTML = '<p class="text-red-600">Failed to load users</p>';
         ErrorHandler.handle(error, 'Failed to load users');
       }
     }
 
-    // Create user
-    document.getElementById('create-user-form')?.addEventListener('submit', async (e) => {
+    // Filter handler
+    document.getElementById('status-filter')?.addEventListener('change', () => {
+      renderUsers(allUsers);
+    });
+
+    // Invite user form
+    document.getElementById('invite-user-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target as HTMLFormElement;
-      const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      const submitBtn = document.getElementById('invite-btn') as HTMLButtonElement;
 
       try {
         setButtonLoading(submitBtn, true);
 
-        const name = (document.getElementById('name') as HTMLInputElement).value;
-        const email = (document.getElementById('email') as HTMLInputElement).value;
-        const password = (document.getElementById('password') as HTMLInputElement).value;
+        const name = (document.getElementById('name') as HTMLInputElement).value.trim();
+        const email = (document.getElementById('email') as HTMLInputElement).value.trim();
         const role = (document.getElementById('role') as HTMLSelectElement).value;
 
-        await createUser(email, password, name, role);
+        if (!role) {
+          toast.error('Please select a role');
+          return;
+        }
 
-        toast.success('User created successfully!');
+        await inviteUser(email, name, role);
+        toast.success(`Invite sent to ${email}!`);
         form.reset();
         loadUsers();
       } catch (error) {
-        ErrorHandler.handle(error, 'Failed to create user');
+        ErrorHandler.handle(error, 'Failed to send invite');
       } finally {
         setButtonLoading(submitBtn, false);
       }
     });
 
-    // Delete user (make available globally)
-    (window as any).deleteUserConfirm = async (userId: number, email: string) => {
+    async function handleDeleteUser(userId: number, email: string) {
       if (confirm(`Are you sure you want to delete user: ${email}?`)) {
         try {
           await deleteUser(userId);
@@ -181,10 +257,9 @@ import Layout from '../layouts/Layout.astro';
           ErrorHandler.handle(error, 'Failed to delete user');
         }
       }
-    };
+    }
 
-    // Reset password (make available globally)
-    (window as any).resetPassword = async (userId: number) => {
+    async function handleResetPassword(userId: number) {
       const newPassword = prompt('Enter new password (min 8 characters):');
       if (newPassword && newPassword.length >= 8) {
         try {
@@ -196,12 +271,6 @@ import Layout from '../layouts/Layout.astro';
       } else if (newPassword) {
         ErrorHandler.handleValidationError('Password', 'Must be at least 8 characters');
       }
-    };
-
-    function escapeHtml(str: string): string {
-      const div = document.createElement('div');
-      div.textContent = str || '';
-      return div.innerHTML;
     }
 
     loadUsers();

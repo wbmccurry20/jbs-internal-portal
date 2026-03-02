@@ -139,3 +139,68 @@ export async function changePassword(currentPassword: string, newPassword: strin
     throw new Error(error.error || 'Failed to change password');
   }
 }
+
+// Invite a new user (sends email with invite link)
+export async function inviteUser(email: string, name: string, role: string): Promise<{ message: string; user_id: number }> {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/users/invite`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, name, role }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to invite user');
+  }
+
+  return response.json();
+}
+
+// Resend invite email for a pending user
+export async function resendInvite(userId: number): Promise<void> {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/resend-invite`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to resend invite');
+  }
+}
+
+// Validate an invite token (public — no auth needed)
+export async function validateInviteToken(inviteToken: string): Promise<{ valid: boolean; name?: string; email?: string }> {
+  const response = await fetch(`${API_BASE_URL}/invite/validate/${inviteToken}`);
+
+  if (!response.ok) {
+    return { valid: false };
+  }
+
+  return response.json();
+}
+
+// Accept an invite and set password (public — no auth needed)
+export async function acceptInvite(inviteToken: string, password: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/invite/accept`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token: inviteToken, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to accept invite');
+  }
+
+  return response.json();
+}

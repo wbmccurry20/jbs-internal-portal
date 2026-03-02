@@ -142,35 +142,25 @@ func runMigrations() error {
 	return nil
 }
 
-// seedUsers creates the initial JBS employee accounts
+// seedUsers creates only the bootstrap admin accounts (executives)
+// All other employees should be invited through the admin UI
 func seedUsers() error {
-	// Seed password from environment - MUST be changed on first login
+	// Seed password from environment - executives MUST change this on first login
 	seedPassword := os.Getenv("SEED_USER_PASSWORD")
 	if seedPassword == "" {
-		seedPassword = "ChangeMe2026!Secure"
-		log.Println("⚠️  WARNING: Using default SEED_USER_PASSWORD. Set SEED_USER_PASSWORD env var for security!")
+		log.Println("⚠️  SEED_USER_PASSWORD not set — skipping executive seed. Set it to bootstrap admin accounts.")
+		return nil
 	}
 
+	// Only seed the founding executives — everyone else gets invited
 	users := []struct {
 		Email    string
 		Name     string
 		Role     string
 	}{
-		{
-			Email:    "emily.simpson@jbsconstructiongroup.com",
-			Name:     "Emily Simpson",
-			Role:     "owner",
-		},
-		{
-			Email:    "shelby@jbsconstructiongroup.com",
-			Name:     "Shelby Fender",
-			Role:     "owner",
-		},
-		{
-			Email:    "jessica.bitner@jbsconstructiongroup.com",
-			Name:     "Jessica Bitner",
-			Role:     "owner",
-		},
+		{Email: "alex@jbsconstructiongroup.com", Name: "Alex", Role: "executive"},
+		{Email: "joe@jbsconstructiongroup.com", Name: "Joe", Role: "executive"},
+		{Email: "kevin@jbsconstructiongroup.com", Name: "Kevin", Role: "executive"},
 	}
 
 	for _, u := range users {
@@ -182,9 +172,9 @@ func seedUsers() error {
 		}
 
 		if exists {
-			// Update role if user exists
+			// Update role if user exists (ensure they stay executive)
 			_, err = DB.Exec(
-				"UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE email = $2",
+				"UPDATE users SET role = $1, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE email = $2",
 				u.Role, u.Email,
 			)
 			if err != nil {
@@ -200,16 +190,16 @@ func seedUsers() error {
 			return fmt.Errorf("failed to hash password for %s: %w", u.Email, err)
 		}
 
-		// Create user
+		// Create user as active (they have a real password)
 		_, err = DB.Exec(
-			"INSERT INTO users (email, password, name, role) VALUES ($1, $2, $3, $4)",
+			"INSERT INTO users (email, password, name, role, status) VALUES ($1, $2, $3, $4, 'active')",
 			u.Email, string(hash), u.Name, u.Role,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create user %s: %w", u.Email, err)
 		}
 
-		log.Printf("  ✓ Created user: %s", u.Email)
+		log.Printf("  ✓ Created executive: %s", u.Email)
 	}
 
 	return nil
@@ -252,18 +242,18 @@ func seedSupportAccount() error {
 			}
 			
 			_, err = DB.Exec(
-				"UPDATE users SET password = $1, role = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3",
-				string(hash), "owner", existingID,
+				"UPDATE users SET password = $1, role = $2, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = $3",
+				string(hash), "support", existingID,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to update support account password: %w", err)
 			}
 			log.Printf("  ✓ Updated support account password and role: %s", supportEmail)
 		} else {
-			// Password matches but update role to owner if needed
+			// Password matches but update role to support if needed
 			_, err = DB.Exec(
-				"UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND role != $1",
-				"owner", existingID,
+				"UPDATE users SET role = $1, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND role != $1",
+				"support", existingID,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to update support account role: %w", err)
@@ -280,8 +270,8 @@ func seedSupportAccount() error {
 	}
 
 	_, err = DB.Exec(
-		"INSERT INTO users (email, password, name, role) VALUES ($1, $2, $3, $4)",
-		supportEmail, string(hash), supportName, "owner",
+		"INSERT INTO users (email, password, name, role, status) VALUES ($1, $2, $3, $4, 'active')",
+		supportEmail, string(hash), supportName, "support",
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create support account: %w", err)
@@ -318,18 +308,18 @@ func ensureITWillOwnerRole() error {
 		return fmt.Errorf("failed to query IT Will account: %w", err)
 	}
 	
-	// Update to owner role if not already
-	if currentRole != "owner" {
+	// Update to support role if not already
+	if currentRole != "support" {
 		_, err = DB.Exec(
 			"UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
-			"owner", existingID,
+			"support", existingID,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to update IT Will account role: %w", err)
 		}
-		log.Printf("  ✓ Updated %s from '%s' to 'owner' role", itwillEmail, currentRole)
+		log.Printf("  ✓ Updated %s from '%s' to 'support' role", itwillEmail, currentRole)
 	} else {
-		log.Printf("  ✓ IT Will account already has owner role: %s", itwillEmail)
+		log.Printf("  ✓ IT Will account already has support role: %s", itwillEmail)
 	}
 	
 	return nil

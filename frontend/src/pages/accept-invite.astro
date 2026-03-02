@@ -1,0 +1,242 @@
+---
+import '../styles/global.css';
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accept Invite - JBS Portal</title>
+  </head>
+  <body class="bg-gray-100">
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-md w-full space-y-6 bg-white p-8 rounded-lg shadow-lg">
+        <div>
+          <div class="mx-auto w-56 mb-4">
+            <img src="/jbs-logo.svg" alt="JBS Construction" class="w-full h-auto" />
+          </div>
+          <h2 class="text-center text-2xl font-bold text-gray-900" id="page-title">
+            Set Up Your Account
+          </h2>
+          <p class="mt-1 text-center text-sm text-gray-600" id="page-subtitle">
+            Loading...
+          </p>
+        </div>
+
+        <!-- Loading state -->
+        <div id="loading-state" class="text-center py-8">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p class="mt-2 text-sm text-gray-500">Verifying your invite...</p>
+        </div>
+
+        <!-- Invalid/expired token state -->
+        <div id="invalid-state" class="hidden text-center py-8">
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900">Invite Link Invalid</h3>
+          <p class="mt-2 text-sm text-gray-500">This invite link is expired or has already been used. Please ask your administrator to send a new invite.</p>
+          <a href="/" class="mt-4 inline-block text-primary hover:text-blue-700 text-sm font-medium">← Go to Login</a>
+        </div>
+
+        <!-- Set password form -->
+        <form id="accept-form" class="hidden space-y-5">
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Create Your Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              minlength="10"
+              autocomplete="new-password"
+              class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+              placeholder="Minimum 10 characters"
+            />
+          </div>
+          <div>
+            <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <input
+              id="confirm-password"
+              name="confirm-password"
+              type="password"
+              required
+              minlength="10"
+              autocomplete="new-password"
+              class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+              placeholder="Re-enter your password"
+            />
+          </div>
+
+          <!-- Password requirements -->
+          <div class="bg-gray-50 rounded-md p-3">
+            <p class="text-xs font-medium text-gray-700 mb-2">Password requirements:</p>
+            <ul class="text-xs text-gray-500 space-y-1">
+              <li id="req-length" class="flex items-center gap-1.5">
+                <span class="req-icon">○</span> At least 10 characters
+              </li>
+              <li id="req-upper" class="flex items-center gap-1.5">
+                <span class="req-icon">○</span> One uppercase letter
+              </li>
+              <li id="req-lower" class="flex items-center gap-1.5">
+                <span class="req-icon">○</span> One lowercase letter
+              </li>
+              <li id="req-number" class="flex items-center gap-1.5">
+                <span class="req-icon">○</span> One number
+              </li>
+              <li id="req-match" class="flex items-center gap-1.5">
+                <span class="req-icon">○</span> Passwords match
+              </li>
+            </ul>
+          </div>
+
+          <div id="error-message" class="hidden">
+            <p class="text-sm text-red-600 text-center font-medium"></p>
+          </div>
+
+          <button
+            type="submit"
+            id="submit-btn"
+            disabled
+            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Activate My Account
+          </button>
+        </form>
+
+        <!-- Success state -->
+        <div id="success-state" class="hidden text-center py-8">
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900">Account Activated!</h3>
+          <p class="mt-2 text-sm text-gray-500">Your password has been set. You can now log in.</p>
+          <a href="/" class="mt-4 inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-700 text-sm font-medium transition-colors">
+            Go to Login →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      import { validateInviteToken, acceptInvite } from '../lib/api';
+
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+
+      const loadingState = document.getElementById('loading-state')!;
+      const invalidState = document.getElementById('invalid-state')!;
+      const acceptForm = document.getElementById('accept-form') as HTMLFormElement;
+      const successState = document.getElementById('success-state')!;
+      const pageTitle = document.getElementById('page-title')!;
+      const pageSubtitle = document.getElementById('page-subtitle')!;
+      const passwordInput = document.getElementById('password') as HTMLInputElement;
+      const confirmInput = document.getElementById('confirm-password') as HTMLInputElement;
+      const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+      const errorDiv = document.getElementById('error-message')!;
+      const errorText = errorDiv.querySelector('p')!;
+
+      // Validate token on page load
+      async function init() {
+        if (!token) {
+          showInvalid();
+          return;
+        }
+
+        try {
+          const result = await validateInviteToken(token);
+          if (result.valid && result.name) {
+            pageTitle.textContent = `Welcome, ${result.name}!`;
+            pageSubtitle.textContent = 'Create a password to activate your account';
+            loadingState.classList.add('hidden');
+            acceptForm.classList.remove('hidden');
+          } else {
+            showInvalid();
+          }
+        } catch {
+          showInvalid();
+        }
+      }
+
+      function showInvalid() {
+        loadingState.classList.add('hidden');
+        invalidState.classList.remove('hidden');
+        pageTitle.textContent = 'Invalid Invite';
+        pageSubtitle.textContent = '';
+      }
+
+      // Real-time password validation
+      function checkRequirements() {
+        const pw = passwordInput.value;
+        const confirm = confirmInput.value;
+
+        const checks = {
+          'req-length': pw.length >= 10,
+          'req-upper': /[A-Z]/.test(pw),
+          'req-lower': /[a-z]/.test(pw),
+          'req-number': /[0-9]/.test(pw),
+          'req-match': pw.length > 0 && pw === confirm,
+        };
+
+        let allPassed = true;
+        for (const [id, passed] of Object.entries(checks)) {
+          const el = document.getElementById(id)!;
+          const icon = el.querySelector('.req-icon')!;
+          if (passed) {
+            icon.textContent = '✓';
+            el.classList.add('text-green-600');
+            el.classList.remove('text-gray-500');
+          } else {
+            icon.textContent = '○';
+            el.classList.remove('text-green-600');
+            el.classList.add('text-gray-500');
+            allPassed = false;
+          }
+        }
+
+        submitBtn.disabled = !allPassed;
+      }
+
+      passwordInput.addEventListener('input', checkRequirements);
+      confirmInput.addEventListener('input', checkRequirements);
+
+      // Submit form
+      acceptForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorDiv.classList.add('hidden');
+
+        const pw = passwordInput.value;
+        const confirm = confirmInput.value;
+
+        if (pw !== confirm) {
+          errorText.textContent = 'Passwords do not match';
+          errorDiv.classList.remove('hidden');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Activating...';
+
+        try {
+          await acceptInvite(token!, pw);
+          acceptForm.classList.add('hidden');
+          successState.classList.remove('hidden');
+          pageTitle.textContent = 'You\'re All Set!';
+          pageSubtitle.textContent = '';
+        } catch (err) {
+          errorText.textContent = err instanceof Error ? err.message : 'Something went wrong';
+          errorDiv.classList.remove('hidden');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Activate My Account';
+        }
+      });
+
+      init();
+    </script>
+  </body>
+</html>

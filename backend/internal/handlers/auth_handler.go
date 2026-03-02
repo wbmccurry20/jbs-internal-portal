@@ -18,14 +18,15 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// Find user by email
+	// Find user by email (include status)
 	var user models.User
+	var status string
 	err := database.DB.QueryRow(`
-		SELECT id, email, password, name, role, created_at, updated_at
+		SELECT id, email, password, name, role, COALESCE(status, 'active'), created_at, updated_at
 		FROM users
 		WHERE email = $1
 	`, req.Email).Scan(&user.ID, &user.Email, &user.Password, &user.Name, 
-		&user.Role, &user.CreatedAt, &user.UpdatedAt)
+		&user.Role, &status, &user.CreatedAt, &user.UpdatedAt)
 
 	// Prevent timing attacks: always hash password even if user doesn't exist
 	// This ensures consistent response time (valid bcrypt hash of random string)
@@ -39,6 +40,12 @@ func Login(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
+	// Block pending users — they must accept their invite first
+	if status == "pending" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Please check your email and accept your invite to activate your account"})
 		return
 	}
 

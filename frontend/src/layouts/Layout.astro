@@ -26,52 +26,59 @@ const title = 'JBS Internal Portal';
               </a>
             </div>
 
-            <!-- Desktop navigation -->
+            <!-- Desktop navigation - items shown/hidden by role via JS -->
             <div class="hidden md:flex md:space-x-1">
-              <a href="/dashboard" class="nav-link group">
+              <a href="/dashboard" class="nav-link group" id="nav-dashboard">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
                 </svg>
                 Dashboard
               </a>
               
-              <a href="/jobs" class="nav-link group">
+              <a href="/jobs" class="nav-link group hidden" id="nav-jobs">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                 </svg>
                 Jobs
               </a>
               
-              <a href="/bids" class="nav-link group">
+              <a href="/bids" class="nav-link group hidden" id="nav-bids">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 Bids
               </a>
               
-              <a href="/superintendents" class="nav-link group">
+              <a href="/superintendents" class="nav-link group hidden" id="nav-supers">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                 </svg>
                 Superintendents
               </a>
               
-              <a href="/licensing" class="nav-link group">
+              <a href="/licensing" class="nav-link group hidden" id="nav-licensing">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                 </svg>
                 Licensing
               </a>
 
-              <a href="/training" class="nav-link group" id="nav-training-admin">
+              <a href="/training" class="nav-link group hidden" id="nav-training">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                 </svg>
                 Training
               </a>
 
+              <a href="/users" class="nav-link group hidden" id="nav-users">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                Users
+              </a>
+
               <!-- Finance Tools dropdown -->
-              <div class="relative group">
+              <div class="relative group hidden" id="nav-finance">
                 <button class="nav-link inline-flex items-center">
                   <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -136,15 +143,16 @@ const title = 'JBS Internal Portal';
       <!-- Mobile menu -->
       <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 bg-white">
         <div class="pt-2 pb-3 space-y-1">
-          <a href="/dashboard" class="mobile-nav-link">Dashboard</a>
-          <a href="/jobs" class="mobile-nav-link">Jobs</a>
-          <a href="/bids" class="mobile-nav-link">Bids</a>
-          <a href="/superintendents" class="mobile-nav-link">Superintendents</a>
-          <a href="/licensing" class="mobile-nav-link">Licensing</a>
-          <a href="/training" class="mobile-nav-link" id="mobile-nav-training">Training</a>
-          <div class="border-t border-gray-200 my-2"></div>
-          <a href="/concur" class="mobile-nav-link">Concur Converter</a>
-          <a href="/reconciliation" class="mobile-nav-link">Reconciliation</a>
+          <a href="/dashboard" class="mobile-nav-link" id="mobile-nav-dashboard">Dashboard</a>
+          <a href="/jobs" class="mobile-nav-link hidden" id="mobile-nav-jobs">Jobs</a>
+          <a href="/bids" class="mobile-nav-link hidden" id="mobile-nav-bids">Bids</a>
+          <a href="/superintendents" class="mobile-nav-link hidden" id="mobile-nav-supers">Superintendents</a>
+          <a href="/licensing" class="mobile-nav-link hidden" id="mobile-nav-licensing">Licensing</a>
+          <a href="/training" class="mobile-nav-link hidden" id="mobile-nav-training">Training</a>
+          <a href="/users" class="mobile-nav-link hidden" id="mobile-nav-users">Manage Users</a>
+          <div class="border-t border-gray-200 my-2 hidden" id="mobile-nav-finance-divider"></div>
+          <a href="/concur" class="mobile-nav-link hidden" id="mobile-nav-concur">Concur Converter</a>
+          <a href="/reconciliation" class="mobile-nav-link hidden" id="mobile-nav-reconciliation">Reconciliation</a>
         </div>
       </div>
     </nav>
@@ -190,8 +198,18 @@ const title = 'JBS Internal Portal';
           if (nameEl && user.name) {
             nameEl.textContent = user.name;
           }
+          // Display friendly role labels
+          const roleLabels: Record<string, string> = {
+            'executive': 'Executive',
+            'hr_admin': 'HR Admin',
+            'finance': 'Finance',
+            'project_manager': 'Project Manager',
+            'construction_admin': 'Construction Admin',
+            'trainee': 'Trainee',
+            'support': 'IT Support',
+          };
           if (roleEl && user.role) {
-            roleEl.textContent = user.role;
+            roleEl.textContent = roleLabels[user.role] || user.role;
           }
           if (initialsEl && user.name) {
             const names = user.name.split(' ');
@@ -201,13 +219,59 @@ const title = 'JBS Internal Portal';
             initialsEl.textContent = initials.toUpperCase();
           }
 
-          // Training nav: trainees go to schedule, admins go to management
-          const trainingNav = document.getElementById('nav-training-admin');
-          const mobileTrainingNav = document.getElementById('mobile-nav-training');
-          if (user.role === 'trainee') {
+          // RBAC nav visibility
+          const role = user.role;
+          const show = (ids: string[]) => ids.forEach(id => {
+            document.getElementById(id)?.classList.remove('hidden');
+          });
+
+          // Everyone gets dashboard
+          // Role-specific nav items:
+          if (role === 'executive' || role === 'support') {
+            // Full access to everything
+            show(['nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training', 'nav-users', 'nav-finance',
+                  'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training', 'mobile-nav-users',
+                  'mobile-nav-finance-divider', 'mobile-nav-concur', 'mobile-nav-reconciliation']);
+          } else if (role === 'hr_admin') {
+            show(['nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training', 'nav-users',
+                  'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training', 'mobile-nav-users']);
+          } else if (role === 'finance') {
+            show(['nav-jobs', 'nav-bids', 'nav-finance',
+                  'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-finance-divider', 'mobile-nav-concur', 'mobile-nav-reconciliation']);
+          } else if (role === 'project_manager') {
+            show(['nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training',
+                  'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training']);
+            // Trainees see their schedule; PMs see their own training too
+            const trainingNav = document.getElementById('nav-training');
+            const mobileTrainingNav = document.getElementById('mobile-nav-training');
             if (trainingNav) {
               trainingNav.setAttribute('href', '/training/schedule');
-              trainingNav.querySelector('svg')?.nextSibling && (trainingNav.lastChild!.textContent = ' My Training');
+              trainingNav.lastChild && (trainingNav.lastChild.textContent = ' My Training');
+            }
+            if (mobileTrainingNav) {
+              mobileTrainingNav.setAttribute('href', '/training/schedule');
+              mobileTrainingNav.textContent = 'My Training';
+            }
+          } else if (role === 'construction_admin') {
+            show(['nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training',
+                  'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training']);
+            const trainingNav = document.getElementById('nav-training');
+            const mobileTrainingNav = document.getElementById('mobile-nav-training');
+            if (trainingNav) {
+              trainingNav.setAttribute('href', '/training/schedule');
+              trainingNav.lastChild && (trainingNav.lastChild.textContent = ' My Training');
+            }
+            if (mobileTrainingNav) {
+              mobileTrainingNav.setAttribute('href', '/training/schedule');
+              mobileTrainingNav.textContent = 'My Training';
+            }
+          } else if (role === 'trainee') {
+            show(['nav-training', 'mobile-nav-training']);
+            const trainingNav = document.getElementById('nav-training');
+            const mobileTrainingNav = document.getElementById('mobile-nav-training');
+            if (trainingNav) {
+              trainingNav.setAttribute('href', '/training/schedule');
+              trainingNav.lastChild && (trainingNav.lastChild.textContent = ' My Training');
             }
             if (mobileTrainingNav) {
               mobileTrainingNav.setAttribute('href', '/training/schedule');
