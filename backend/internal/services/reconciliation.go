@@ -169,7 +169,7 @@ func (e *ReconciliationEngine) Reconcile(bankTrans []models.BankTransaction, fou
 		}
 	}
 
-	return &models.ReconciliationReport{
+	report := &models.ReconciliationReport{
 		MatchedTransactions:        matched,
 		BankOnlyTransactions:       finalBankUnmatched,
 		FoundationOnlyTransactions: finalFoundationUnmatched,
@@ -178,6 +178,11 @@ func (e *ReconciliationEngine) Reconcile(bankTrans []models.BankTransaction, fou
 		AmbiguousVoids:             e.ambiguousVoids,
 		GeneratedAt:                time.Now(),
 	}
+
+	// Compute date ranges and classify unmatched transactions
+	e.classifyUnmatched(report, bankFiltered, foundationCleaned)
+
+	return report
 }
 
 func (e *ReconciliationEngine) filterBankTransactions(transactions []models.BankTransaction) []models.BankTransaction {
@@ -206,6 +211,100 @@ func (e *ReconciliationEngine) filterFoundationTransactions(transactions []model
 		filtered = append(filtered, txn)
 	}
 	return filtered
+}
+
+// classifyUnmatched categorizes unmatched transactions into payments, out-of-range, and true discrepancies
+func (e *ReconciliationEngine) classifyUnmatched(report *models.ReconciliationReport, bankAll []models.BankTransaction, foundAll []models.FoundationTransaction) {
+	// Compute date ranges from all loaded transactions
+	if len(bankAll) > 0 {
+		minD, maxD := bankAll[0].Date, bankAll[0].Date
+		for _, t := range bankAll {
+			if t.Date.Before(minD) {
+				minD = t.Date
+			}
+			if t.Date.After(maxD) {
+				maxD = t.Date
+			}
+		}
+		report.BankMinDate = &minD
+		report.BankMaxDate = &maxD
+	}
+	if len(foundAll) > 0 {
+		minD, maxD := foundAll[0].Date, foundAll[0].Date
+		for _, t := range foundAll {
+			if t.Date.Before(minD) {
+				minD = t.Date
+			}
+			if t.Date.After(maxD) {
+				maxD = t.Date
+			}
+		}
+		report.FoundationMinDate = &minD
+		report.FoundationMaxDate = &maxD
+	}
+
+	// Compute overlap period (with tolerance buffer)
+	if report.BankMinDate != nil && report.FoundationMinDate != nil {
+		tolerance := time.Duration(e.DateToleranceDays) * 24 * time.Hour
+
+		overlapStart := *report.BankMinDate
+		if report.FoundationMinDate.After(overlapStart) {
+			overlapStart = *report.FoundationMinDate
+		}
+		// Subtract tolerance from overlap start so edge transactions aren't penalized
+		adjustedStart := overlapStart.Add(-tolerance)
+		report.OverlapStart = &adjustedStart
+
+		overlapEnd := *report.BankMaxDate
+		if report.FoundationMaxDate.Before(overlapEnd) {
+			overlapEnd = *report.FoundationMaxDate
+		}
+		// Add tolerance to overlap end
+		adjustedEnd := overlapEnd.Add(tolerance)
+		report.OverlapEnd = &adjustedEnd
+	}
+
+	// Classify bank-only transactions
+	report.BankPayments = make([]models.BankTransaction, 0)
+	report.BankOutOfRange = make([]models.BankTransaction, 0)
+	report.BankTrueDiscrepancies = make([]models.BankTransaction, 0)
+
+	for _, txn := range report.BankOnlyTransactions {
+		if isPaymentTransaction(txn) {
+			report.BankPayments = append(report.BankPayments, txn)
+		} else if report.OverlapStart != nil && report.OverlapEnd != nil &&
+			(txn.Date.Before(*report.OverlapStart) || txn.Date.After(*report.OverlapEnd)) {
+			report.BankOutOfRange = append(report.BankOutOfRange, txn)
+		} else {
+			report.BankTrueDiscrepancies = append(report.BankTrueDiscrepancies, txn)
+		}
+	}
+
+	// Classify foundation-only transactions
+	report.FoundationOutOfRange = make([]models.FoundationTransaction, 0)
+	report.FoundationTrueDiscrepancies = make([]models.FoundationTransaction, 0)
+
+	for _, txn := range report.FoundationOnlyTransactions {
+		if report.OverlapStart != nil && report.OverlapEnd != nil &&
+			(txn.Date.Before(*report.OverlapStart) || txn.Date.After(*report.OverlapEnd)) {
+			report.FoundationOutOfRange = append(report.FoundationOutOfRange, txn)
+		} else {
+			report.FoundationTrueDiscrepancies = append(report.FoundationTrueDiscrepancies, txn)
+		}
+	}
+}
+
+// isPaymentTransaction detects AmEx payment/credit transactions (not purchases)
+func isPaymentTransaction(txn models.BankTransaction) bool {
+	desc := strings.ToLower(txn.Description)
+	return strings.Contains(desc, "payment") ||
+		strings.Contains(desc, "autopay") ||
+		strings.Contains(desc, "online pmt") ||
+		strings.Contains(desc, "rebilling") ||
+		strings.Contains(desc, "membership cancelled") ||
+		strings.Contains(desc, "late fee") ||
+		strings.Contains(desc, "interest charge") ||
+		(txn.Amount < 0 && math.Abs(txn.Amount) > 5000)
 }
 
 func (e *ReconciliationEngine) handleVoids(transactions []models.FoundationTransaction) ([]models.FoundationTransaction, []models.VoidPair) {

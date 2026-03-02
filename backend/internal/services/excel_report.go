@@ -215,44 +215,29 @@ func (g *ExcelReportGenerator) createActionItemsSheet(f *excelize.File, report *
 		})
 	}
 
-	// HIGH: Bank only transactions
-	for _, txn := range report.BankOnlyTransactions {
-		isPayment := g.isPaymentTransaction(txn)
-		if isPayment {
-			items = append(items, actionItem{
-				priority:     "INFO",
-				prioritySort: 4,
-				amount:       txn.Amount,
-				date:         txn.Date.Format("01/02/2006"),
-				itemType:     "💳 PAYMENT TO AMEX - Informational",
-				cardmember:   txn.CardmemberName,
-				description:  txn.Description,
-				reference:    txn.Reference,
-				notes:        "Payment transaction, not a purchase",
-				format:       formats["potential"],
-			})
-		} else {
-			items = append(items, actionItem{
-				priority:     "HIGH",
-				prioritySort: 1,
-				amount:       txn.Amount,
-				date:         txn.Date.Format("01/02/2006"),
-				itemType:     "🏦 BANK ONLY - Add to Foundation",
-				cardmember:   txn.CardmemberName,
-				description:  txn.Description,
-				reference:    txn.Reference,
-				format:       formats["bank_only"],
-			})
-		}
+	// HIGH: True bank discrepancies (in overlapping date range, not payments)
+	for _, txn := range report.BankTrueDiscrepancies {
+		items = append(items, actionItem{
+			priority:     "HIGH",
+			prioritySort: 1,
+			amount:       txn.Amount,
+			date:         txn.Date.Format("01/02/2006"),
+			itemType:     "🏦 BANK ONLY - Not in Foundation",
+			cardmember:   txn.CardmemberName,
+			description:  txn.Description,
+			reference:    txn.Reference,
+			notes:        "Card charge in bank statement but not found in Foundation/Concur",
+			format:       formats["bank_only"],
+		})
 	}
 
-	// MEDIUM/HIGH: Foundation only transactions
-	for _, txn := range report.FoundationOnlyTransactions {
+	// MEDIUM/HIGH: True foundation discrepancies (in overlapping date range)
+	for _, txn := range report.FoundationTrueDiscrepancies {
 		isPrepaid := g.isPrepaidCardTransaction(txn)
 		priority := "MEDIUM"
 		prioritySort := 2
-		itemType := "📊 FOUNDATION ONLY - Verify source"
-		notes := "Transaction in Foundation but not in bank statement"
+		itemType := "📊 FOUNDATION ONLY - Not in Bank"
+		notes := "In Foundation but not in bank statement for this period"
 
 		if isPrepaid {
 			itemType = "💳 PRE-PAID CARD - Add merchant details"
@@ -297,6 +282,55 @@ func (g *ExcelReportGenerator) createActionItemsSheet(f *excelize.File, report *
 			jobNum:       pm.FoundationTransaction.JobNumber,
 			reference:    pm.BankTransaction.Reference,
 			notes:        notes,
+			format:       formats["potential"],
+		})
+	}
+
+	// INFO: Payments to AmEx
+	for _, txn := range report.BankPayments {
+		items = append(items, actionItem{
+			priority:     "INFO",
+			prioritySort: 4,
+			amount:       txn.Amount,
+			date:         txn.Date.Format("01/02/2006"),
+			itemType:     "💳 PAYMENT TO AMEX",
+			cardmember:   txn.CardmemberName,
+			description:  txn.Description,
+			reference:    txn.Reference,
+			notes:        "Payment/credit to card account — not a purchase, no Foundation match expected",
+			format:       formats["potential"],
+		})
+	}
+
+	// INFO: Out of date range (bank)
+	for _, txn := range report.BankOutOfRange {
+		items = append(items, actionItem{
+			priority:     "INFO",
+			prioritySort: 5,
+			amount:       txn.Amount,
+			date:         txn.Date.Format("01/02/2006"),
+			itemType:     "📅 OUTSIDE DATE RANGE",
+			cardmember:   txn.CardmemberName,
+			description:  txn.Description,
+			reference:    txn.Reference,
+			notes:        "Bank transaction outside Foundation date range — check prior/next period",
+			format:       formats["potential"],
+		})
+	}
+
+	// INFO: Out of date range (foundation)
+	for _, txn := range report.FoundationOutOfRange {
+		items = append(items, actionItem{
+			priority:     "INFO",
+			prioritySort: 5,
+			amount:       txn.Amount,
+			date:         txn.Date.Format("01/02/2006"),
+			itemType:     "📅 OUTSIDE DATE RANGE",
+			cardmember:   txn.VendorName,
+			description:  txn.Description,
+			trxNum:       fmt.Sprintf("%d", txn.TransactionNumber),
+			jobNum:       txn.JobNumber,
+			notes:        "Foundation transaction outside bank statement range — check prior/next period",
 			format:       formats["potential"],
 		})
 	}
@@ -348,40 +382,65 @@ func (g *ExcelReportGenerator) createActionItemsSheet(f *excelize.File, report *
 	reviewCount := 0
 	infoCount := 0
 	for _, item := range items {
-		switch item.prioritySort {
-		case 1:
+		switch {
+		case item.prioritySort <= 1:
 			highCount++
-		case 2:
+		case item.prioritySort == 2:
 			mediumCount++
-		case 3:
+		case item.prioritySort == 3:
 			reviewCount++
-		case 4:
+		default:
 			infoCount++
 		}
 	}
 
-	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("HIGH Priority (Missing Transactions): %d", highCount))
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("HIGH/CRITICAL (True Discrepancies): %d", highCount))
 	row++
-	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("MEDIUM Priority (Pre-Paid Cards & Verify): %d", mediumCount))
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("MEDIUM (Foundation Only - Verify): %d", mediumCount))
 	row++
-	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("REVIEW Priority (Potential Matches): %d", reviewCount))
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("REVIEW (Potential Matches): %d", reviewCount))
 	row++
-	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("INFO (Payments - No Action): %d", infoCount))
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("INFO (Payments/Out-of-Range - No Action): %d", infoCount))
 }
 
 func (g *ExcelReportGenerator) createSummarySheet(f *excelize.File, report *models.ReconciliationReport, formats map[string]int) {
 	sheetName := "Summary"
 	f.NewSheet(sheetName)
 
-	f.SetColWidth(sheetName, "A", "A", 35)
-	f.SetColWidth(sheetName, "B", "B", 20)
+	f.SetColWidth(sheetName, "A", "A", 45)
+	f.SetColWidth(sheetName, "B", "B", 25)
 
 	row := 1
 	f.SetCellValue(sheetName, "A1", "Reconciliation Summary Report")
+	f.SetCellStyle(sheetName, "A1", "A1", formats["header"])
 	f.SetCellValue(sheetName, "A2", fmt.Sprintf("Generated: %s", report.GeneratedAt.Format("2006-01-02 15:04:05")))
 
-	row = 5
-	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), "Key Metrics")
+	// Date Range Section
+	row = 4
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), "📅 Date Range Analysis")
+	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("A%d", row), formats["header"])
+	row++
+
+	if report.BankMinDate != nil && report.BankMaxDate != nil {
+		f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), "Bank Statement Period")
+		f.SetCellValue(sheetName, fmt.Sprintf("B%d", row), fmt.Sprintf("%s to %s", report.BankMinDate.Format("01/02/2006"), report.BankMaxDate.Format("01/02/2006")))
+		row++
+	}
+	if report.FoundationMinDate != nil && report.FoundationMaxDate != nil {
+		f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), "Foundation Period")
+		f.SetCellValue(sheetName, fmt.Sprintf("B%d", row), fmt.Sprintf("%s to %s", report.FoundationMinDate.Format("01/02/2006"), report.FoundationMaxDate.Format("01/02/2006")))
+		row++
+	}
+	if report.OverlapStart != nil && report.OverlapEnd != nil {
+		f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), "Overlapping Period (used for matching)")
+		f.SetCellValue(sheetName, fmt.Sprintf("B%d", row), fmt.Sprintf("%s to %s", report.OverlapStart.Format("01/02/2006"), report.OverlapEnd.Format("01/02/2006")))
+		row++
+	}
+
+	// Transaction counts
+	row += 1
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), "📊 Transaction Counts")
+	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("A%d", row), formats["header"])
 	row++
 
 	totalBank := report.TotalMatched() + report.TotalBankOnly()
@@ -393,21 +452,71 @@ func (g *ExcelReportGenerator) createSummarySheet(f *excelize.File, report *mode
 	}{
 		{"Total Bank Transactions", totalBank},
 		{"Total Foundation Transactions", totalFoundation},
-		{"", ""},
-		{"✅ Matched Transactions", report.TotalMatched()},
-		{"🏦 Bank Only (Missing in Foundation)", report.TotalBankOnly()},
-		{"📊 Foundation Only (Missing in Bank)", report.TotalFoundationOnly()},
-		{"🔍 Potential Matches (Need Review)", len(report.PotentialMatches)},
-		{"♻️  Void Pairs Identified", len(report.VoidPairs)},
-		{"⚠️  Ambiguous Voids (Manual Review)", len(report.AmbiguousVoids)},
-		{"", ""},
-		{"Match Rate", fmt.Sprintf("%.1f%%", report.MatchRate())},
 	}
 
 	for _, metric := range metrics {
-		if metric.label != "" {
-			f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), metric.label)
-			f.SetCellValue(sheetName, fmt.Sprintf("B%d", row), metric.value)
+		f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), metric.label)
+		f.SetCellValue(sheetName, fmt.Sprintf("B%d", row), metric.value)
+		row++
+	}
+
+	// Matching results
+	row += 1
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), "✅ Matching Results")
+	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("A%d", row), formats["header"])
+	row++
+
+	matchResults := []struct {
+		label  string
+		value  interface{}
+		style  int
+	}{
+		{"Matched Transactions", report.TotalMatched(), formats["matched"]},
+		{"Match Rate (Actionable)", fmt.Sprintf("%.1f%%", report.ActionableMatchRate()), formats["matched"]},
+		{"Match Rate (Overall)", fmt.Sprintf("%.1f%%", report.MatchRate()), 0},
+		{"", "", 0},
+		{"🔍 Potential Matches (Need Review)", len(report.PotentialMatches), formats["potential"]},
+		{"♻️  Void Pairs Identified", len(report.VoidPairs), 0},
+		{"⚠️  Ambiguous Voids (Manual Review)", len(report.AmbiguousVoids), 0},
+	}
+
+	for _, m := range matchResults {
+		if m.label != "" {
+			f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), m.label)
+			f.SetCellValue(sheetName, fmt.Sprintf("B%d", row), m.value)
+			if m.style != 0 {
+				f.SetCellStyle(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("B%d", row), m.style)
+			}
+		}
+		row++
+	}
+
+	// Discrepancy breakdown
+	row += 1
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), "🔍 Discrepancy Breakdown")
+	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("A%d", row), formats["header"])
+	row++
+
+	discrepancies := []struct {
+		label string
+		value interface{}
+		style int
+	}{
+		{"🏦 Bank Only — True Discrepancies (need action)", len(report.BankTrueDiscrepancies), formats["bank_only"]},
+		{"📊 Foundation Only — True Discrepancies (need action)", len(report.FoundationTrueDiscrepancies), formats["foundation_only"]},
+		{"", "", 0},
+		{"💳 Bank Payments/Credits (no action needed)", len(report.BankPayments), formats["potential"]},
+		{"📅 Bank — Outside Foundation Date Range", len(report.BankOutOfRange), formats["potential"]},
+		{"📅 Foundation — Outside Bank Date Range", len(report.FoundationOutOfRange), formats["potential"]},
+	}
+
+	for _, d := range discrepancies {
+		if d.label != "" {
+			f.SetCellValue(sheetName, fmt.Sprintf("A%d", row), d.label)
+			f.SetCellValue(sheetName, fmt.Sprintf("B%d", row), d.value)
+			if d.style != 0 {
+				f.SetCellStyle(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("B%d", row), d.style)
+			}
 		}
 		row++
 	}
@@ -599,9 +708,7 @@ func (g *ExcelReportGenerator) createAmbiguousVoidsSheet(f *excelize.File, repor
 
 // Helper functions
 func (g *ExcelReportGenerator) isPaymentTransaction(txn models.BankTransaction) bool {
-	desc := strings.ToLower(txn.Description)
-	return strings.Contains(desc, "payment") || strings.Contains(desc, "autopay") ||
-		strings.Contains(desc, "online pmt") || (txn.Amount < 0 && math.Abs(txn.Amount) > 1000)
+	return isPaymentTransaction(txn)
 }
 
 func (g *ExcelReportGenerator) isPrepaidCardTransaction(txn models.FoundationTransaction) bool {

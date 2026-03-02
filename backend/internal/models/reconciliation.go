@@ -11,6 +11,23 @@ type ReconciliationReport struct {
 	VoidPairs                   []VoidPair
 	AmbiguousVoids              []AmbiguousVoid
 	GeneratedAt                 time.Time
+
+	// Categorized bank-only transactions for better reporting
+	BankPayments          []BankTransaction // Payments to AmEx (not purchases)
+	BankOutOfRange        []BankTransaction // Bank txns outside Foundation date range
+	BankTrueDiscrepancies []BankTransaction // Actual missing-in-Foundation items
+
+	// Categorized foundation-only transactions
+	FoundationOutOfRange        []FoundationTransaction // Foundation txns outside bank date range
+	FoundationTrueDiscrepancies []FoundationTransaction // Actual missing-in-bank items
+
+	// Date range info
+	BankMinDate       *time.Time
+	BankMaxDate       *time.Time
+	FoundationMinDate *time.Time
+	FoundationMaxDate *time.Time
+	OverlapStart      *time.Time
+	OverlapEnd        *time.Time
 }
 
 // MatchedPair represents a matched bank and foundation transaction
@@ -85,4 +102,25 @@ func (r *ReconciliationReport) MatchRate() float64 {
 		return 0.0
 	}
 	return (float64(r.TotalMatched()) / float64(total)) * 100.0
+}
+
+// ActionableMatchRate calculates match rate excluding payments and out-of-range transactions
+func (r *ReconciliationReport) ActionableMatchRate() float64 {
+	actionableBankOnly := len(r.BankTrueDiscrepancies)
+	actionableFoundOnly := len(r.FoundationTrueDiscrepancies)
+	total := r.TotalMatched() + actionableBankOnly + actionableFoundOnly
+	if total == 0 {
+		return 0.0
+	}
+	return (float64(r.TotalMatched()) / float64(total)) * 100.0
+}
+
+// TotalPayments returns count of payment transactions
+func (r *ReconciliationReport) TotalPayments() int {
+	return len(r.BankPayments)
+}
+
+// TotalOutOfRange returns count of transactions outside the overlapping date range
+func (r *ReconciliationReport) TotalOutOfRange() int {
+	return len(r.BankOutOfRange) + len(r.FoundationOutOfRange)
 }
