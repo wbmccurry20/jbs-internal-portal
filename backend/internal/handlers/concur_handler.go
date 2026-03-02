@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -37,7 +38,7 @@ func UploadConcurFile(c *gin.Context) {
 
 	// Validate file
 	if err := utils.ValidateExcelFile(file); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file upload"})
 		return
 	}
 
@@ -93,7 +94,7 @@ func UploadConcurFile(c *gin.Context) {
 			WHERE id = $4
 		`, "failed", err.Error(), time.Now(), jobID)
 
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "File processing failed"})
 		return
 	}
 
@@ -255,7 +256,7 @@ func DeleteConversionJob(c *gin.Context) {
 		if strings.HasPrefix(absOutputPath, absUploadDir) {
 			if err := os.Remove(cleanPath); err != nil {
 				// Log error but don't fail the delete operation
-				fmt.Printf("Warning: Failed to delete file %s: %v\n", cleanPath, err)
+				log.Printf("Warning: Failed to delete file %s: %v", cleanPath, err)
 			}
 		}
 	}

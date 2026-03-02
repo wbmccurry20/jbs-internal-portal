@@ -187,6 +187,16 @@ import Layout from '../layouts/Layout.astro';
   </div>
 
   <script>
+    function escapeHtml(str: string): string {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     const API_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
     const token = localStorage.getItem('jbs_token');
 
@@ -249,8 +259,8 @@ import Layout from '../layouts/Layout.astro';
 
           return `
             <div class="bg-white border-l-4 ${priorityColors[priority]} rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="editBid(${bid.id})">
-              <h4 class="font-semibold text-gray-900 mb-1">${bid.location || 'Untitled Bid'}</h4>
-              <p class="text-sm text-gray-600 mb-2">${bid.client?.name || 'No client'}</p>
+              <h4 class="font-semibold text-gray-900 mb-1">${escapeHtml(bid.location || 'Untitled Bid')}</h4>
+              <p class="text-sm text-gray-600 mb-2">${escapeHtml(bid.client?.name || 'No client')}</p>
               <div class="flex items-center justify-between text-sm">
                 <span class="font-semibold text-primary-600">$${parseFloat(bid.bid_amount || 0).toLocaleString()}</span>
                 ${bid.due_date ? `<span class="text-gray-500">${formatDate(bid.due_date)}</span>` : ''}
@@ -260,7 +270,7 @@ import Layout from '../layouts/Layout.astro';
                   <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
                     priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
                   }">
-                    ${priority.toUpperCase()} Priority
+                    ${escapeHtml(priority.toUpperCase())} Priority
                   </span>
                 </div>
               ` : ''}

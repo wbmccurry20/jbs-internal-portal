@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -90,7 +91,7 @@ func ListBids(c *gin.Context) {
 			&cID, &cName, &jID, &jNumber, &jName,
 		)
 		if err != nil {
-			fmt.Printf("Scan error: %v\n", err)
+			log.Printf("Scan error: %v", err)
 			continue
 		}
 

@@ -3,7 +3,9 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -48,9 +50,14 @@ func ListLicenses(c *gin.Context) {
 		argPos++
 	}
 
-	// Filter by expiring soon (days parameter)
+	// Filter by expiring soon (days parameter) - parse to int to prevent SQL injection
 	if days := c.Query("expiring_days"); days != "" {
-		query += fmt.Sprintf(" AND expiration_date <= CURRENT_DATE + INTERVAL '%s days'", days)
+		daysInt, err := strconv.Atoi(days)
+		if err != nil || daysInt < 0 || daysInt > 365 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid expiring_days parameter"})
+			return
+		}
+		query += fmt.Sprintf(" AND expiration_date <= CURRENT_DATE + INTERVAL '%d days'", daysInt)
 		query += " AND expiration_date >= CURRENT_DATE"
 	}
 
@@ -177,7 +184,7 @@ func CreateLicense(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
@@ -237,8 +244,8 @@ func CreateLicense(c *gin.Context) {
 	).Scan(&id)
 
 	if err != nil {
-		fmt.Printf("Error creating license: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create license", "details": err.Error()})
+		log.Printf("Error creating license: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create license"})
 		return
 	}
 
@@ -262,7 +269,7 @@ func UpdateLicense(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 

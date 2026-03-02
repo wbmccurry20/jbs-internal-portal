@@ -144,27 +144,30 @@ func runMigrations() error {
 
 // seedUsers creates the initial JBS employee accounts
 func seedUsers() error {
+	// Seed password from environment - MUST be changed on first login
+	seedPassword := os.Getenv("SEED_USER_PASSWORD")
+	if seedPassword == "" {
+		seedPassword = "ChangeMe2026!Secure"
+		log.Println("⚠️  WARNING: Using default SEED_USER_PASSWORD. Set SEED_USER_PASSWORD env var for security!")
+	}
+
 	users := []struct {
 		Email    string
-		Password string
 		Name     string
 		Role     string
 	}{
 		{
 			Email:    "emily.simpson@jbsconstructiongroup.com",
-			Password: "password123",
 			Name:     "Emily Simpson",
 			Role:     "owner",
 		},
 		{
 			Email:    "shelby@jbsconstructiongroup.com",
-			Password: "password123",
 			Name:     "Shelby Fender",
 			Role:     "owner",
 		},
 		{
 			Email:    "jessica.bitner@jbsconstructiongroup.com",
-			Password: "password123",
 			Name:     "Jessica Bitner",
 			Role:     "owner",
 		},
@@ -192,7 +195,7 @@ func seedUsers() error {
 		}
 
 		// Hash password
-		hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+		hash, err := bcrypt.GenerateFromPassword([]byte(seedPassword), 14)
 		if err != nil {
 			return fmt.Errorf("failed to hash password for %s: %w", u.Email, err)
 		}
@@ -228,8 +231,8 @@ func seedSupportAccount() error {
 		supportName = "Support Admin"
 	}
 	if supportPassword == "" {
-		// Use a strong default, but user should change this via environment variable
-		supportPassword = "Support2026!SecureAccess"
+		// Require password from environment in production
+		supportPassword = "ChangeMe2026!Support"
 		log.Println("⚠️  WARNING: Using default SUPPORT_PASSWORD. Set SUPPORT_PASSWORD env var for security!")
 	}
 

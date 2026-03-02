@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
@@ -36,6 +37,13 @@ func main() {
 
 	// Initialize Gin router
 	router := gin.Default()
+
+	// Limit request body size to 10MB to prevent abuse
+	router.MaxMultipartMemory = 10 << 20 // 10 MB
+	router.Use(func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 10<<20) // 10MB
+		c.Next()
+	})
 
 	// Security middleware (applied to all routes)
 	router.Use(middleware.SecurityHeaders())

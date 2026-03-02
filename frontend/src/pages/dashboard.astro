@@ -207,6 +207,16 @@ import Layout from '../layouts/Layout.astro';
     const API_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
     const token = localStorage.getItem('jbs_token');
 
+    function escapeHtml(str: string): string {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     async function loadDashboard() {
       try {
         // Fetch all data in parallel
@@ -279,14 +289,14 @@ import Layout from '../layouts/Layout.astro';
           recentJobsEl!.innerHTML = recentJobs.map((job: any) => `
             <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-900 truncate">${job.job_number}</p>
-                <p class="text-sm text-gray-600 truncate">${job.project_name || 'Untitled'}</p>
+                <p class="text-sm font-semibold text-gray-900 truncate">${escapeHtml(job.job_number)}</p>
+                <p class="text-sm text-gray-600 truncate">${escapeHtml(job.project_name || 'Untitled')}</p>
               </div>
               <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 job.status === 'active' ? 'bg-green-100 text-green-800' : 
                 job.status === 'completed' ? 'bg-blue-100 text-blue-800' : 
                 'bg-yellow-100 text-yellow-800'
-              }">${job.status}</span>
+              }">${escapeHtml(job.status)}</span>
             </div>
           `).join('');
         }
@@ -308,8 +318,8 @@ import Layout from '../layouts/Layout.astro';
           activeBidsEl!.innerHTML = activeBidsList.map((bid: any) => `
             <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-900 truncate">${bid.project_name}</p>
-                <p class="text-sm text-gray-600 truncate">${bid.client_name}</p>
+                <p class="text-sm font-semibold text-gray-900 truncate">${escapeHtml(bid.project_name)}</p>
+                <p class="text-sm text-gray-600 truncate">${escapeHtml(bid.client_name)}</p>
               </div>
               <div class="ml-3 text-right">
                 <p class="text-sm font-semibold text-primary-600">$${(parseFloat(bid.bid_amount) / 1000).toFixed(0)}K</p>

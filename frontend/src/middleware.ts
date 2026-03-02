@@ -12,17 +12,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const isDev = import.meta.env.DEV;
   const backendUrl = isDev 
     ? 'http://localhost:8080' 
-    : 'https://jbs-internal-portal-production.up.railway.app';
+    : (import.meta.env.PUBLIC_API_URL || 'https://jbs-internal-portal-production.up.railway.app');
   
   response.headers.set(
     'Content-Security-Policy',
-    `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ${backendUrl}; frame-ancestors 'none';`
+    `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ${backendUrl}; frame-ancestors 'none';`
   );
   response.headers.set(
     'Strict-Transport-Security',
     'max-age=31536000; includeSubDomains; preload'
   );
-  response.headers.set('X-XSS-Protection', '1; mode=block');
+  // X-XSS-Protection: 0 is recommended by OWASP when CSP is present
+  response.headers.set('X-XSS-Protection', '0');
 
   return response;
 });

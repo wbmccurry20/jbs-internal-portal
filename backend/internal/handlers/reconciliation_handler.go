@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -67,7 +68,7 @@ func UploadReconciliationFiles(c *gin.Context) {
 		uploadDir = "/tmp/uploads"
 	}
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create upload directory: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
 		return
 	}
 
@@ -115,7 +116,7 @@ func UploadReconciliationFiles(c *gin.Context) {
 			WHERE id = $4
 		`, "failed", fmt.Sprintf("Failed to load bank transactions: %s", err.Error()), time.Now(), jobID)
 
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to load bank transactions: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load bank transactions"})
 		return
 	}
 
@@ -127,7 +128,7 @@ func UploadReconciliationFiles(c *gin.Context) {
 			WHERE id = $4
 		`, "failed", fmt.Sprintf("Failed to load foundation transactions: %s", err.Error()), time.Now(), jobID)
 
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to load foundation transactions: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load foundation transactions"})
 		return
 	}
 
@@ -145,7 +146,7 @@ func UploadReconciliationFiles(c *gin.Context) {
 			WHERE id = $4
 		`, "failed", fmt.Sprintf("Failed to generate report: %s", err.Error()), time.Now(), jobID)
 
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to generate report: %s", err.Error())})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate report"})
 		return
 	}
 
@@ -319,7 +320,7 @@ func DeleteReconciliationJob(c *gin.Context) {
 		if strings.HasPrefix(absOutputPath, absUploadDir) {
 			if err := os.Remove(cleanPath); err != nil {
 				// Log error but don't fail the delete operation
-				fmt.Printf("Warning: Failed to delete file %s: %v\n", cleanPath, err)
+				log.Printf("Warning: Failed to delete file %s: %v", cleanPath, err)
 			}
 		}
 	}

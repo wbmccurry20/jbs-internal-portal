@@ -147,6 +147,17 @@ import Layout from '../layouts/Layout.astro';
   <script>
     const API_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
     const token = localStorage.getItem('jbs_token');
+
+    function escapeHtml(str: string): string {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     const userStr = localStorage.getItem('jbs_user');
     let currentUser: any = null;
 
@@ -211,16 +222,16 @@ import Layout from '../layouts/Layout.astro';
           <div class="flex justify-between items-start">
             <div class="flex-1">
               <div class="flex items-center space-x-3 mb-2">
-                <h3 class="text-xl font-semibold text-gray-900">${job.job_number}</h3>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(job.status)}">${job.status}</span>
+                <h3 class="text-xl font-semibold text-gray-900">${escapeHtml(job.job_number)}</h3>
+                <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(job.status)}">${escapeHtml(job.status)}</span>
               </div>
-              <p class="text-lg text-gray-700 mb-2">${job.job_name || 'Untitled Project'}</p>
+              <p class="text-lg text-gray-700 mb-2">${escapeHtml(job.job_name || 'Untitled Project')}</p>
               <div class="text-sm text-gray-600 space-y-1">
-                ${job.address ? `<p>📍 ${job.address}${job.city ? `, ${job.city}` : ''}${job.state ? `, ${job.state}` : ''}</p>` : ''}
-                ${job.superintendent?.name ? `<p>👷 ${job.superintendent.name}</p>` : ''}
+                ${job.address ? `<p>📍 ${escapeHtml(job.address)}${job.city ? `, ${escapeHtml(job.city)}` : ''}${job.state ? `, ${escapeHtml(job.state)}` : ''}</p>` : ''}
+                ${job.superintendent?.name ? `<p>👷 ${escapeHtml(job.superintendent.name)}</p>` : ''}
                 ${job.contract_value ? `<p>💰 $${parseFloat(job.contract_value).toLocaleString()}</p>` : ''}
               </div>
-              ${job.notes ? `<p class="mt-3 text-sm text-gray-500 italic">${job.notes}</p>` : ''}
+              ${job.notes ? `<p class="mt-3 text-sm text-gray-500 italic">${escapeHtml(job.notes)}</p>` : ''}
             </div>
             <div class="flex space-x-2 ml-4">
               <button onclick="editJob(${job.id})" class="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
