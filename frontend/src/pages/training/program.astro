@@ -24,6 +24,13 @@ import Layout from '../../layouts/Layout.astro';
       </div>
     </div>
 
+    <!-- Reference Start Date -->
+    <div class="flex items-center space-x-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5">
+      <span class="text-sm font-medium text-blue-700">📅 Program Start Date:</span>
+      <input type="date" id="ref-start-date" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+      <span class="text-xs text-blue-500">Set a start date to see actual dates on each day</span>
+    </div>
+
     <!-- Week Tabs -->
     <div class="flex items-center space-x-2 overflow-x-auto pb-2" id="week-tabs"></div>
 
@@ -208,6 +215,18 @@ import Layout from '../../layouts/Layout.astro';
     let currentWeek = 1;
     const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
+    // Reference start date for showing actual dates on columns
+    function getNextMonday(): string {
+      const d = new Date();
+      const day = d.getDay();
+      const diff = day === 0 ? 1 : day === 1 ? 0 : 8 - day;
+      d.setDate(d.getDate() + diff);
+      return d.toISOString().split('T')[0];
+    }
+    const refDateInput = document.getElementById('ref-start-date') as HTMLInputElement;
+    refDateInput.value = getNextMonday();
+    refDateInput.addEventListener('change', () => renderProgram());
+
     async function loadProgram() {
       try {
         const res = await fetch(`${API_BASE}/training/programs/${programId}`, { headers });
@@ -255,9 +274,24 @@ import Layout from '../../layouts/Layout.astro';
         const col = document.createElement('div');
         col.className = 'bg-white rounded-xl shadow-sm border border-gray-200 min-h-[300px] flex flex-col';
 
+        // Compute actual date for this column if a reference start date is set
+        const refDate = (document.getElementById('ref-start-date') as HTMLInputElement).value;
+        let dateLabel = '';
+        if (refDate) {
+          const start = new Date(refDate + 'T00:00:00');
+          // Find Monday of start week
+          while (start.getDay() !== 1) start.setDate(start.getDate() - 1);
+          const dayDate = new Date(start);
+          dayDate.setDate(dayDate.getDate() + (currentWeek - 1) * 7 + (dow - 1));
+          dateLabel = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
         col.innerHTML = `
           <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-xl">
-            <h3 class="font-semibold text-gray-900 text-sm">${dayNames[dow - 1]}</h3>
+            <div class="flex justify-between items-center">
+              <h3 class="font-semibold text-gray-900 text-sm">${dayNames[dow - 1]}</h3>
+              ${dateLabel ? `<span class="text-xs text-gray-400 font-medium">${dateLabel}</span>` : ''}
+            </div>
             ${dayTitle ? `<p class="text-xs text-primary-600 font-medium mt-0.5">${escapeHtml(dayTitle)}</p>` : ''}
           </div>
           <div class="flex-1 p-3 space-y-2" id="day-${dow}-items">
@@ -269,7 +303,7 @@ import Layout from '../../layouts/Layout.astro';
                   <div class="flex-1 min-w-0">
                     <p class="text-sm ${item.is_highlight ? 'font-bold text-yellow-800' : 'font-medium text-gray-800'} leading-tight">${escapeHtml(item.title)}</p>
                     ${item.description ? `<p class="text-xs text-gray-500 mt-0.5 line-clamp-2">${escapeHtml(item.description)}</p>` : ''}
-                    ${item.link_url ? `<span class="inline-flex items-center text-xs text-primary-600 mt-1">🔗 ${escapeHtml(item.link_label || 'Link')}</span>` : ''}
+                    ${item.link_url ? `<a href="${escapeHtml(item.link_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="inline-flex items-center text-xs text-primary-600 hover:text-primary-800 mt-1">🔗 ${escapeHtml(item.link_label || 'Link')}</a>` : ''}
                   </div>
                   ${formatTimeRange(item.start_time, item.end_time) ? `<span class="text-xs text-gray-400 ml-1 flex-shrink-0">${formatTimeRange(item.start_time, item.end_time)}</span>` : ''}
                 </div>
@@ -301,7 +335,7 @@ import Layout from '../../layouts/Layout.astro';
       (document.getElementById('item-link-label') as HTMLInputElement).value = '';
       (document.getElementById('item-highlight') as HTMLInputElement).checked = false;
 
-      document.getElementById('item-modal-title')!.textContent = `Add Item — ${dayNames[dow - 1]}, Week ${week}`;
+      document.getElementById('item-modal-title')!.textContent = `Add Item — ${dayNames[dow - 1]}${getRefDateLabel(week, dow)}, Week ${week}`;
       document.getElementById('item-submit-btn')!.textContent = 'Add Item';
       document.getElementById('delete-item-btn')!.classList.add('hidden');
       document.getElementById('item-modal')!.classList.remove('hidden');
@@ -493,6 +527,17 @@ import Layout from '../../layouts/Layout.astro';
       const div = document.createElement('div');
       div.textContent = str || '';
       return div.innerHTML;
+    }
+
+    /** Get formatted date label for a given week/dow based on reference start date */
+    function getRefDateLabel(week: number, dow: number): string {
+      const refDate = (document.getElementById('ref-start-date') as HTMLInputElement).value;
+      if (!refDate) return '';
+      const start = new Date(refDate + 'T00:00:00');
+      while (start.getDay() !== 1) start.setDate(start.getDate() - 1);
+      const dayDate = new Date(start);
+      dayDate.setDate(dayDate.getDate() + (week - 1) * 7 + (dow - 1));
+      return `, ${dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
     }
 
     /** Convert "HH:MM" 24-hr to "h:MM AM/PM" */
