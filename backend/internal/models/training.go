@@ -29,7 +29,9 @@ type TrainingScheduleItem struct {
 	Description string    `json:"description"`
 	LinkURL     string    `json:"link_url"`
 	LinkLabel   string    `json:"link_label"`
-	TimeSlot    string    `json:"time_slot"` // morning, afternoon, all-day
+	TimeSlot    string    `json:"time_slot"`              // legacy: morning, afternoon, all-day
+	StartTime   *string   `json:"start_time,omitempty"`   // "HH:MM" 24-hr, nullable = all day
+	EndTime     *string   `json:"end_time,omitempty"`     // "HH:MM" 24-hr, nullable = all day
 	SortOrder   int       `json:"sort_order"`
 	IsHighlight bool      `json:"is_highlight"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -65,6 +67,29 @@ type TrainingResource struct {
 	Description string    `json:"description"`
 	SortOrder   int       `json:"sort_order"`
 	CreatedAt   time.Time `json:"created_at"`
+}
+
+// ScheduleOverride customises a single trainee's schedule relative to the base program.
+type ScheduleOverride struct {
+	ID           int       `json:"id"`
+	AssignmentID int       `json:"assignment_id"`
+	WeekNumber   int       `json:"week_number"`
+	DayOfWeek    int       `json:"day_of_week"`
+	Action       string    `json:"action"`       // add, remove, replace
+	BaseItemID   *int      `json:"base_item_id"` // for remove/replace
+	Title        string    `json:"title,omitempty"`
+	Description  string    `json:"description,omitempty"`
+	DayTitle     string    `json:"day_title,omitempty"`
+	LinkURL      string    `json:"link_url,omitempty"`
+	LinkLabel    string    `json:"link_label,omitempty"`
+	TimeSlot     string    `json:"time_slot,omitempty"`
+	StartTime    *string   `json:"start_time,omitempty"`
+	EndTime      *string   `json:"end_time,omitempty"`
+	SortOrder    int       `json:"sort_order"`
+	IsHighlight  bool      `json:"is_highlight"`
+	CreatedBy    *int      `json:"created_by,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 // CalendarDay represents one day on a trainee's calendar

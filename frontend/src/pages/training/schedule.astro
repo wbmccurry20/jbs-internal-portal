@@ -52,6 +52,62 @@ import Layout from '../../layouts/Layout.astro';
       <h3 class="text-lg font-semibold text-gray-900 mb-4">📎 Training Resources</h3>
       <div id="resources-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
     </div>
+
+    <!-- Override Modal (admin only) -->
+    <div id="override-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-10 mx-auto p-6 border w-full max-w-lg shadow-xl rounded-xl bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900" id="override-modal-title">Add Custom Item</h3>
+          <button id="close-override-modal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <form id="override-form" class="space-y-4">
+          <input type="hidden" id="ovr-id" value="">
+          <input type="hidden" id="ovr-week" value="">
+          <input type="hidden" id="ovr-dow" value="">
+          <input type="hidden" id="ovr-action" value="add">
+          <input type="hidden" id="ovr-base-item-id" value="">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Task / Activity *</label>
+            <input type="text" id="ovr-title" required placeholder="e.g., Extra safety briefing" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+              <input type="time" id="ovr-start-time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+              <input type="time" id="ovr-end-time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea id="ovr-description" rows="2" placeholder="Additional details..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Link URL</label>
+              <input type="url" id="ovr-link-url" placeholder="https://..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Link Label</label>
+              <input type="text" id="ovr-link-label" placeholder="e.g., Open Doc" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+          </div>
+          <div class="flex items-center">
+            <input type="checkbox" id="ovr-highlight" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+            <label for="ovr-highlight" class="ml-2 text-sm text-gray-700">Highlight this item</label>
+          </div>
+          <div class="flex justify-end space-x-3 pt-2">
+            <button type="button" id="cancel-override" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+            <button type="button" id="delete-override-btn" class="hidden px-4 py-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 font-medium">Delete</button>
+            <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium" id="override-submit-btn">Add Item</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <div id="loading" class="text-center py-20">
@@ -77,6 +133,7 @@ import Layout from '../../layouts/Layout.astro';
     // Check if viewing specific assignment (admin) or own calendar (trainee)
     const params = new URLSearchParams(window.location.search);
     const assignmentId = params.get('assignment');
+    const isAdminView = !!assignmentId;
     const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
     let calendar: any = null;
@@ -152,7 +209,7 @@ import Layout from '../../layouts/Layout.astro';
 
       weekDays.forEach((day: any) => {
         const dateObj = new Date(day.date + 'T00:00:00');
-        const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
         let borderClass = 'border-gray-200';
         let headerBg = 'bg-gray-50';
@@ -179,11 +236,12 @@ import Layout from '../../layouts/Layout.astro';
             ${day.items.length === 0
               ? `<p class="text-xs text-gray-400 text-center py-4">${day.is_past ? 'No scheduled items' : 'Free day'}</p>`
               : day.items.map((item: any) => `
-                <div class="p-2.5 rounded-lg border ${item.is_highlight ? 'border-yellow-300 bg-yellow-50' : day.is_past ? 'border-gray-100 bg-gray-50' : 'border-gray-100 bg-white'} transition-colors">
+                <div class="group p-2.5 rounded-lg border ${item.is_highlight ? 'border-yellow-300 bg-yellow-50' : day.is_past ? 'border-gray-100 bg-gray-50' : 'border-gray-100 bg-white'} transition-colors ${item.id < 0 ? 'ring-1 ring-indigo-200' : ''}">
                   <div class="flex items-start">
                     ${day.is_past ? '<span class="text-green-500 mr-1.5 mt-0.5 flex-shrink-0">✓</span>' : '<span class="text-gray-300 mr-1.5 mt-0.5 flex-shrink-0">•</span>'}
                     <div class="flex-1 min-w-0">
                       <p class="text-sm ${item.is_highlight ? 'font-bold text-yellow-800' : day.is_past ? 'text-gray-500' : 'font-medium text-gray-800'}">${escapeHtml(item.title)}</p>
+                      ${item.id < 0 ? '<span class="text-xs text-indigo-500 font-medium">✦ Custom</span>' : ''}
                       ${item.description ? `<p class="text-xs text-gray-500 mt-0.5">${escapeHtml(item.description)}</p>` : ''}
                       ${item.link_url ? `
                         <a href="${escapeHtml(item.link_url)}" target="_blank" rel="noopener"
@@ -192,12 +250,22 @@ import Layout from '../../layouts/Layout.astro';
                         </a>
                       ` : ''}
                     </div>
-                    ${item.time_slot !== 'all-day' ? `<span class="text-xs ${day.is_past ? 'text-gray-300' : 'text-gray-400'} ml-1 flex-shrink-0">${item.time_slot === 'morning' ? 'AM' : 'PM'}</span>` : ''}
+                    <div class="flex items-center space-x-1 ml-1 flex-shrink-0">
+                      ${formatTimeRange(item.start_time, item.end_time) ? `<span class="text-xs ${day.is_past ? 'text-gray-300' : 'text-gray-400'}">${formatTimeRange(item.start_time, item.end_time)}</span>` : ''}
+                      ${isAdminView && item.id > 0 ? `<button onclick="removeBaseItem(${item.id}, ${day.week}, ${day.day_of_week})" class="hidden group-hover:inline-flex text-red-400 hover:text-red-600 p-0.5" title="Remove for this trainee"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>` : ''}
+                    </div>
                   </div>
                 </div>
               `).join('')
             }
           </div>
+          ${isAdminView ? `
+            <div class="p-2 border-t border-gray-100">
+              <button onclick="openAddOverride(${day.week}, ${day.day_of_week})" class="w-full py-1.5 text-xs text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors font-medium">
+                + Add Custom Item
+              </button>
+            </div>
+          ` : ''}
         `;
         grid.appendChild(col);
       });
@@ -259,10 +327,124 @@ import Layout from '../../layouts/Layout.astro';
       return div.innerHTML;
     }
 
+    /** Convert "HH:MM" 24-hr to "h:MM AM/PM" */
+    function formatTime24to12(t: string): string {
+      const [hStr, mStr] = t.split(':');
+      let h = parseInt(hStr, 10);
+      const suffix = h >= 12 ? 'PM' : 'AM';
+      if (h === 0) h = 12;
+      else if (h > 12) h -= 12;
+      return `${h}:${mStr} ${suffix}`;
+    }
+
+    /** Build a display string like "9:00 AM – 2:00 PM" or "" */
+    function formatTimeRange(start?: string | null, end?: string | null): string {
+      if (!start && !end) return '';
+      if (start && end) return `${formatTime24to12(start)} – ${formatTime24to12(end)}`;
+      if (start) return formatTime24to12(start);
+      return formatTime24to12(end!);
+    }
+
     function formatDate(dateStr: string) {
       const d = new Date(dateStr + 'T00:00:00');
       return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     }
+
+    // ===================== Per-Trainee Override Functions (Admin Only) =====================
+
+    (window as any).openAddOverride = (week: number, dow: number) => {
+      (document.getElementById('ovr-id') as HTMLInputElement).value = '';
+      (document.getElementById('ovr-week') as HTMLInputElement).value = String(week);
+      (document.getElementById('ovr-dow') as HTMLInputElement).value = String(dow);
+      (document.getElementById('ovr-action') as HTMLInputElement).value = 'add';
+      (document.getElementById('ovr-base-item-id') as HTMLInputElement).value = '';
+      (document.getElementById('ovr-title') as HTMLInputElement).value = '';
+      (document.getElementById('ovr-start-time') as HTMLInputElement).value = '';
+      (document.getElementById('ovr-end-time') as HTMLInputElement).value = '';
+      (document.getElementById('ovr-description') as HTMLTextAreaElement).value = '';
+      (document.getElementById('ovr-link-url') as HTMLInputElement).value = '';
+      (document.getElementById('ovr-link-label') as HTMLInputElement).value = '';
+      (document.getElementById('ovr-highlight') as HTMLInputElement).checked = false;
+
+      document.getElementById('override-modal-title')!.textContent = `Add Custom Item — ${dayNames[dow - 1]}, Week ${week}`;
+      document.getElementById('override-submit-btn')!.textContent = 'Add Item';
+      document.getElementById('delete-override-btn')!.classList.add('hidden');
+      document.getElementById('override-modal')!.classList.remove('hidden');
+    };
+
+    (window as any).removeBaseItem = async (baseItemId: number, week: number, dow: number) => {
+      if (!assignmentId || !confirm('Remove this item from this trainee\'s schedule?')) return;
+      try {
+        const res = await fetch(`${API_BASE}/training/assignments/${assignmentId}/overrides`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            week_number: week,
+            day_of_week: dow,
+            action: 'remove',
+            base_item_id: baseItemId,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error);
+        }
+        loadCalendar();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    };
+
+    // Save override
+    document.getElementById('override-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!assignmentId) return;
+
+      const ovrId = (document.getElementById('ovr-id') as HTMLInputElement).value;
+      const startTime = (document.getElementById('ovr-start-time') as HTMLInputElement).value || null;
+      const endTime = (document.getElementById('ovr-end-time') as HTMLInputElement).value || null;
+
+      const body = {
+        week_number: parseInt((document.getElementById('ovr-week') as HTMLInputElement).value),
+        day_of_week: parseInt((document.getElementById('ovr-dow') as HTMLInputElement).value),
+        action: (document.getElementById('ovr-action') as HTMLInputElement).value,
+        base_item_id: (document.getElementById('ovr-base-item-id') as HTMLInputElement).value
+          ? parseInt((document.getElementById('ovr-base-item-id') as HTMLInputElement).value)
+          : null,
+        title: (document.getElementById('ovr-title') as HTMLInputElement).value,
+        description: (document.getElementById('ovr-description') as HTMLTextAreaElement).value,
+        time_slot: startTime ? 'custom' : 'all-day',
+        start_time: startTime,
+        end_time: endTime,
+        link_url: (document.getElementById('ovr-link-url') as HTMLInputElement).value,
+        link_label: (document.getElementById('ovr-link-label') as HTMLInputElement).value,
+        is_highlight: (document.getElementById('ovr-highlight') as HTMLInputElement).checked,
+      };
+
+      try {
+        const url = ovrId
+          ? `${API_BASE}/training/assignments/${assignmentId}/overrides/${ovrId}`
+          : `${API_BASE}/training/assignments/${assignmentId}/overrides`;
+        const method = ovrId ? 'PUT' : 'POST';
+
+        const res = await fetch(url, { method, headers, body: JSON.stringify(body) });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error);
+        }
+        document.getElementById('override-modal')!.classList.add('hidden');
+        loadCalendar();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    });
+
+    // Close override modal
+    ['close-override-modal', 'cancel-override'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', () => {
+        document.getElementById('override-modal')!.classList.add('hidden');
+      });
+    });
 
     loadCalendar();
   </script>

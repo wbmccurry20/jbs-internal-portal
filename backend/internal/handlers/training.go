@@ -12,6 +12,14 @@ import (
 	"github.com/wbmccurry20/jbs-internal-portal/internal/models"
 )
 
+// normaliseTimePtr converts empty-string time pointers to nil for clean DB storage.
+func normaliseTimePtr(t *string) *string {
+	if t == nil || *t == "" {
+		return nil
+	}
+	return t
+}
+
 // ===================== Training Programs =====================
 
 // ListTrainingPrograms returns all programs (admin view)
@@ -82,7 +90,8 @@ func GetTrainingProgram(c *gin.Context) {
 	// Get schedule items
 	rows, err := database.DB.Query(`
 		SELECT id, program_id, week_number, day_of_week, COALESCE(day_title, ''), title, COALESCE(description, ''),
-			   COALESCE(link_url, ''), COALESCE(link_label, ''), time_slot, sort_order, is_highlight, created_at, updated_at
+			   COALESCE(link_url, ''), COALESCE(link_label, ''), time_slot, sort_order, is_highlight,
+			   start_time, end_time, created_at, updated_at
 		FROM training_schedule_items
 		WHERE program_id = $1
 		ORDER BY week_number, day_of_week, sort_order
@@ -98,7 +107,8 @@ func GetTrainingProgram(c *gin.Context) {
 		var item models.TrainingScheduleItem
 		if err := rows.Scan(&item.ID, &item.ProgramID, &item.WeekNumber, &item.DayOfWeek, &item.DayTitle,
 			&item.Title, &item.Description, &item.LinkURL, &item.LinkLabel, &item.TimeSlot,
-			&item.SortOrder, &item.IsHighlight, &item.CreatedAt, &item.UpdatedAt); err != nil {
+			&item.SortOrder, &item.IsHighlight, &item.StartTime, &item.EndTime,
+			&item.CreatedAt, &item.UpdatedAt); err != nil {
 			continue
 		}
 		p.Items = append(p.Items, item)
@@ -229,16 +239,18 @@ func CreateScheduleItem(c *gin.Context) {
 	}
 
 	var req struct {
-		WeekNumber  int    `json:"week_number" binding:"required"`
-		DayOfWeek   int    `json:"day_of_week" binding:"required"`
-		DayTitle    string `json:"day_title"`
-		Title       string `json:"title" binding:"required"`
-		Description string `json:"description"`
-		LinkURL     string `json:"link_url"`
-		LinkLabel   string `json:"link_label"`
-		TimeSlot    string `json:"time_slot"`
-		SortOrder   int    `json:"sort_order"`
-		IsHighlight bool   `json:"is_highlight"`
+		WeekNumber  int     `json:"week_number" binding:"required"`
+		DayOfWeek   int     `json:"day_of_week" binding:"required"`
+		DayTitle    string  `json:"day_title"`
+		Title       string  `json:"title" binding:"required"`
+		Description string  `json:"description"`
+		LinkURL     string  `json:"link_url"`
+		LinkLabel   string  `json:"link_label"`
+		TimeSlot    string  `json:"time_slot"`
+		StartTime   *string `json:"start_time"`
+		EndTime     *string `json:"end_time"`
+		SortOrder   int     `json:"sort_order"`
+		IsHighlight bool    `json:"is_highlight"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Week number, day of week, and title are required"})
@@ -249,14 +261,20 @@ func CreateScheduleItem(c *gin.Context) {
 		req.TimeSlot = "all-day"
 	}
 
+	// Normalise empty-string time pointers to nil
+	req.StartTime = normaliseTimePtr(req.StartTime)
+	req.EndTime = normaliseTimePtr(req.EndTime)
+
 	var id int
 	err = database.DB.QueryRow(`
 		INSERT INTO training_schedule_items
-			(program_id, week_number, day_of_week, day_title, title, description, link_url, link_label, time_slot, sort_order, is_highlight)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+			(program_id, week_number, day_of_week, day_title, title, description,
+			 link_url, link_label, time_slot, start_time, end_time, sort_order, is_highlight)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING id
 	`, programID, req.WeekNumber, req.DayOfWeek, req.DayTitle, req.Title, req.Description,
-		req.LinkURL, req.LinkLabel, req.TimeSlot, req.SortOrder, req.IsHighlight).Scan(&id)
+		req.LinkURL, req.LinkLabel, req.TimeSlot, req.StartTime, req.EndTime,
+		req.SortOrder, req.IsHighlight).Scan(&id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create schedule item"})
 		return
@@ -291,16 +309,18 @@ func UpdateScheduleItem(c *gin.Context) {
 	}
 
 	var req struct {
-		WeekNumber  int    `json:"week_number" binding:"required"`
-		DayOfWeek   int    `json:"day_of_week" binding:"required"`
-		DayTitle    string `json:"day_title"`
-		Title       string `json:"title" binding:"required"`
-		Description string `json:"description"`
-		LinkURL     string `json:"link_url"`
-		LinkLabel   string `json:"link_label"`
-		TimeSlot    string `json:"time_slot"`
-		SortOrder   int    `json:"sort_order"`
-		IsHighlight bool   `json:"is_highlight"`
+		WeekNumber  int     `json:"week_number" binding:"required"`
+		DayOfWeek   int     `json:"day_of_week" binding:"required"`
+		DayTitle    string  `json:"day_title"`
+		Title       string  `json:"title" binding:"required"`
+		Description string  `json:"description"`
+		LinkURL     string  `json:"link_url"`
+		LinkLabel   string  `json:"link_label"`
+		TimeSlot    string  `json:"time_slot"`
+		StartTime   *string `json:"start_time"`
+		EndTime     *string `json:"end_time"`
+		SortOrder   int     `json:"sort_order"`
+		IsHighlight bool    `json:"is_highlight"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Week number, day of week, and title are required"})
@@ -311,14 +331,18 @@ func UpdateScheduleItem(c *gin.Context) {
 		req.TimeSlot = "all-day"
 	}
 
+	req.StartTime = normaliseTimePtr(req.StartTime)
+	req.EndTime = normaliseTimePtr(req.EndTime)
+
 	_, err = database.DB.Exec(`
 		UPDATE training_schedule_items
 		SET week_number = $1, day_of_week = $2, day_title = $3, title = $4, description = $5,
-			link_url = $6, link_label = $7, time_slot = $8, sort_order = $9, is_highlight = $10,
-			updated_at = CURRENT_TIMESTAMP
-		WHERE id = $11
+			link_url = $6, link_label = $7, time_slot = $8, start_time = $9, end_time = $10,
+			sort_order = $11, is_highlight = $12, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $13
 	`, req.WeekNumber, req.DayOfWeek, req.DayTitle, req.Title, req.Description,
-		req.LinkURL, req.LinkLabel, req.TimeSlot, req.SortOrder, req.IsHighlight, itemID)
+		req.LinkURL, req.LinkLabel, req.TimeSlot, req.StartTime, req.EndTime,
+		req.SortOrder, req.IsHighlight, itemID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update schedule item"})
 		return
@@ -371,16 +395,18 @@ func BulkUpdateScheduleItems(c *gin.Context) {
 
 	var req struct {
 		Items []struct {
-			WeekNumber  int    `json:"week_number"`
-			DayOfWeek   int    `json:"day_of_week"`
-			DayTitle    string `json:"day_title"`
-			Title       string `json:"title"`
-			Description string `json:"description"`
-			LinkURL     string `json:"link_url"`
-			LinkLabel   string `json:"link_label"`
-			TimeSlot    string `json:"time_slot"`
-			SortOrder   int    `json:"sort_order"`
-			IsHighlight bool   `json:"is_highlight"`
+			WeekNumber  int     `json:"week_number"`
+			DayOfWeek   int     `json:"day_of_week"`
+			DayTitle    string  `json:"day_title"`
+			Title       string  `json:"title"`
+			Description string  `json:"description"`
+			LinkURL     string  `json:"link_url"`
+			LinkLabel   string  `json:"link_label"`
+			TimeSlot    string  `json:"time_slot"`
+			StartTime   *string `json:"start_time"`
+			EndTime     *string `json:"end_time"`
+			SortOrder   int     `json:"sort_order"`
+			IsHighlight bool    `json:"is_highlight"`
 		} `json:"items" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -414,12 +440,17 @@ func BulkUpdateScheduleItems(c *gin.Context) {
 		if timeSlot == "" {
 			timeSlot = "all-day"
 		}
+		startTime := normaliseTimePtr(item.StartTime)
+		endTime := normaliseTimePtr(item.EndTime)
+
 		_, err = tx.Exec(`
 			INSERT INTO training_schedule_items
-				(program_id, week_number, day_of_week, day_title, title, description, link_url, link_label, time_slot, sort_order, is_highlight)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+				(program_id, week_number, day_of_week, day_title, title, description,
+				 link_url, link_label, time_slot, start_time, end_time, sort_order, is_highlight)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		`, programID, item.WeekNumber, item.DayOfWeek, item.DayTitle, item.Title, item.Description,
-			item.LinkURL, item.LinkLabel, timeSlot, item.SortOrder, item.IsHighlight)
+			item.LinkURL, item.LinkLabel, timeSlot, startTime, endTime,
+			item.SortOrder, item.IsHighlight)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert schedule item"})
 			return
@@ -802,7 +833,8 @@ func buildTraineeCalendar(assignment models.TraineeAssignment, startDate time.Ti
 	// Get schedule items
 	rows, err := database.DB.Query(`
 		SELECT id, program_id, week_number, day_of_week, COALESCE(day_title, ''), title, COALESCE(description, ''),
-			   COALESCE(link_url, ''), COALESCE(link_label, ''), time_slot, sort_order, is_highlight, created_at, updated_at
+			   COALESCE(link_url, ''), COALESCE(link_label, ''), time_slot, sort_order, is_highlight,
+			   start_time, end_time, created_at, updated_at
 		FROM training_schedule_items
 		WHERE program_id = $1
 		ORDER BY week_number, day_of_week, sort_order
@@ -824,7 +856,8 @@ func buildTraineeCalendar(assignment models.TraineeAssignment, startDate time.Ti
 		var item models.TrainingScheduleItem
 		if err := rows.Scan(&item.ID, &item.ProgramID, &item.WeekNumber, &item.DayOfWeek, &item.DayTitle,
 			&item.Title, &item.Description, &item.LinkURL, &item.LinkLabel, &item.TimeSlot,
-			&item.SortOrder, &item.IsHighlight, &item.CreatedAt, &item.UpdatedAt); err != nil {
+			&item.SortOrder, &item.IsHighlight, &item.StartTime, &item.EndTime,
+			&item.CreatedAt, &item.UpdatedAt); err != nil {
 			continue
 		}
 		key := dayKey{item.WeekNumber, item.DayOfWeek}
@@ -861,6 +894,44 @@ func buildTraineeCalendar(assignment models.TraineeAssignment, startDate time.Ti
 		return nil, err
 	}
 
+	// Load per-trainee overrides (only for real assignments, not previews)
+	type dayKey2 struct {
+		week int
+		day  int
+	}
+	overridesByDay := make(map[dayKey2][]models.ScheduleOverride)
+	if assignment.ID > 0 {
+		oRows, err := database.DB.Query(`
+			SELECT id, assignment_id, week_number, day_of_week, action, base_item_id,
+				   COALESCE(title, ''), COALESCE(description, ''), COALESCE(day_title, ''),
+				   COALESCE(link_url, ''), COALESCE(link_label, ''),
+				   COALESCE(time_slot, 'all-day'), start_time, end_time,
+				   sort_order, is_highlight, created_by, created_at, updated_at
+			FROM assignment_schedule_overrides
+			WHERE assignment_id = $1
+			ORDER BY week_number, day_of_week, sort_order
+		`, assignment.ID)
+		if err != nil {
+			return nil, err
+		}
+		defer oRows.Close()
+
+		for oRows.Next() {
+			var o models.ScheduleOverride
+			if err := oRows.Scan(&o.ID, &o.AssignmentID, &o.WeekNumber, &o.DayOfWeek, &o.Action, &o.BaseItemID,
+				&o.Title, &o.Description, &o.DayTitle, &o.LinkURL, &o.LinkLabel,
+				&o.TimeSlot, &o.StartTime, &o.EndTime,
+				&o.SortOrder, &o.IsHighlight, &o.CreatedBy, &o.CreatedAt, &o.UpdatedAt); err != nil {
+				continue
+			}
+			k := dayKey2{o.WeekNumber, o.DayOfWeek}
+			overridesByDay[k] = append(overridesByDay[k], o)
+		}
+		if err := oRows.Err(); err != nil {
+			return nil, err
+		}
+	}
+
 	// Build calendar days
 	today := time.Now().Truncate(24 * time.Hour)
 	var days []models.CalendarDay
@@ -883,9 +954,24 @@ func buildTraineeCalendar(assignment models.TraineeAssignment, startDate time.Ti
 				items = []models.TrainingScheduleItem{}
 			}
 
+			// Apply per-trainee overrides if any exist
+			oKey := dayKey2{week, dow}
+			if dayOverrides, ok := overridesByDay[oKey]; ok && len(dayOverrides) > 0 {
+				items = applyOverrides(items, dayOverrides)
+			}
+
+			// Check if an override provides a day_title
+			dayTitle := dayTitles[key]
+			for _, o := range overridesByDay[oKey] {
+				if o.DayTitle != "" {
+					dayTitle = o.DayTitle
+					break
+				}
+			}
+
 			day := models.CalendarDay{
 				Date:      date.Format("2006-01-02"),
-				DayTitle:  dayTitles[key],
+				DayTitle:  dayTitle,
 				DayOfWeek: dow,
 				Week:      week,
 				Items:     items,
@@ -916,4 +1002,333 @@ func buildTraineeCalendar(assignment models.TraineeAssignment, startDate time.Ti
 		CurrentWeek: currentWeek,
 		TotalWeeks:  program.DurationWeeks,
 	}, nil
+}
+
+// ===================== Program Preview =====================
+
+// PreviewProgramCalendar lets admins preview a program as if a trainee started on a given date.
+func PreviewProgramCalendar(c *gin.Context) {
+	programID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid program ID"})
+		return
+	}
+
+	startDateStr := c.Query("start_date")
+	if startDateStr == "" {
+		// Default to next Monday
+		now := time.Now()
+		daysUntilMon := (8 - int(now.Weekday())) % 7
+		if daysUntilMon == 0 {
+			daysUntilMon = 7
+		}
+		startDateStr = now.AddDate(0, 0, daysUntilMon).Format("2006-01-02")
+	}
+
+	startDate, err := time.Parse("2006-01-02", startDateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start_date (use YYYY-MM-DD)"})
+		return
+	}
+
+	// Build a synthetic assignment for preview
+	userName, _ := c.Get("userName")
+	nameStr := "Preview"
+	if n, ok := userName.(string); ok && n != "" {
+		nameStr = n
+	}
+
+	fakeAssignment := models.TraineeAssignment{
+		ProgramID:   programID,
+		StartDate:   startDateStr,
+		Status:      "active",
+		TraineeName: nameStr,
+	}
+
+	calendar, err := buildTraineeCalendar(fakeAssignment, startDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to build preview calendar"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"calendar": calendar})
+}
+
+// ===================== Schedule Overrides =====================
+
+// ListOverrides returns all overrides for an assignment
+func ListOverrides(c *gin.Context) {
+	assignmentID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid assignment ID"})
+		return
+	}
+
+	rows, err := database.DB.Query(`
+		SELECT id, assignment_id, week_number, day_of_week, action, base_item_id,
+			   COALESCE(title, ''), COALESCE(description, ''), COALESCE(day_title, ''),
+			   COALESCE(link_url, ''), COALESCE(link_label, ''),
+			   COALESCE(time_slot, 'all-day'), start_time, end_time,
+			   sort_order, is_highlight, created_by, created_at, updated_at
+		FROM assignment_schedule_overrides
+		WHERE assignment_id = $1
+		ORDER BY week_number, day_of_week, sort_order
+	`, assignmentID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch overrides"})
+		return
+	}
+	defer rows.Close()
+
+	var overrides []models.ScheduleOverride
+	for rows.Next() {
+		var o models.ScheduleOverride
+		if err := rows.Scan(&o.ID, &o.AssignmentID, &o.WeekNumber, &o.DayOfWeek, &o.Action, &o.BaseItemID,
+			&o.Title, &o.Description, &o.DayTitle, &o.LinkURL, &o.LinkLabel,
+			&o.TimeSlot, &o.StartTime, &o.EndTime,
+			&o.SortOrder, &o.IsHighlight, &o.CreatedBy, &o.CreatedAt, &o.UpdatedAt); err != nil {
+			continue
+		}
+		overrides = append(overrides, o)
+	}
+	if overrides == nil {
+		overrides = []models.ScheduleOverride{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"overrides": overrides})
+}
+
+// CreateOverride adds a per-trainee schedule override
+func CreateOverride(c *gin.Context) {
+	assignmentID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid assignment ID"})
+		return
+	}
+
+	var req struct {
+		WeekNumber  int     `json:"week_number" binding:"required"`
+		DayOfWeek   int     `json:"day_of_week" binding:"required"`
+		Action      string  `json:"action" binding:"required"`
+		BaseItemID  *int    `json:"base_item_id"`
+		Title       string  `json:"title"`
+		Description string  `json:"description"`
+		DayTitle    string  `json:"day_title"`
+		LinkURL     string  `json:"link_url"`
+		LinkLabel   string  `json:"link_label"`
+		TimeSlot    string  `json:"time_slot"`
+		StartTime   *string `json:"start_time"`
+		EndTime     *string `json:"end_time"`
+		SortOrder   int     `json:"sort_order"`
+		IsHighlight bool    `json:"is_highlight"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "week_number, day_of_week, and action are required"})
+		return
+	}
+
+	validActions := map[string]bool{"add": true, "remove": true, "replace": true}
+	if !validActions[req.Action] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "action must be add, remove, or replace"})
+		return
+	}
+
+	if (req.Action == "remove" || req.Action == "replace") && req.BaseItemID == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "base_item_id is required for remove/replace actions"})
+		return
+	}
+
+	if req.TimeSlot == "" {
+		req.TimeSlot = "all-day"
+	}
+	req.StartTime = normaliseTimePtr(req.StartTime)
+	req.EndTime = normaliseTimePtr(req.EndTime)
+
+	userID, _ := c.Get("userID")
+
+	var id int
+	err = database.DB.QueryRow(`
+		INSERT INTO assignment_schedule_overrides
+			(assignment_id, week_number, day_of_week, action, base_item_id,
+			 title, description, day_title, link_url, link_label,
+			 time_slot, start_time, end_time, sort_order, is_highlight, created_by)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+		RETURNING id
+	`, assignmentID, req.WeekNumber, req.DayOfWeek, req.Action, req.BaseItemID,
+		req.Title, req.Description, req.DayTitle, req.LinkURL, req.LinkLabel,
+		req.TimeSlot, req.StartTime, req.EndTime, req.SortOrder, req.IsHighlight, userID).Scan(&id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create override"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"id": id, "message": "Override created"})
+}
+
+// UpdateOverride updates an existing override
+func UpdateOverride(c *gin.Context) {
+	assignmentID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid assignment ID"})
+		return
+	}
+
+	overrideID, err := strconv.Atoi(c.Param("overrideId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid override ID"})
+		return
+	}
+
+	// Verify ownership
+	var ownerID int
+	if err := database.DB.QueryRow("SELECT assignment_id FROM assignment_schedule_overrides WHERE id = $1", overrideID).Scan(&ownerID); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Override not found"})
+		return
+	}
+	if ownerID != assignmentID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Override does not belong to this assignment"})
+		return
+	}
+
+	var req struct {
+		WeekNumber  int     `json:"week_number" binding:"required"`
+		DayOfWeek   int     `json:"day_of_week" binding:"required"`
+		Action      string  `json:"action" binding:"required"`
+		BaseItemID  *int    `json:"base_item_id"`
+		Title       string  `json:"title"`
+		Description string  `json:"description"`
+		DayTitle    string  `json:"day_title"`
+		LinkURL     string  `json:"link_url"`
+		LinkLabel   string  `json:"link_label"`
+		TimeSlot    string  `json:"time_slot"`
+		StartTime   *string `json:"start_time"`
+		EndTime     *string `json:"end_time"`
+		SortOrder   int     `json:"sort_order"`
+		IsHighlight bool    `json:"is_highlight"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	if req.TimeSlot == "" {
+		req.TimeSlot = "all-day"
+	}
+	req.StartTime = normaliseTimePtr(req.StartTime)
+	req.EndTime = normaliseTimePtr(req.EndTime)
+
+	_, err = database.DB.Exec(`
+		UPDATE assignment_schedule_overrides
+		SET week_number = $1, day_of_week = $2, action = $3, base_item_id = $4,
+			title = $5, description = $6, day_title = $7, link_url = $8, link_label = $9,
+			time_slot = $10, start_time = $11, end_time = $12, sort_order = $13, is_highlight = $14,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $15
+	`, req.WeekNumber, req.DayOfWeek, req.Action, req.BaseItemID,
+		req.Title, req.Description, req.DayTitle, req.LinkURL, req.LinkLabel,
+		req.TimeSlot, req.StartTime, req.EndTime, req.SortOrder, req.IsHighlight, overrideID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update override"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Override updated"})
+}
+
+// DeleteOverride removes an override
+func DeleteOverride(c *gin.Context) {
+	assignmentID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid assignment ID"})
+		return
+	}
+
+	overrideID, err := strconv.Atoi(c.Param("overrideId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid override ID"})
+		return
+	}
+
+	var ownerID int
+	if err := database.DB.QueryRow("SELECT assignment_id FROM assignment_schedule_overrides WHERE id = $1", overrideID).Scan(&ownerID); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Override not found"})
+		return
+	}
+	if ownerID != assignmentID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Override does not belong to this assignment"})
+		return
+	}
+
+	_, err = database.DB.Exec("DELETE FROM assignment_schedule_overrides WHERE id = $1", overrideID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete override"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Override deleted"})
+}
+
+// applyOverrides merges per-trainee overrides into a base set of schedule items for a given (week, day).
+func applyOverrides(baseItems []models.TrainingScheduleItem, overrides []models.ScheduleOverride) []models.TrainingScheduleItem {
+	// Build a set of base item IDs to remove
+	removeSet := make(map[int]bool)
+	replaceMap := make(map[int]models.ScheduleOverride)
+
+	for _, o := range overrides {
+		switch o.Action {
+		case "remove":
+			if o.BaseItemID != nil {
+				removeSet[*o.BaseItemID] = true
+			}
+		case "replace":
+			if o.BaseItemID != nil {
+				replaceMap[*o.BaseItemID] = o
+			}
+		}
+	}
+
+	// Filter + replace base items
+	var result []models.TrainingScheduleItem
+	for _, item := range baseItems {
+		if removeSet[item.ID] {
+			continue
+		}
+		if repl, ok := replaceMap[item.ID]; ok {
+			item.Title = repl.Title
+			item.Description = repl.Description
+			item.DayTitle = repl.DayTitle
+			item.LinkURL = repl.LinkURL
+			item.LinkLabel = repl.LinkLabel
+			item.TimeSlot = repl.TimeSlot
+			item.StartTime = repl.StartTime
+			item.EndTime = repl.EndTime
+			item.SortOrder = repl.SortOrder
+			item.IsHighlight = repl.IsHighlight
+		}
+		result = append(result, item)
+	}
+
+	// Append 'add' overrides as new items (use negative IDs so frontend can distinguish)
+	for i, o := range overrides {
+		if o.Action == "add" {
+			result = append(result, models.TrainingScheduleItem{
+				ID:          -(o.ID), // negative = override-sourced
+				ProgramID:   0,
+				WeekNumber:  o.WeekNumber,
+				DayOfWeek:   o.DayOfWeek,
+				DayTitle:    o.DayTitle,
+				Title:       o.Title,
+				Description: o.Description,
+				LinkURL:     o.LinkURL,
+				LinkLabel:   o.LinkLabel,
+				TimeSlot:    o.TimeSlot,
+				StartTime:   o.StartTime,
+				EndTime:     o.EndTime,
+				SortOrder:   o.SortOrder + 1000 + i, // sort after base items
+				IsHighlight: o.IsHighlight,
+			})
+		}
+	}
+
+	return result
 }

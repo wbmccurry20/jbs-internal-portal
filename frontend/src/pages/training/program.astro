@@ -12,6 +12,9 @@ import Layout from '../../layouts/Layout.astro';
         <p class="mt-1 text-sm text-gray-500" id="program-desc"></p>
       </div>
       <div class="flex space-x-3">
+        <button id="preview-btn" class="px-4 py-2 text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 font-medium text-sm">
+          👁 Preview as Trainee
+        </button>
         <button id="edit-program-btn" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium text-sm">
           Edit Details
         </button>
@@ -52,17 +55,18 @@ import Layout from '../../layouts/Layout.astro';
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Time Slot</label>
-              <select id="item-time-slot" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                <option value="all-day">All Day</option>
-                <option value="morning">Morning</option>
-                <option value="afternoon">Afternoon</option>
-              </select>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+              <input type="time" id="item-start-time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <p class="text-xs text-gray-400 mt-0.5">Leave blank for all-day</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
-              <input type="number" id="item-sort" value="0" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <label class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+              <input type="time" id="item-end-time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
             </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
+            <input type="number" id="item-sort" value="0" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -152,6 +156,37 @@ import Layout from '../../layouts/Layout.astro';
         </form>
       </div>
     </div>
+    <!-- Preview Panel -->
+    <div id="preview-panel" class="hidden">
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center space-x-3">
+          <span class="text-emerald-700 font-semibold text-sm">👁 Trainee Preview Mode</span>
+          <label class="text-sm text-gray-600">Start Date:</label>
+          <input type="date" id="preview-start-date" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+          <button id="preview-load" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors">
+            Load Preview
+          </button>
+        </div>
+        <button id="preview-close" class="text-sm text-gray-500 hover:text-gray-700 font-medium">✕ Close Preview</button>
+      </div>
+
+      <!-- Preview progress -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mt-4">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-medium text-gray-700">Training Progress</span>
+          <span class="text-sm text-gray-500" id="preview-progress-text"></span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div id="preview-progress-bar" class="bg-emerald-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Preview week tabs -->
+      <div class="flex items-center space-x-2 overflow-x-auto pb-2 mt-4" id="preview-week-tabs"></div>
+
+      <!-- Preview calendar grid -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4" id="preview-grid"></div>
+    </div>
   </div>
 
   <script>
@@ -236,7 +271,7 @@ import Layout from '../../layouts/Layout.astro';
                     ${item.description ? `<p class="text-xs text-gray-500 mt-0.5 line-clamp-2">${escapeHtml(item.description)}</p>` : ''}
                     ${item.link_url ? `<span class="inline-flex items-center text-xs text-primary-600 mt-1">🔗 ${escapeHtml(item.link_label || 'Link')}</span>` : ''}
                   </div>
-                  ${item.time_slot !== 'all-day' ? `<span class="text-xs text-gray-400 ml-1 flex-shrink-0">${item.time_slot === 'morning' ? 'AM' : 'PM'}</span>` : ''}
+                  ${formatTimeRange(item.start_time, item.end_time) ? `<span class="text-xs text-gray-400 ml-1 flex-shrink-0">${formatTimeRange(item.start_time, item.end_time)}</span>` : ''}
                 </div>
               </div>
             `).join('')}
@@ -258,7 +293,8 @@ import Layout from '../../layouts/Layout.astro';
       (document.getElementById('item-dow') as HTMLInputElement).value = String(dow);
       (document.getElementById('item-title') as HTMLInputElement).value = '';
       (document.getElementById('item-day-title') as HTMLInputElement).value = '';
-      (document.getElementById('item-time-slot') as HTMLSelectElement).value = 'all-day';
+      (document.getElementById('item-start-time') as HTMLInputElement).value = '';
+      (document.getElementById('item-end-time') as HTMLInputElement).value = '';
       (document.getElementById('item-sort') as HTMLInputElement).value = '0';
       (document.getElementById('item-description') as HTMLTextAreaElement).value = '';
       (document.getElementById('item-link-url') as HTMLInputElement).value = '';
@@ -281,7 +317,8 @@ import Layout from '../../layouts/Layout.astro';
       (document.getElementById('item-dow') as HTMLInputElement).value = String(item.day_of_week);
       (document.getElementById('item-title') as HTMLInputElement).value = item.title;
       (document.getElementById('item-day-title') as HTMLInputElement).value = item.day_title || '';
-      (document.getElementById('item-time-slot') as HTMLSelectElement).value = item.time_slot;
+      (document.getElementById('item-start-time') as HTMLInputElement).value = item.start_time || '';
+      (document.getElementById('item-end-time') as HTMLInputElement).value = item.end_time || '';
       (document.getElementById('item-sort') as HTMLInputElement).value = String(item.sort_order);
       (document.getElementById('item-description') as HTMLTextAreaElement).value = item.description || '';
       (document.getElementById('item-link-url') as HTMLInputElement).value = item.link_url || '';
@@ -298,12 +335,16 @@ import Layout from '../../layouts/Layout.astro';
     document.getElementById('item-form')!.addEventListener('submit', async (e) => {
       e.preventDefault();
       const itemId = (document.getElementById('item-id') as HTMLInputElement).value;
+      const startTime = (document.getElementById('item-start-time') as HTMLInputElement).value || null;
+      const endTime = (document.getElementById('item-end-time') as HTMLInputElement).value || null;
       const body = {
         week_number: parseInt((document.getElementById('item-week') as HTMLInputElement).value),
         day_of_week: parseInt((document.getElementById('item-dow') as HTMLInputElement).value),
         title: (document.getElementById('item-title') as HTMLInputElement).value,
         day_title: (document.getElementById('item-day-title') as HTMLInputElement).value,
-        time_slot: (document.getElementById('item-time-slot') as HTMLSelectElement).value,
+        time_slot: startTime ? 'custom' : 'all-day',
+        start_time: startTime,
+        end_time: endTime,
         sort_order: parseInt((document.getElementById('item-sort') as HTMLInputElement).value) || 0,
         description: (document.getElementById('item-description') as HTMLTextAreaElement).value,
         link_url: (document.getElementById('item-link-url') as HTMLInputElement).value,
@@ -452,6 +493,141 @@ import Layout from '../../layouts/Layout.astro';
       const div = document.createElement('div');
       div.textContent = str || '';
       return div.innerHTML;
+    }
+
+    /** Convert "HH:MM" 24-hr to "h:MM AM/PM" */
+    function formatTime24to12(t: string): string {
+      const [hStr, mStr] = t.split(':');
+      let h = parseInt(hStr, 10);
+      const suffix = h >= 12 ? 'PM' : 'AM';
+      if (h === 0) h = 12;
+      else if (h > 12) h -= 12;
+      return `${h}:${mStr} ${suffix}`;
+    }
+
+    /** Build a display string like "9:00 AM – 2:00 PM" or "9:00 AM" or "" */
+    function formatTimeRange(start?: string | null, end?: string | null): string {
+      if (!start && !end) return '';
+      if (start && end) return `${formatTime24to12(start)} – ${formatTime24to12(end)}`;
+      if (start) return formatTime24to12(start);
+      return formatTime24to12(end!);
+    }
+
+    // ===================== Trainee Preview =====================
+    let previewCalendar: any = null;
+    let previewWeek = 1;
+
+    // Set default preview start date to next Monday
+    (() => {
+      const d = new Date();
+      const dayOfWeek = d.getDay();
+      const daysUntilMon = dayOfWeek === 0 ? 1 : dayOfWeek === 1 ? 7 : 8 - dayOfWeek;
+      d.setDate(d.getDate() + daysUntilMon);
+      (document.getElementById('preview-start-date') as HTMLInputElement).value = d.toISOString().split('T')[0];
+    })();
+
+    document.getElementById('preview-btn')!.addEventListener('click', () => {
+      document.getElementById('preview-panel')!.classList.remove('hidden');
+      loadPreview();
+    });
+
+    document.getElementById('preview-close')!.addEventListener('click', () => {
+      document.getElementById('preview-panel')!.classList.add('hidden');
+      previewCalendar = null;
+    });
+
+    document.getElementById('preview-load')!.addEventListener('click', () => loadPreview());
+
+    async function loadPreview() {
+      const startDate = (document.getElementById('preview-start-date') as HTMLInputElement).value;
+      if (!startDate) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/training/programs/${programId}/preview?start_date=${startDate}`, { headers });
+        if (!res.ok) throw new Error('Failed to load preview');
+        const data = await res.json();
+        previewCalendar = data.calendar;
+        previewWeek = previewCalendar.current_week || 1;
+        renderPreview();
+      } catch (e: any) {
+        alert('Preview error: ' + e.message);
+      }
+    }
+
+    function renderPreview() {
+      if (!previewCalendar) return;
+      const { days, total_weeks } = previewCalendar;
+
+      // Progress
+      const totalDays = total_weeks * 5;
+      const pastDays = days.filter((d: any) => d.is_past || d.is_today).length;
+      const pct = Math.min(100, Math.round((pastDays / totalDays) * 100));
+      document.getElementById('preview-progress-text')!.textContent = `Week ${previewWeek} of ${total_weeks} • ${pct}% complete`;
+      (document.getElementById('preview-progress-bar') as HTMLElement).style.width = `${pct}%`;
+
+      // Week tabs
+      const tabsEl = document.getElementById('preview-week-tabs')!;
+      tabsEl.innerHTML = '';
+      for (let w = 1; w <= total_weeks; w++) {
+        const btn = document.createElement('button');
+        btn.className = `px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          w === previewWeek ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+        }`;
+        btn.textContent = `Week ${w}`;
+        btn.addEventListener('click', () => { previewWeek = w; renderPreview(); });
+        tabsEl.appendChild(btn);
+      }
+
+      // Calendar grid
+      const grid = document.getElementById('preview-grid')!;
+      grid.innerHTML = '';
+      const weekDays = days.filter((d: any) => d.week === previewWeek);
+
+      weekDays.forEach((day: any) => {
+        const dateObj = new Date(day.date + 'T00:00:00');
+        const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+
+        let borderClass = 'border-gray-200';
+        let headerBg = 'bg-gray-50';
+        if (day.is_today) {
+          borderClass = 'border-emerald-400 ring-2 ring-emerald-100';
+          headerBg = 'bg-emerald-50';
+        } else if (day.is_past) {
+          borderClass = 'border-gray-100';
+        }
+
+        const col = document.createElement('div');
+        col.className = `bg-white rounded-xl shadow-sm border ${borderClass} flex flex-col`;
+        col.innerHTML = `
+          <div class="px-4 py-3 ${headerBg} rounded-t-xl border-b border-gray-100">
+            <div class="flex justify-between items-center">
+              <h3 class="font-semibold text-gray-900 text-sm">${dayNames[day.day_of_week - 1]}</h3>
+              <span class="text-xs ${day.is_today ? 'text-emerald-600 font-bold' : 'text-gray-400'}">${dateStr}</span>
+            </div>
+            ${day.day_title ? `<p class="text-xs text-emerald-600 font-semibold mt-1">${escapeHtml(day.day_title)}</p>` : ''}
+            ${day.is_today ? '<span class="inline-block mt-1 px-2 py-0.5 bg-emerald-600 text-white text-xs rounded-full font-medium">TODAY</span>' : ''}
+          </div>
+          <div class="flex-1 p-3 space-y-2">
+            ${day.items.length === 0
+              ? `<p class="text-xs text-gray-400 text-center py-4">${day.is_past ? 'No scheduled items' : 'Free day'}</p>`
+              : day.items.map((item: any) => `
+                <div class="p-2.5 rounded-lg border ${item.is_highlight ? 'border-yellow-300 bg-yellow-50' : 'border-gray-100 bg-white'} transition-colors">
+                  <div class="flex items-start">
+                    ${day.is_past ? '<span class="text-green-500 mr-1.5 mt-0.5 flex-shrink-0">✓</span>' : '<span class="text-gray-300 mr-1.5 mt-0.5 flex-shrink-0">•</span>'}
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm ${item.is_highlight ? 'font-bold text-yellow-800' : 'font-medium text-gray-800'}">${escapeHtml(item.title)}</p>
+                      ${item.description ? `<p class="text-xs text-gray-500 mt-0.5">${escapeHtml(item.description)}</p>` : ''}
+                      ${item.link_url ? `<span class="inline-flex items-center mt-1 text-xs text-emerald-600">🔗 ${escapeHtml(item.link_label || 'Link')}</span>` : ''}
+                    </div>
+                    ${formatTimeRange(item.start_time, item.end_time) ? `<span class="text-xs text-gray-400 ml-1 flex-shrink-0">${formatTimeRange(item.start_time, item.end_time)}</span>` : ''}
+                  </div>
+                </div>
+              `).join('')
+            }
+          </div>
+        `;
+        grid.appendChild(col);
+      });
     }
 
     loadProgram();

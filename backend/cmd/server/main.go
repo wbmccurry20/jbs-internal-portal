@@ -165,12 +165,21 @@ func main() {
 		api.PUT("/training/programs/:id/resources/:resourceId", middleware.RequireRole("hr_admin", "support"), handlers.UpdateResource)
 		api.DELETE("/training/programs/:id/resources/:resourceId", middleware.RequireRole("hr_admin", "support"), handlers.DeleteResource)
 
+		// Program preview (admin: see calendar with a simulated start date)
+		api.GET("/training/programs/:id/preview", middleware.RequireRole("executive", "hr_admin", "support"), handlers.PreviewProgramCalendar)
+
 		// Trainee assignments (hr_admin and support only)
 		api.GET("/training/assignments", middleware.RequireRole("executive", "hr_admin", "support"), handlers.ListAssignments)
 		api.POST("/training/assignments", middleware.RequireRole("hr_admin", "support"), handlers.CreateAssignment)
 		api.PUT("/training/assignments/:id", middleware.RequireRole("hr_admin", "support"), handlers.UpdateAssignment)
 		api.DELETE("/training/assignments/:id", middleware.RequireRole("hr_admin", "support"), handlers.DeleteAssignment)
 		api.GET("/training/assignments/:id/calendar", middleware.RequireRole("executive", "hr_admin", "support"), handlers.GetTraineeCalendar)
+
+		// Per-trainee schedule overrides (hr_admin and support only)
+		api.GET("/training/assignments/:id/overrides", middleware.RequireRole("executive", "hr_admin", "support"), handlers.ListOverrides)
+		api.POST("/training/assignments/:id/overrides", middleware.RequireRole("hr_admin", "support"), handlers.CreateOverride)
+		api.PUT("/training/assignments/:id/overrides/:overrideId", middleware.RequireRole("hr_admin", "support"), handlers.UpdateOverride)
+		api.DELETE("/training/assignments/:id/overrides/:overrideId", middleware.RequireRole("hr_admin", "support"), handlers.DeleteOverride)
 	}
 
 	// Start server
