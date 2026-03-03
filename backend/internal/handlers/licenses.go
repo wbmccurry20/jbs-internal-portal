@@ -65,20 +65,24 @@ func ListLicenses(c *gin.Context) {
 
 	rows, err := database.DB.Query(query, args...)
 	if err != nil {
+		log.Printf("Error fetching licenses: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch licenses"})
 		return
 	}
 	defer rows.Close()
 
-	var licenses []map[string]interface{}
+	// Initialize as empty slice so JSON serializes to [] not null
+	licenses := make([]map[string]interface{}, 0)
 	for rows.Next() {
 		var (
-			id, state, licenseType, licenseNumber, entityName       string
+			id                                                      int
+			state, licenseType                                      string
+			licenseNumber, entityName                               sql.NullString
 			issueDate, expirationDate                               sql.NullTime
-			status                                                   sql.NullString
+			status                                                  sql.NullString
 			renewalFee                                              sql.NullFloat64
-			notes                                                    sql.NullString
-			city                                                     sql.NullString
+			notes                                                   sql.NullString
+			city                                                    sql.NullString
 			isCityLicense, isActive                                 sql.NullBool
 			createdAt, updatedAt                                    time.Time
 		)
@@ -90,23 +94,24 @@ func ListLicenses(c *gin.Context) {
 			&createdAt, &updatedAt,
 		)
 		if err != nil {
+			log.Printf("Error scanning license row: %v", err)
 			continue
 		}
 
 		license := map[string]interface{}{
-			"id":             id,
-			"state":          state,
-			"license_type":   licenseType,
-			"license_number": licenseNumber,
-			"entity_name":    entityName,
-			"status":         status.String,
-			"renewal_fee":    renewalFee.Float64,
-			"notes":          notes.String,
-			"city":           city.String,
+			"id":              id,
+			"state":           state,
+			"license_type":    licenseType,
+			"license_number":  licenseNumber.String,
+			"entity_name":     entityName.String,
+			"status":          status.String,
+			"renewal_fee":     renewalFee.Float64,
+			"notes":           notes.String,
+			"city":            city.String,
 			"is_city_license": isCityLicense.Bool,
-			"is_active":      isActive.Bool,
-			"created_at":     createdAt,
-			"updated_at":     updatedAt,
+			"is_active":       isActive.Bool,
+			"created_at":      createdAt,
+			"updated_at":      updatedAt,
 		}
 
 		if issueDate.Valid {
@@ -140,12 +145,13 @@ func GetStateSummary(c *gin.Context) {
 
 	rows, err := database.DB.Query(query)
 	if err != nil {
+		log.Printf("Error fetching state summary: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch state summary"})
 		return
 	}
 	defer rows.Close()
 
-	var summary []map[string]interface{}
+	summary := make([]map[string]interface{}, 0)
 	for rows.Next() {
 		var state string
 		var total, active, expiring, expired, cityLicenses, stateLicenses int
@@ -181,6 +187,9 @@ func CreateLicense(c *gin.Context) {
 		Status         string  `json:"status"`
 		RenewalFee     float64 `json:"renewal_fee"`
 		Notes          string  `json:"notes"`
+		City           string  `json:"city"`
+		IsCityLicense  bool    `json:"is_city_license"`
+		IsActive       *bool   `json:"is_active"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -189,7 +198,7 @@ func CreateLicense(c *gin.Context) {
 	}
 
 	// Convert empty strings to null for optional fields
-	var licenseNumber, entityName, issueDate, expirationDate, notes interface{}
+	var licenseNumber, entityName, issueDate, expirationDate, notes, city interface{}
 	
 	if req.LicenseNumber != "" {
 		licenseNumber = req.LicenseNumber
@@ -205,6 +214,15 @@ func CreateLicense(c *gin.Context) {
 	}
 	if req.Notes != "" {
 		notes = req.Notes
+	}
+	if req.City != "" {
+		city = req.City
+	}
+
+	// Default is_active to true if not provided
+	isActive := true
+	if req.IsActive != nil {
+		isActive = *req.IsActive
 	}
 
 	// Auto-calculate status if not provided
@@ -231,8 +249,8 @@ func CreateLicense(c *gin.Context) {
 	query := `
 		INSERT INTO state_licenses 
 			(state, license_type, license_number, entity_name, issue_date, 
-			 expiration_date, status, renewal_fee, notes)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			 expiration_date, status, renewal_fee, notes, city, is_city_license, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		RETURNING id
 	`
 
@@ -241,6 +259,7 @@ func CreateLicense(c *gin.Context) {
 		query,
 		req.State, req.LicenseType, licenseNumber, entityName,
 		issueDate, expirationDate, status, req.RenewalFee, notes,
+		city, req.IsCityLicense, isActive,
 	).Scan(&id)
 
 	if err != nil {
@@ -266,6 +285,9 @@ func UpdateLicense(c *gin.Context) {
 		Status         string  `json:"status"`
 		RenewalFee     float64 `json:"renewal_fee"`
 		Notes          string  `json:"notes"`
+		City           string  `json:"city"`
+		IsCityLicense  bool    `json:"is_city_license"`
+		IsActive       *bool   `json:"is_active"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -273,18 +295,47 @@ func UpdateLicense(c *gin.Context) {
 		return
 	}
 
+	// Default is_active to true if not provided
+	isActive := true
+	if req.IsActive != nil {
+		isActive = *req.IsActive
+	}
+
+	// Convert empty strings to null for optional fields
+	var licenseNumber, entityName, issueDate, expirationDate, notes, city interface{}
+	if req.LicenseNumber != "" {
+		licenseNumber = req.LicenseNumber
+	}
+	if req.EntityName != "" {
+		entityName = req.EntityName
+	}
+	if req.IssueDate != "" {
+		issueDate = req.IssueDate
+	}
+	if req.ExpirationDate != "" {
+		expirationDate = req.ExpirationDate
+	}
+	if req.Notes != "" {
+		notes = req.Notes
+	}
+	if req.City != "" {
+		city = req.City
+	}
+
 	query := `
 		UPDATE state_licenses
 		SET state = $1, license_type = $2, license_number = $3, entity_name = $4,
 		    issue_date = $5, expiration_date = $6, status = $7, renewal_fee = $8,
-		    notes = $9, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $10
+		    notes = $9, city = $10, is_city_license = $11, is_active = $12,
+		    updated_at = CURRENT_TIMESTAMP
+		WHERE id = $13
 	`
 
 	result, err := database.DB.Exec(
 		query,
-		req.State, req.LicenseType, req.LicenseNumber, req.EntityName,
-		req.IssueDate, req.ExpirationDate, req.Status, req.RenewalFee, req.Notes,
+		req.State, req.LicenseType, licenseNumber, entityName,
+		issueDate, expirationDate, req.Status, req.RenewalFee, notes,
+		city, req.IsCityLicense, isActive,
 		id,
 	)
 
