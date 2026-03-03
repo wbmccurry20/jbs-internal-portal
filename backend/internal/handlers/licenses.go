@@ -13,14 +13,11 @@ import (
 )
 
 // LICENSE MANAGEMENT HANDLERS
-// 
-// Current: Portal-first CRUD operations for manual license entry
-// Future: OneDrive sync integration
-//   - Auto-import license PDFs from Azure OneDrive folder
-//   - Parse metadata from file names or embedded text
-//   - Store onedrive_file_path for reference
-//   - Sync status tracking (last_synced_at)
-//   - Bi-directional sync: portal updates → OneDrive, OneDrive changes → portal
+//
+// Phase 1 (done): Portal CRUD — manual license entry, US map, stats
+// Phase 2 (next): SharePoint folder browser — browse JBS Licensing folder from portal
+// Phase 3: Document linking — attach SharePoint doc URLs to license records
+// Phase 4: Auto-suggest — scan folder hierarchy to propose new license records
 
 // ListLicenses returns all licenses with optional filters
 func ListLicenses(c *gin.Context) {
