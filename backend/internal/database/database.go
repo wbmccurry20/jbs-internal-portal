@@ -221,9 +221,12 @@ func seedSupportAccount() error {
 		supportName = "Support Admin"
 	}
 	if supportPassword == "" {
-		// Require password from environment in production
+		if os.Getenv("GIN_MODE") == "release" {
+			log.Println("❌ SUPPORT_PASSWORD is required in production. Set it in your environment variables.")
+			return fmt.Errorf("SUPPORT_PASSWORD environment variable is required in production")
+		}
 		supportPassword = "ChangeMe2026!Support"
-		log.Println("⚠️  WARNING: Using default SUPPORT_PASSWORD. Set SUPPORT_PASSWORD env var for security!")
+		log.Println("⚠️  WARNING: Using default SUPPORT_PASSWORD (dev only). Set SUPPORT_PASSWORD env var for security!")
 	}
 
 	// Check if support account already exists

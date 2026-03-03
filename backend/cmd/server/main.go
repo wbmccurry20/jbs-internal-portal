@@ -99,6 +99,7 @@ func main() {
 		api.POST("/users/:id/resend-invite", middleware.RequireRole("executive", "hr_admin", "support"), handlers.ResendInvite)
 		api.DELETE("/users/:id", middleware.RequireRole("executive", "support"), handlers.DeleteUser)
 		api.POST("/users/:id/reset-password", middleware.RequireRole("executive", "hr_admin", "support"), handlers.ResetUserPassword)
+		api.PUT("/users/:id/role", middleware.RequireRole("executive", "support"), handlers.UpdateUserRole)
 
 		// Concur conversion routes (finance, executive, and support only)
 		api.POST("/concur/upload", middleware.RequireRole("finance", "executive", "support"), middleware.RateLimitUpload(), handlers.UploadConcurFile)

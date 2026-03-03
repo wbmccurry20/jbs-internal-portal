@@ -140,6 +140,24 @@ export async function changePassword(currentPassword: string, newPassword: strin
   }
 }
 
+// Update a user's role
+export async function updateUserRole(userId: number, role: string): Promise<void> {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/role`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ role }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update role');
+  }
+}
+
 // Invite a new user (sends email with invite link)
 export async function inviteUser(email: string, name: string, role: string): Promise<{ message: string; user_id: number }> {
   const token = getAuthToken();

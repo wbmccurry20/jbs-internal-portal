@@ -258,7 +258,7 @@ import Layout from '../layouts/Layout.astro';
         return;
       }
 
-      const canDelete = currentUser?.role === 'owner' || currentUser?.role === 'support';
+      const canDelete = currentUser?.role === 'executive' || currentUser?.role === 'support';
 
       container.innerHTML = filteredLodgings.map(lodging => {
         const status = getLodgingStatus(lodging.check_in_date, lodging.check_out_date);

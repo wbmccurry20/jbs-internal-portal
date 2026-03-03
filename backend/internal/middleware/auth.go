@@ -54,7 +54,12 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 			return
 		}
 
-		roleStr := userRole.(string)
+		roleStr, ok := userRole.(string)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid role type"})
+			c.Abort()
+			return
+		}
 		allowed := false
 		for _, role := range roles {
 			if roleStr == role {

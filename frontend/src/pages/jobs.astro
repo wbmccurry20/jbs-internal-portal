@@ -215,7 +215,7 @@ import Layout from '../layouts/Layout.astro';
         return;
       }
 
-      const canDelete = currentUser?.role === 'owner' || currentUser?.role === 'support';
+      const canDelete = currentUser?.role === 'executive' || currentUser?.role === 'support';
 
       container.innerHTML = filteredJobs.map(job => `
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">

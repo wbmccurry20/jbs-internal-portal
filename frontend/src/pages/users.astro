@@ -83,7 +83,7 @@ import Layout from '../layouts/Layout.astro';
   </div>
 
   <script>
-    import { listUsers, deleteUser, resetUserPassword, inviteUser, resendInvite } from '../lib/api';
+    import { listUsers, deleteUser, resetUserPassword, inviteUser, resendInvite, updateUserRole } from '../lib/api';
     import { toast } from '../utils/toast';
     import { ErrorHandler } from '../utils/errorHandler';
     import { setButtonLoading } from '../utils/loading';
@@ -145,6 +145,14 @@ import Layout from '../layouts/Layout.astro';
         const safeDate = new Date(user.created_at).toLocaleDateString();
         const isProtected = user.email === 'hello@itwill.dev';
 
+        const roleOptions = ['executive', 'hr_admin', 'finance', 'project_manager', 'construction_admin', 'trainee']
+          .map(r => `<option value="${r}" ${user.role === r ? 'selected' : ''}>${roleLabels[r]}</option>`)
+          .join('');
+
+        const roleCell = isProtected
+          ? `<span class="text-sm text-gray-500">IT Support</span>`
+          : `<select data-action="change-role" data-id="${safeId}" class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-primary focus:border-primary">${roleOptions}</select>`;
+
         let actions = '';
         if (isProtected) {
           actions = '<span class="text-gray-400 text-xs">Protected</span>';
@@ -161,7 +169,7 @@ import Layout from '../layouts/Layout.astro';
         return `<tr class="hover:bg-gray-50">
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${safeName}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${safeEmail}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${role}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${roleCell}</td>
           <td class="px-6 py-4 whitespace-nowrap">${getStatusBadge(status)}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${safeDate}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">${actions}</td>
@@ -194,6 +202,21 @@ import Layout from '../layouts/Layout.astro';
         btn.addEventListener('click', () => {
           const el = btn as HTMLElement;
           handleDeleteUser(Number(el.dataset.id), el.dataset.email || '');
+        });
+      });
+
+      tbody.querySelectorAll('[data-action="change-role"]').forEach(select => {
+        select.addEventListener('change', async () => {
+          const el = select as HTMLSelectElement;
+          const id = Number(el.dataset.id);
+          const newRole = el.value;
+          try {
+            await updateUserRole(id, newRole);
+            toast.success(`Role updated to ${roleLabels[newRole]}`);
+          } catch (error) {
+            ErrorHandler.handle(error, 'Failed to update role');
+            loadUsers(); // Reload to reset dropdown
+          }
         });
       });
     }
@@ -260,8 +283,8 @@ import Layout from '../layouts/Layout.astro';
     }
 
     async function handleResetPassword(userId: number) {
-      const newPassword = prompt('Enter new password (min 8 characters):');
-      if (newPassword && newPassword.length >= 8) {
+      const newPassword = prompt('Enter new password (min 10 chars, must have uppercase, lowercase, and a number):');
+      if (newPassword && newPassword.length >= 10 && /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /[0-9]/.test(newPassword)) {
         try {
           await resetUserPassword(userId, newPassword);
           toast.success('Password reset successfully');
@@ -269,7 +292,7 @@ import Layout from '../layouts/Layout.astro';
           ErrorHandler.handle(error, 'Failed to reset password');
         }
       } else if (newPassword) {
-        ErrorHandler.handleValidationError('Password', 'Must be at least 8 characters');
+        ErrorHandler.handleValidationError('Password', 'Must be at least 10 characters with uppercase, lowercase, and a number');
       }
     }
 

@@ -295,7 +295,12 @@ func DeleteReconciliationJob(c *gin.Context) {
 	}
 
 	// Verify user owns this job
-	if ownerID != userID.(int) {
+	uid, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user session"})
+		return
+	}
+	if ownerID != uid {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own jobs"})
 		return
 	}

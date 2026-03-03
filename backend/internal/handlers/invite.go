@@ -133,7 +133,11 @@ func InviteUser(c *gin.Context) {
 		// Create new user with placeholder password and pending status
 		// The placeholder password is a random bcrypt hash that can never be guessed
 		placeholderBytes := make([]byte, 32)
-		rand.Read(placeholderBytes)
+		if _, err := rand.Read(placeholderBytes); err != nil {
+			log.Printf("Failed to generate random placeholder: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error"})
+			return
+		}
 		placeholderHash, _ := bcrypt.GenerateFromPassword(placeholderBytes, 14)
 
 		err = tx.QueryRow(

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -11,9 +12,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// BcryptCost is the standardized bcrypt cost for all password operations
+const BcryptCost = 14
+
 type CreateUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=8"`
+	Password string `json:"password" binding:"required,min=10"`
 	Name     string `json:"name" binding:"required"`
 	Role     string `json:"role" binding:"required"`
 }
@@ -75,6 +79,12 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
+	// Validate password strength
+	if err := validatePasswordStrength(req.Password); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	// Check if user already exists
 	var exists bool
 	err := database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", req.Email).Scan(&exists)
@@ -88,8 +98,9 @@ func CreateUser(c *gin.Context) {
 	}
 
 	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), BcryptCost)
 	if err != nil {
+		log.Printf("Failed to hash password for user creation: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
@@ -103,6 +114,7 @@ func CreateUser(c *gin.Context) {
 	`, req.Email, string(hashedPassword), req.Name, req.Role).Scan(&userID)
 
 	if err != nil {
+		log.Printf("Failed to create user %s: %v", req.Email, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
@@ -155,16 +167,22 @@ func ResetUserPassword(c *gin.Context) {
 	userID := c.Param("id")
 
 	var req struct {
-		NewPassword string `json:"new_password" binding:"required,min=8"`
+		NewPassword string `json:"new_password" binding:"required,min=10"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 10 characters"})
+		return
+	}
+
+	// Validate password strength
+	if err := validatePasswordStrength(req.NewPassword); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Hash new password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), BcryptCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
@@ -196,7 +214,7 @@ func ChangeOwnPassword(c *gin.Context) {
 
 	var req struct {
 		CurrentPassword string `json:"current_password" binding:"required"`
-		NewPassword     string `json:"new_password" binding:"required,min=8"`
+		NewPassword     string `json:"new_password" binding:"required,min=10"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -218,8 +236,14 @@ func ChangeOwnPassword(c *gin.Context) {
 		return
 	}
 
+	// Validate password strength
+	if err := validatePasswordStrength(req.NewPassword); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	// Hash new password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), BcryptCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
@@ -233,4 +257,88 @@ func ChangeOwnPassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
+}
+
+// UpdateUserRole changes a user's role (admin only)
+func UpdateUserRole(c *gin.Context) {
+	userID := c.Param("id")
+
+	var req struct {
+		Role string `json:"role" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Role is required"})
+		return
+	}
+
+	// Validate role
+	validRoles := map[string]bool{
+		"executive": true, "hr_admin": true, "finance": true,
+		"project_manager": true, "construction_admin": true,
+		"trainee": true, "support": true,
+	}
+	if !validRoles[req.Role] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role"})
+		return
+	}
+
+	// Don't allow changing the support account's role
+	var email string
+	err := database.DB.QueryRow("SELECT email FROM users WHERE id = $1", userID).Scan(&email)
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	if err != nil {
+		log.Printf("Failed to fetch user %s for role update: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
+	if email == "hello@itwill.dev" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot change role of support account"})
+		return
+	}
+
+	// Update role
+	result, err := database.DB.Exec(
+		"UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+		req.Role, userID,
+	)
+	if err != nil {
+		log.Printf("Failed to update role for user %s: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update role"})
+		return
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Role updated successfully"})
+}
+
+// validatePasswordStrength enforces strong password requirements
+func validatePasswordStrength(password string) error {
+	if len(password) < 10 {
+		return fmt.Errorf("password must be at least 10 characters")
+	}
+	hasUpper, hasLower, hasDigit := false, false, false
+	for _, c := range password {
+		if c >= 'A' && c <= 'Z' {
+			hasUpper = true
+		}
+		if c >= 'a' && c <= 'z' {
+			hasLower = true
+		}
+		if c >= '0' && c <= '9' {
+			hasDigit = true
+		}
+	}
+	if !hasUpper || !hasLower || !hasDigit {
+		return fmt.Errorf("password must contain uppercase, lowercase, and a number")
+	}
+	return nil
 }
