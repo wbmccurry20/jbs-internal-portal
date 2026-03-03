@@ -35,6 +35,9 @@ func main() {
 	}
 	defer database.Close()
 
+	// Initialize SharePoint / Graph API client
+	handlers.InitGraphClient()
+
 	// Initialize Gin router
 	router := gin.Default()
 
@@ -83,6 +86,9 @@ func main() {
 	// Public invite routes (no auth required — users click link from email)
 	router.GET("/api/invite/validate/:token", handlers.ValidateInviteToken)
 	router.POST("/api/invite/accept", handlers.AcceptInvite)
+
+	// Public SharePoint OAuth callback (Microsoft redirects here after login)
+	router.GET("/api/sharepoint/callback", handlers.HandleSharePointCallback)
 
 	// Protected routes
 	api := router.Group("/api")
@@ -142,6 +148,12 @@ func main() {
 		api.POST("/licenses", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.CreateLicense)
 		api.PUT("/licenses/:id", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.UpdateLicense)
 		api.DELETE("/licenses/:id", middleware.RequireRole("executive", "support"), handlers.DeleteLicense)
+
+		// SharePoint folder browser routes (executive, hr_admin, construction_admin, support)
+		api.GET("/sharepoint/status", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.GetSharePointStatus)
+		api.GET("/sharepoint/auth", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.InitSharePointAuth)
+		api.GET("/sharepoint/browse", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.BrowseSharePoint)
+		api.POST("/sharepoint/disconnect", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.DisconnectSharePoint)
 
 		// Training portal routes
 		// Trainee view (any authenticated user)

@@ -52,6 +52,74 @@ import USMapClean from '../components/USMapClean.astro';
         </div>
       </div>
     </div>
+
+    <!-- SharePoint Document Browser -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12.5 3.5l-8 4.04v8.92l8 4.04 8-4.04V7.54l-8-4.04zm0 2.08l5.53 2.79-5.53 2.79L6.97 8.37l5.53-2.79zM6.5 9.73l5 2.53v5.01l-5-2.53V9.73zm11 5.01l-5 2.53v-5.01l5-2.53v5.01z"/>
+          </svg>
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900">SharePoint Documents</h2>
+            <p class="text-xs text-gray-500">Browse licensing documents on SharePoint</p>
+          </div>
+        </div>
+        <div id="sp-connection" class="flex items-center gap-3">
+          <span id="sp-status-badge" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            Checking...
+          </span>
+          <button id="sp-connect-btn" class="hidden inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+            <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            Connect Microsoft
+          </button>
+          <button id="sp-disconnect-btn" class="hidden inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors">
+            Disconnect
+          </button>
+        </div>
+      </div>
+
+      <!-- Breadcrumb -->
+      <div id="sp-breadcrumb" class="hidden px-6 py-2 bg-gray-50 border-b border-gray-200">
+        <nav class="flex items-center text-sm text-gray-500">
+          <button class="sp-crumb hover:text-blue-600 font-medium" data-path="">
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+            Licensing
+          </button>
+          <span id="sp-crumb-trail"></span>
+        </nav>
+      </div>
+
+      <!-- File browser content -->
+      <div id="sp-browser" class="hidden">
+        <div id="sp-loading" class="hidden text-center py-8">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p class="mt-2 text-sm text-gray-500">Loading files...</p>
+        </div>
+        <div id="sp-items" class="divide-y divide-gray-100"></div>
+        <div id="sp-empty" class="hidden text-center py-8 text-gray-400 text-sm">
+          This folder is empty
+        </div>
+      </div>
+
+      <!-- Not connected state -->
+      <div id="sp-not-connected" class="hidden text-center py-10 px-6">
+        <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+        </svg>
+        <p class="mt-3 text-sm text-gray-600">Connect your Microsoft account to browse licensing documents on SharePoint</p>
+        <p class="mt-1 text-xs text-gray-400">Files stay on SharePoint — nothing is downloaded or copied</p>
+      </div>
+
+      <!-- Not configured state -->
+      <div id="sp-not-configured" class="hidden text-center py-10 px-6">
+        <svg class="mx-auto h-12 w-12 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+        </svg>
+        <p class="mt-3 text-sm text-gray-600">SharePoint integration is not configured</p>
+        <p class="mt-1 text-xs text-gray-400">Azure environment variables need to be set by an administrator</p>
+      </div>
+    </div>
   </div>
 
   <!-- Add/Edit License Modal -->
@@ -490,5 +558,285 @@ import USMapClean from '../components/USMapClean.astro';
     if (typeof (window as any).renderCleanMap === 'function') {
       (window as any).renderCleanMap([]);
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // SharePoint Document Browser
+    // ═══════════════════════════════════════════════════════════
+
+    const spConnectBtn = document.getElementById('sp-connect-btn')!;
+    const spDisconnectBtn = document.getElementById('sp-disconnect-btn')!;
+    const spStatusBadge = document.getElementById('sp-status-badge')!;
+    const spBreadcrumb = document.getElementById('sp-breadcrumb')!;
+    const spBrowser = document.getElementById('sp-browser')!;
+    const spLoading = document.getElementById('sp-loading')!;
+    const spItems = document.getElementById('sp-items')!;
+    const spEmpty = document.getElementById('sp-empty')!;
+    const spNotConnected = document.getElementById('sp-not-connected')!;
+    const spNotConfigured = document.getElementById('sp-not-configured')!;
+    const spCrumbTrail = document.getElementById('sp-crumb-trail')!;
+
+    let spCurrentPath = '';
+
+    // Handle ?sp= query param after OAuth redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const spParam = urlParams.get('sp');
+    if (spParam) {
+      // Clean up URL
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+      if (spParam === 'error') {
+        alert('SharePoint connection failed. Please try again.');
+      }
+    }
+
+    // Check SharePoint status on load
+    async function checkSharePointStatus() {
+      try {
+        const res = await fetch(`${API_URL}/sharepoint/status`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          // User may not have permission — hide section
+          return;
+        }
+        const data = await res.json();
+
+        if (!data.configured) {
+          spStatusBadge.textContent = 'Not Configured';
+          spStatusBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700';
+          spNotConfigured.classList.remove('hidden');
+          return;
+        }
+
+        if (data.connected) {
+          showConnectedState();
+          browseSP('');
+        } else {
+          showDisconnectedState();
+        }
+      } catch {
+        // Silently fail — sharepoint is optional
+      }
+    }
+
+    function showConnectedState() {
+      spStatusBadge.textContent = 'Connected';
+      spStatusBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700';
+      spConnectBtn.classList.add('hidden');
+      spDisconnectBtn.classList.remove('hidden');
+      spBreadcrumb.classList.remove('hidden');
+      spBrowser.classList.remove('hidden');
+      spNotConnected.classList.add('hidden');
+      spNotConfigured.classList.add('hidden');
+    }
+
+    function showDisconnectedState() {
+      spStatusBadge.textContent = 'Not Connected';
+      spStatusBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
+      spConnectBtn.classList.remove('hidden');
+      spDisconnectBtn.classList.add('hidden');
+      spBreadcrumb.classList.add('hidden');
+      spBrowser.classList.add('hidden');
+      spNotConnected.classList.remove('hidden');
+      spNotConfigured.classList.add('hidden');
+      spItems.innerHTML = '';
+    }
+
+    // Connect button → start OAuth
+    spConnectBtn.addEventListener('click', async () => {
+      try {
+        const res = await fetch(`${API_URL}/sharepoint/auth`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to start auth');
+        const data = await res.json();
+        window.location.href = data.auth_url;
+      } catch {
+        alert('Failed to start SharePoint connection');
+      }
+    });
+
+    // Disconnect button
+    spDisconnectBtn.addEventListener('click', async () => {
+      if (!confirm('Disconnect from SharePoint?')) return;
+      try {
+        await fetch(`${API_URL}/sharepoint/disconnect`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch { /* ignore */ }
+      showDisconnectedState();
+    });
+
+    // Browse a SharePoint folder
+    async function browseSP(path: string) {
+      spCurrentPath = path;
+      spLoading.classList.remove('hidden');
+      spItems.innerHTML = '';
+      spEmpty.classList.add('hidden');
+      updateBreadcrumb(path);
+
+      try {
+        const res = await fetch(`${API_URL}/sharepoint/browse?path=${encodeURIComponent(path)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 401) {
+          showDisconnectedState();
+          return;
+        }
+
+        if (!res.ok) throw new Error('Browse failed');
+
+        const data = await res.json();
+        spLoading.classList.add('hidden');
+
+        if (!data.items || data.items.length === 0) {
+          spEmpty.classList.remove('hidden');
+          return;
+        }
+
+        renderItems(data.items);
+      } catch (err) {
+        spLoading.classList.add('hidden');
+        spItems.innerHTML = '<div class="px-6 py-4 text-sm text-red-500">Failed to load folder contents</div>';
+      }
+    }
+
+    // Update breadcrumb navigation
+    function updateBreadcrumb(path: string) {
+      if (!path) {
+        spCrumbTrail.innerHTML = '';
+        return;
+      }
+
+      const parts = path.split('/');
+      let html = '';
+      let buildPath = '';
+      for (const part of parts) {
+        buildPath = buildPath ? buildPath + '/' + part : part;
+        html += `
+          <svg class="w-4 h-4 mx-1 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+          </svg>
+          <button class="sp-crumb hover:text-blue-600" data-path="${escapeHtml(buildPath)}">${escapeHtml(part)}</button>
+        `;
+      }
+      spCrumbTrail.innerHTML = html;
+    }
+
+    // Breadcrumb click delegation
+    spBreadcrumb.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.sp-crumb') as HTMLElement | null;
+      if (btn) {
+        browseSP(btn.dataset.path || '');
+      }
+    });
+
+    interface SPItem {
+      id: string;
+      name: string;
+      size: number;
+      web_url: string;
+      is_folder: boolean;
+      mime_type?: string;
+      child_count?: number;
+      modified_at: string;
+      modified_by?: string;
+    }
+
+    function renderItems(items: SPItem[]) {
+      // Sort: folders first, then files, alphabetical
+      const sorted = [...items].sort((a, b) => {
+        if (a.is_folder !== b.is_folder) return a.is_folder ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      spItems.innerHTML = sorted.map(item => {
+        const modDate = item.modified_at ? new Date(item.modified_at).toLocaleDateString() : '';
+        const sizeStr = item.is_folder ? `${item.child_count || 0} items` : formatFileSize(item.size);
+
+        if (item.is_folder) {
+          return `
+            <button class="sp-folder-btn w-full flex items-center px-6 py-3 hover:bg-blue-50 transition-colors text-left group"
+                    data-path="${escapeHtml(spCurrentPath ? spCurrentPath + '/' + item.name : item.name)}">
+              <svg class="w-5 h-5 text-blue-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+              </svg>
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-medium text-gray-900 group-hover:text-blue-700">${escapeHtml(item.name)}</span>
+              </div>
+              <span class="text-xs text-gray-400 mr-4">${sizeStr}</span>
+              <span class="text-xs text-gray-400 mr-4">${modDate}</span>
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          `;
+        } else {
+          const icon = getFileIcon(item.name, item.mime_type);
+          return `
+            <div class="flex items-center px-6 py-3 hover:bg-gray-50 transition-colors group">
+              ${icon}
+              <div class="flex-1 min-w-0">
+                <span class="text-sm text-gray-700">${escapeHtml(item.name)}</span>
+              </div>
+              <span class="text-xs text-gray-400 mr-4">${sizeStr}</span>
+              <span class="text-xs text-gray-400 mr-4">${modDate}</span>
+              <a href="${escapeHtml(item.web_url)}" target="_blank" rel="noopener noreferrer"
+                 class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors opacity-0 group-hover:opacity-100">
+                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+                Open
+              </a>
+            </div>
+          `;
+        }
+      }).join('');
+    }
+
+    // Folder click delegation
+    spItems.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.sp-folder-btn') as HTMLElement | null;
+      if (btn) {
+        browseSP(btn.dataset.path || '');
+      }
+    });
+
+    function formatFileSize(bytes: number): string {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function getFileIcon(name: string, mimeType?: string): string {
+      const ext = name.split('.').pop()?.toLowerCase() || '';
+      const iconClass = 'w-5 h-5 mr-3 flex-shrink-0';
+
+      // PDF
+      if (ext === 'pdf') {
+        return `<svg class="${iconClass} text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>`;
+      }
+      // Images
+      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'].includes(ext)) {
+        return `<svg class="${iconClass} text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>`;
+      }
+      // Word docs
+      if (['doc', 'docx'].includes(ext)) {
+        return `<svg class="${iconClass} text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>`;
+      }
+      // Excel
+      if (['xls', 'xlsx', 'csv'].includes(ext)) {
+        return `<svg class="${iconClass} text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>`;
+      }
+      // Default
+      return `<svg class="${iconClass} text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>`;
+    }
+
+    // Check status on page load
+    checkSharePointStatus();
   </script>
 </Layout>
