@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout>
+<Layout title="Superintendents">
   <div class="space-y-6">
     <!-- Page header -->
     <div>
@@ -12,810 +12,450 @@ import Layout from '../layouts/Layout.astro';
 
     <!-- Tab navigation -->
     <div class="border-b border-gray-200">
-      <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-        <button
-          id="tab-lodging"
-          class="tab-button active border-primary-500 text-primary-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
-          data-tab="lodging"
-        >
-          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-          </svg>
+      <nav class="-mb-px flex space-x-8">
+        <button id="tab-lodging" class="tab-btn border-primary-500 text-primary-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="lodging">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
           Lodging
         </button>
-        <button
-          id="tab-schedule"
-          class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
-          data-tab="schedule"
-        >
-          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-          </svg>
+        <button id="tab-schedule" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="schedule">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
           Schedule
         </button>
       </nav>
     </div>
 
-    <!-- Tab content -->
-    <div id="tab-content">
-      <!-- Lodging tab content -->
-      <div id="content-lodging" class="tab-content">
-        <div class="space-y-6">
-          <!-- Lodging controls -->
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- ====== Lodging Tab ====== -->
+    <div id="content-lodging" class="tab-content">
+      <div class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h2 class="text-xl font-semibold text-gray-900">Superintendent Lodging</h2>
+          <button id="create-lodging-btn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 shadow-sm transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            Add Lodging
+          </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <h2 class="text-xl font-semibold text-gray-900">Superintendent Lodging</h2>
-              <p class="mt-1 text-sm text-gray-600">Track housing and accommodations for field staff</p>
+              <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <input type="text" id="search" placeholder="Search superintendent, location..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
             </div>
-            <button id="create-lodging-btn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm transition-colors">
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-              Add Lodging
-            </button>
-          </div>
-
-          <!-- Filters and view toggle -->
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                <input 
-                  type="text" 
-                  id="search" 
-                  placeholder="Search superintendent, location..." 
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-              </div>
-              <div>
-                <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select id="status-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                  <option value="">All</option>
-                  <option value="active">Active</option>
-                  <option value="upcoming">Upcoming</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-              <div>
-                <label for="sort" class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
-                <select id="sort" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                  <option value="checkin">Check-in Date</option>
-                  <option value="checkout">Check-out Date</option>
-                  <option value="super">Superintendent</option>
-                  <option value="cost">Cost</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">View</label>
-                <div class="flex space-x-2">
-                  <button id="view-list" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium bg-primary-50 text-primary-600 border-primary-300">
-                    List
-                  </button>
-                  <button id="view-calendar" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
-                    Calendar
-                  </button>
-                </div>
-              </div>
+            <div>
+              <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select id="status-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                <option value="">All</option>
+                <option value="active">Active</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="completed">Completed</option>
+              </select>
             </div>
-          </div>
-
-          <!-- List view -->
-          <div id="list-view" class="space-y-4">
-            <!-- Loading state -->
-            <div id="loading" class="text-center py-12">
-              <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              <p class="mt-4 text-gray-600">Loading lodging...</p>
-            </div>
-          </div>
-
-          <!-- Calendar view (simplified placeholder) -->
-          <div id="calendar-view" class="hidden">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-              <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-              <h3 class="mt-4 text-lg font-medium text-gray-900">Calendar View Coming Soon</h3>
-              <p class="mt-2 text-sm text-gray-500">Use the list view to manage lodging for now.</p>
+            <div>
+              <label for="super-filter" class="block text-sm font-medium text-gray-700 mb-1">Superintendent</label>
+              <select id="super-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                <option value="">All</option>
+              </select>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Schedule tab content -->
-      <div id="content-schedule" class="tab-content hidden">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <svg class="mx-auto h-20 w-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-          </svg>
-          <h3 class="mt-6 text-xl font-semibold text-gray-900">Superintendent Schedule</h3>
-          <p class="mt-2 text-sm text-gray-600 max-w-md mx-auto">
-            Schedule view coming soon. Track superintendent assignments, project timelines, and availability.
-          </p>
-          <div class="mt-8 space-y-3 text-left max-w-lg mx-auto bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <p class="text-sm font-medium text-blue-900">Planned Features:</p>
-            <ul class="text-sm text-blue-700 space-y-2 ml-4">
-              <li class="flex items-start">
-                <svg class="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                Calendar view of superintendent assignments by job
-              </li>
-              <li class="flex items-start">
-                <svg class="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                Link schedule to lodging reservations
-              </li>
-              <li class="flex items-start">
-                <svg class="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                Drag-and-drop superintendent reassignment
-              </li>
-              <li class="flex items-start">
-                <svg class="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                Conflict detection (overlapping assignments)
-              </li>
-              <li class="flex items-start">
-                <svg class="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                Availability tracking and time-off management
-              </li>
-            </ul>
+        <!-- List -->
+        <div id="lodging-list" class="space-y-4">
+          <div id="loading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <p class="mt-4 text-gray-600">Loading lodging...</p>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- ====== Schedule Tab ====== -->
+    <div id="content-schedule" class="tab-content hidden">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+        <svg class="mx-auto h-20 w-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        <h3 class="mt-6 text-xl font-semibold text-gray-900">Superintendent Schedule</h3>
+        <p class="mt-2 text-sm text-gray-600 max-w-md mx-auto">Schedule view coming soon. Track superintendent assignments, project timelines, and availability.</p>
+      </div>
+    </div>
   </div>
 
-  <!-- Lodging Modal (same as original lodging page) -->
+  <!-- ====== Lodging Modal ====== -->
   <div id="lodging-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 id="modal-title" class="text-2xl font-bold text-gray-900">Add Lodging</h3>
         <button id="close-modal" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
 
       <form id="lodging-form" class="space-y-4">
         <input type="hidden" id="lodging-id">
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="superintendent" class="block text-sm font-medium text-gray-700 mb-1">Superintendent *</label>
-            <input 
-              type="text" 
-              id="superintendent" 
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
+            <label for="superintendent-id" class="block text-sm font-medium text-gray-700 mb-1">Superintendent *</label>
+            <select id="superintendent-id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">Select superintendent...</option>
+            </select>
           </div>
           <div>
-            <label for="job-name" class="block text-sm font-medium text-gray-700 mb-1">Job Name</label>
-            <input 
-              type="text" 
-              id="job-name"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
+            <label for="job-id" class="block text-sm font-medium text-gray-700 mb-1">Job</label>
+            <select id="job-id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">No job linked</option>
+            </select>
           </div>
         </div>
 
         <div>
-          <label for="accommodation-type" class="block text-sm font-medium text-gray-700 mb-1">Accommodation Type *</label>
-          <select 
-            id="accommodation-type" 
-            required
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="">Select type...</option>
-            <option value="hotel">Hotel</option>
-            <option value="apartment">Apartment</option>
-            <option value="rental-home">Rental Home</option>
-            <option value="extended-stay">Extended Stay</option>
-            <option value="company-housing">Company Housing</option>
-            <option value="other">Other</option>
-          </select>
+          <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location / Property Name *</label>
+          <input type="text" id="location" required placeholder="e.g. Marriott Courtyard Downtown" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
         </div>
 
         <div>
-          <label for="property-name" class="block text-sm font-medium text-gray-700 mb-1">Property Name *</label>
-          <input 
-            type="text" 
-            id="property-name" 
-            required
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
+          <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+          <input type="text" id="address" placeholder="123 Main St, City, State" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
         </div>
 
         <div>
-          <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address *</label>
-          <input 
-            type="text" 
-            id="address" 
-            required
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
+          <label for="jobsite-address" class="block text-sm font-medium text-gray-700 mb-1">Jobsite Address</label>
+          <input type="text" id="jobsite-address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City *</label>
-            <input 
-              type="text" 
-              id="city" 
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
+            <label for="check-in" class="block text-sm font-medium text-gray-700 mb-1">Check-in Date</label>
+            <input type="date" id="check-in" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           </div>
           <div>
-            <label for="state" class="block text-sm font-medium text-gray-700 mb-1">State *</label>
-            <input 
-              type="text" 
-              id="state" 
-              required
-              maxlength="2"
-              placeholder="CA"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
-          </div>
-          <div>
-            <label for="zip" class="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
-            <input 
-              type="text" 
-              id="zip" 
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
+            <label for="check-out" class="block text-sm font-medium text-gray-700 mb-1">Check-out Date</label>
+            <input type="date" id="check-out" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label for="checkin-date" class="block text-sm font-medium text-gray-700 mb-1">Check-in Date *</label>
-            <input 
-              type="date" 
-              id="checkin-date" 
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
-          </div>
-          <div>
-            <label for="checkout-date" class="block text-sm font-medium text-gray-700 mb-1">Check-out Date</label>
-            <input 
-              type="date" 
-              id="checkout-date"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
             <label for="cost-per-night" class="block text-sm font-medium text-gray-700 mb-1">Cost per Night</label>
-            <div class="relative">
-              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
-              <input 
-                type="number" 
-                id="cost-per-night"
-                step="0.01"
-                class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              >
-            </div>
+            <input type="number" id="cost-per-night" step="0.01" placeholder="0.00" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           </div>
           <div>
             <label for="total-cost" class="block text-sm font-medium text-gray-700 mb-1">Total Cost</label>
-            <div class="relative">
-              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
-              <input 
-                type="number" 
-                id="total-cost"
-                step="0.01"
-                class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              >
-            </div>
+            <input type="number" id="total-cost" step="0.01" placeholder="0.00" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="confirmation-number" class="block text-sm font-medium text-gray-700 mb-1">Confirmation Number</label>
-            <input 
-              type="text" 
-              id="confirmation-number"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
+            <label for="property-link" class="block text-sm font-medium text-gray-700 mb-1">Property Link</label>
+            <input type="url" id="property-link" placeholder="https://..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           </div>
           <div>
-            <label for="contact-phone" class="block text-sm font-medium text-gray-700 mb-1">Property Phone</label>
-            <input 
-              type="tel" 
-              id="contact-phone"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
+            <label for="booking-confirmation" class="block text-sm font-medium text-gray-700 mb-1">Booking Confirmation #</label>
+            <input type="text" id="booking-confirmation" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           </div>
         </div>
 
         <div>
           <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <textarea 
-            id="notes"
-            rows="3"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          ></textarea>
+          <textarea id="notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
         </div>
 
         <div class="flex justify-end space-x-3 pt-4 border-t">
-          <button type="button" id="cancel-btn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
-            Cancel
-          </button>
-          <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">
-            Save Lodging
-          </button>
+          <button type="button" id="cancel-btn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
+          <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">Save Lodging</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Delete Confirmation Modal -->
-  <div id="delete-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-    <div class="relative top-40 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-      <div class="text-center">
-        <svg class="mx-auto h-12 w-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-        </svg>
-        <h3 class="mt-5 text-lg font-medium text-gray-900">Delete Lodging</h3>
-        <p class="mt-2 text-sm text-gray-500">Are you sure you want to delete this lodging record? This action cannot be undone.</p>
-        <div class="mt-6 flex justify-center space-x-4">
-          <button id="cancel-delete" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium">
-            Cancel
-          </button>
-          <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</Layout>
+  <script>
+    import { escapeHtml } from '../utils/html';
+    import { getApiUrl } from '../utils/api';
+    import { toast } from '../utils/toast';
 
-<script>
-  // Tab switching
-  const tabButtons = document.querySelectorAll('.tab-button');
-  const tabContents = document.querySelectorAll('.tab-content');
+    const API_URL = getApiUrl();
+    const token = localStorage.getItem('jbs_token');
 
-  tabButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const tabName = button.getAttribute('data-tab');
-      
-      // Update button styles
-      tabButtons.forEach(btn => {
-        if (btn === button) {
-          btn.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-          btn.classList.add('border-primary-500', 'text-primary-600', 'active');
-        } else {
-          btn.classList.remove('border-primary-500', 'text-primary-600', 'active');
-          btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-        }
-      });
-      
-      // Show/hide content
-      tabContents.forEach(content => {
-        if (content.id === `content-${tabName}`) {
-          content.classList.remove('hidden');
-        } else {
-          content.classList.add('hidden');
-        }
+    interface Superintendent { id: number; name: string; }
+    interface Job { id: number; job_number: string; job_name: string; }
+    interface Lodging {
+      id: number;
+      superintendent_id: number;
+      job_id: number | null;
+      location: string;
+      address: string;
+      jobsite_address: string;
+      check_in_date: string | null;
+      check_out_date: string | null;
+      property_link: string;
+      cost_per_night: number | null;
+      total_cost: number | null;
+      booking_confirmation: string;
+      notes: string;
+      superintendent?: { id: number; name: string };
+      job?: { id: number; job_number: string; job_name: string };
+    }
+
+    let supers: Superintendent[] = [];
+    let jobs: Job[] = [];
+    let lodgings: Lodging[] = [];
+    let filtered: Lodging[] = [];
+    let editingId: number | null = null;
+
+    // ---- Tab switching ----
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-tab')!;
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.toggle('border-primary-500', b === btn);
+          b.classList.toggle('text-primary-600', b === btn);
+          b.classList.toggle('border-transparent', b !== btn);
+          b.classList.toggle('text-gray-500', b !== btn);
+        });
+        document.querySelectorAll('.tab-content').forEach(c => {
+          c.classList.toggle('hidden', c.id !== `content-${tab}`);
+        });
       });
     });
-  });
 
-  // All the lodging functionality (same as original lodging.astro)
-  const API_BASE_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
-  const token = localStorage.getItem('jbs_token');
-  let currentLodgingId: number | null = null;
-  let lodgingToDelete: number | null = null;
-  let allLodging: any[] = [];
-
-  function escapeHtml(str: string): string {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  // Fetch and display lodging
-  async function loadLodging() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/lodging`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) throw new Error('Failed to fetch lodging');
-      
-      allLodging = await response.json();
-      renderLodging(allLodging);
-    } catch (error) {
-      console.error('Error loading lodging:', error);
-      showError('Failed to load lodging data');
-    }
-  }
-
-  function renderLodging(lodging: any[]) {
-    const listView = document.getElementById('list-view');
-    const loading = document.getElementById('loading');
-    
-    if (loading) loading.style.display = 'none';
-    
-    if (!listView) return;
-    
-    if (lodging.length === 0) {
-      listView.innerHTML = `
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-          </svg>
-          <h3 class="mt-4 text-lg font-medium text-gray-900">No Lodging Records</h3>
-          <p class="mt-2 text-sm text-gray-500">Get started by creating a new lodging entry.</p>
-        </div>
-      `;
-      return;
-    }
-    
-    const html = lodging.map(lodge => {
-      const superintendentName = lodge.superintendent?.name || 'Unknown';
-      const jobName = lodge.job?.job_name || null;
-      const checkinDate = new Date(lodge.check_in_date);
-      const checkoutDate = lodge.check_out_date ? new Date(lodge.check_out_date) : null;
-      const today = new Date();
-      
-      let status = 'upcoming';
-      let statusClass = 'bg-blue-100 text-blue-800';
-      
-      if (checkinDate <= today && (!checkoutDate || checkoutDate >= today)) {
-        status = 'active';
-        statusClass = 'bg-green-100 text-green-800';
-      } else if (checkoutDate && checkoutDate < today) {
-        status = 'completed';
-        statusClass = 'bg-gray-100 text-gray-800';
+    // ---- Load reference data ----
+    async function loadReferenceData() {
+      try {
+        const [supersRes, jobsRes] = await Promise.all([
+          fetch(`${API_URL}/superintendents`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_URL}/jobs`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        ]);
+        if (supersRes.ok) supers = await supersRes.json();
+        if (jobsRes.ok) jobs = await jobsRes.json();
+        populateDropdowns();
+      } catch (e) {
+        console.error('Failed to load reference data:', e);
       }
-      
-      return `
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <h3 class="text-lg font-semibold text-gray-900">${escapeHtml(superintendentName)}</h3>
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} capitalize">
-                  ${escapeHtml(status)}
-                </span>
-              </div>
-              
-              <div class="space-y-2">
-                ${jobName ? `
-                  <div class="flex items-center text-sm text-gray-600">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                    ${escapeHtml(jobName)}
-                  </div>
-                ` : ''}
-                
-                ${lodge.location ? `
-                  <div class="flex items-center text-sm text-gray-600">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                    </svg>
-                    ${escapeHtml(lodge.location)}
-                  </div>
-                ` : ''}
-                
-                ${lodge.address ? `
-                  <div class="flex items-center text-sm text-gray-600">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    ${escapeHtml(lodge.address)}
-                  </div>
-                ` : ''}
-                
-                <div class="flex items-center text-sm text-gray-600">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                  ${checkinDate.toLocaleDateString()} - ${checkoutDate ? checkoutDate.toLocaleDateString() : 'Ongoing'}
+    }
+
+    function populateDropdowns() {
+      // Superintendent select in form
+      const superSelect = document.getElementById('superintendent-id') as HTMLSelectElement;
+      if (superSelect) {
+        superSelect.innerHTML = '<option value="">Select superintendent...</option>' +
+          supers.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+      }
+
+      // Superintendent filter
+      const superFilter = document.getElementById('super-filter') as HTMLSelectElement;
+      if (superFilter) {
+        superFilter.innerHTML = '<option value="">All</option>' +
+          supers.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+      }
+
+      // Job select in form
+      const jobSelect = document.getElementById('job-id') as HTMLSelectElement;
+      if (jobSelect) {
+        jobSelect.innerHTML = '<option value="">No job linked</option>' +
+          jobs.map(j => `<option value="${(j as any).id}">${escapeHtml((j as any).job_number || '')} — ${escapeHtml((j as any).job_name || '')}</option>`).join('');
+      }
+    }
+
+    // ---- Fetch lodging ----
+    async function fetchLodging() {
+      try {
+        const res = await fetch(`${API_URL}/lodging`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Failed');
+        lodgings = await res.json();
+        applyFilters();
+        document.getElementById('loading')?.classList.add('hidden');
+      } catch (e) {
+        console.error('Error fetching lodging:', e);
+        toast.error('Failed to load lodging');
+      }
+    }
+
+    // ---- Filtering ----
+    document.getElementById('search')?.addEventListener('input', applyFilters);
+    document.getElementById('status-filter')?.addEventListener('change', applyFilters);
+    document.getElementById('super-filter')?.addEventListener('change', applyFilters);
+
+    function getLodgingStatus(checkIn: string | null, checkOut: string | null): string {
+      if (!checkIn) return 'upcoming';
+      const now = new Date();
+      const cin = new Date(checkIn);
+      const cout = checkOut ? new Date(checkOut) : null;
+      if (cout && now > cout) return 'completed';
+      if (now >= cin && (!cout || now <= cout)) return 'active';
+      return 'upcoming';
+    }
+
+    function applyFilters() {
+      const search = (document.getElementById('search') as HTMLInputElement)?.value.toLowerCase() || '';
+      const statusVal = (document.getElementById('status-filter') as HTMLSelectElement)?.value || '';
+      const superVal = (document.getElementById('super-filter') as HTMLSelectElement)?.value || '';
+
+      filtered = lodgings.filter(l => {
+        const matchSearch = !search ||
+          l.superintendent?.name?.toLowerCase().includes(search) ||
+          l.location?.toLowerCase().includes(search) ||
+          l.address?.toLowerCase().includes(search) ||
+          l.job?.job_name?.toLowerCase().includes(search);
+        const matchStatus = !statusVal || getLodgingStatus(l.check_in_date, l.check_out_date) === statusVal;
+        const matchSuper = !superVal || String(l.superintendent_id) === superVal;
+        return matchSearch && matchStatus && matchSuper;
+      });
+
+      renderLodging();
+    }
+
+    // ---- Render ----
+    function renderLodging() {
+      const container = document.getElementById('lodging-list')!;
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+          <h3 class="mt-4 text-lg font-medium text-gray-900">No lodging records</h3>
+          <p class="mt-2 text-sm text-gray-500">Add housing information for superintendents.</p>
+        </div>`;
+        return;
+      }
+
+      const statusColors: Record<string, string> = {
+        active: 'bg-green-100 text-green-800',
+        upcoming: 'bg-blue-100 text-blue-800',
+        completed: 'bg-gray-100 text-gray-800',
+      };
+
+      container.innerHTML = filtered.map(l => {
+        const status = getLodgingStatus(l.check_in_date, l.check_out_date);
+        return `
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-2">
+                  <h3 class="text-lg font-semibold text-gray-900">${escapeHtml(l.superintendent?.name || 'Unknown')}</h3>
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status]} capitalize">${escapeHtml(status)}</span>
+                  ${l.job ? `<span class="text-sm text-gray-500">#${escapeHtml(l.job.job_number)}</span>` : ''}
                 </div>
+                <p class="text-gray-700 mb-2">🏨 ${escapeHtml(l.location || 'No location')}</p>
+                <div class="text-sm text-gray-600 space-y-1">
+                  ${l.address ? `<p>📍 ${escapeHtml(l.address)}</p>` : ''}
+                  <p>📅 ${l.check_in_date ? formatDate(l.check_in_date) : 'TBD'} → ${l.check_out_date ? formatDate(l.check_out_date) : 'Ongoing'}</p>
+                  ${l.cost_per_night ? `<p>💵 $${Number(l.cost_per_night).toFixed(2)}/night${l.total_cost ? ` (Total: $${Number(l.total_cost).toFixed(2)})` : ''}</p>` : ''}
+                  ${l.booking_confirmation ? `<p>🔖 Confirmation: ${escapeHtml(l.booking_confirmation)}</p>` : ''}
+                  ${l.property_link ? `<p>🔗 <a href="${escapeHtml(l.property_link)}" target="_blank" class="text-primary-600 hover:underline">Property link</a></p>` : ''}
+                </div>
+                ${l.notes ? `<p class="mt-3 text-sm text-gray-500 italic">${escapeHtml(l.notes)}</p>` : ''}
+              </div>
+              <div class="flex space-x-2 ml-4">
+                <button onclick="editLodging(${l.id})" class="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="Edit">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </button>
+                <button onclick="deleteLodging(${l.id})" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
               </div>
             </div>
-            
-            <div class="flex items-center gap-2">
-              <button 
-                onclick="editLodging(${lodge.id})"
-                class="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Edit"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                </svg>
-              </button>
-              <button 
-                onclick="confirmDelete(${lodge.id})"
-                class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-    
-    listView.innerHTML = html;
-  }
-
-  function showError(message: string) {
-    // Simple error display - could be enhanced with a toast notification
-    const listView = document.getElementById('list-view');
-    if (listView) {
-      listView.innerHTML = `
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          ${escapeHtml(message)}
-        </div>
-      `;
+          </div>`;
+      }).join('');
     }
-  }
 
-  // Modal controls
-  const modal = document.getElementById('lodging-modal');
-  const createBtn = document.getElementById('create-lodging-btn');
-  const closeBtn = document.getElementById('close-modal');
-  const cancelBtn = document.getElementById('cancel-btn');
-  const form = document.getElementById('lodging-form') as HTMLFormElement;
-
-  createBtn?.addEventListener('click', () => {
-    currentLodgingId = null;
-    form?.reset();
-    document.getElementById('modal-title')!.textContent = 'Add Lodging';
-    modal?.classList.remove('hidden');
-  });
-
-  closeBtn?.addEventListener('click', () => modal?.classList.add('hidden'));
-  cancelBtn?.addEventListener('click', () => modal?.classList.add('hidden'));
-
-  // Edit lodging
-  (window as any).editLodging = async (id: number) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/lodging/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) throw new Error('Failed to fetch lodging details');
-      
-      const lodge = await response.json();
-      currentLodgingId = id;
-      
-      // Populate form
-      (document.getElementById('superintendent') as HTMLInputElement).value = lodge.superintendent || '';
-      (document.getElementById('job-name') as HTMLInputElement).value = lodge.job_name || '';
-      (document.getElementById('accommodation-type') as HTMLSelectElement).value = lodge.accommodation_type || '';
-      (document.getElementById('property-name') as HTMLInputElement).value = lodge.property_name || '';
-      (document.getElementById('address') as HTMLInputElement).value = lodge.address || '';
-      (document.getElementById('city') as HTMLInputElement).value = lodge.city || '';
-      (document.getElementById('state') as HTMLInputElement).value = lodge.state || '';
-      (document.getElementById('zip') as HTMLInputElement).value = lodge.zip_code || '';
-      (document.getElementById('checkin-date') as HTMLInputElement).value = lodge.checkin_date ? lodge.checkin_date.split('T')[0] : '';
-      (document.getElementById('checkout-date') as HTMLInputElement).value = lodge.checkout_date ? lodge.checkout_date.split('T')[0] : '';
-      (document.getElementById('cost-per-night') as HTMLInputElement).value = lodge.cost_per_night || '';
-      (document.getElementById('total-cost') as HTMLInputElement).value = lodge.total_cost || '';
-      (document.getElementById('confirmation-number') as HTMLInputElement).value = lodge.confirmation_number || '';
-      (document.getElementById('contact-phone') as HTMLInputElement).value = lodge.contact_phone || '';
-      (document.getElementById('notes') as HTMLTextAreaElement).value = lodge.notes || '';
-      
-      document.getElementById('modal-title')!.textContent = 'Edit Lodging';
-      modal?.classList.remove('hidden');
-    } catch (error) {
-      console.error('Error loading lodging:', error);
-      showError('Failed to load lodging details');
+    function formatDate(d: string): string {
+      return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
-  };
 
-  // Form submission
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = {
-      superintendent: (document.getElementById('superintendent') as HTMLInputElement).value,
-      job_name: (document.getElementById('job-name') as HTMLInputElement).value || null,
-      accommodation_type: (document.getElementById('accommodation-type') as HTMLSelectElement).value,
-      property_name: (document.getElementById('property-name') as HTMLInputElement).value,
-      address: (document.getElementById('address') as HTMLInputElement).value,
-      city: (document.getElementById('city') as HTMLInputElement).value,
-      state: (document.getElementById('state') as HTMLInputElement).value,
-      zip_code: (document.getElementById('zip') as HTMLInputElement).value,
-      checkin_date: (document.getElementById('checkin-date') as HTMLInputElement).value,
-      checkout_date: (document.getElementById('checkout-date') as HTMLInputElement).value || null,
-      cost_per_night: (document.getElementById('cost-per-night') as HTMLInputElement).value || null,
-      total_cost: (document.getElementById('total-cost') as HTMLInputElement).value || null,
-      confirmation_number: (document.getElementById('confirmation-number') as HTMLInputElement).value || null,
-      contact_phone: (document.getElementById('contact-phone') as HTMLInputElement).value || null,
-      notes: (document.getElementById('notes') as HTMLTextAreaElement).value || null
-    };
-    
-    try {
-      const url = currentLodgingId 
-        ? `${API_BASE_URL}/lodging/${currentLodgingId}`
-        : `${API_BASE_URL}/lodging`;
-      
-      const method = currentLodgingId ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      if (!response.ok) throw new Error('Failed to save lodging');
-      
-      modal?.classList.add('hidden');
+    // ---- Modal ----
+    const modal = document.getElementById('lodging-modal')!;
+    const form = document.getElementById('lodging-form') as HTMLFormElement;
+
+    document.getElementById('create-lodging-btn')?.addEventListener('click', () => {
+      editingId = null;
+      (document.getElementById('modal-title') as HTMLElement).textContent = 'Add Lodging';
       form.reset();
-      await loadLodging();
-    } catch (error) {
-      console.error('Error saving lodging:', error);
-      alert('Failed to save lodging. Please try again.');
-    }
-  });
-
-  // Delete confirmation
-  const deleteModal = document.getElementById('delete-modal');
-  const cancelDeleteBtn = document.getElementById('cancel-delete');
-  const confirmDeleteBtn = document.getElementById('confirm-delete');
-
-  (window as any).confirmDelete = (id: number) => {
-    lodgingToDelete = id;
-    deleteModal?.classList.remove('hidden');
-  };
-
-  cancelDeleteBtn?.addEventListener('click', () => {
-    deleteModal?.classList.add('hidden');
-    lodgingToDelete = null;
-  });
-
-  confirmDeleteBtn?.addEventListener('click', async () => {
-    if (!lodgingToDelete) return;
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/lodging/${lodgingToDelete}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete lodging');
-      
-      deleteModal?.classList.add('hidden');
-      lodgingToDelete = null;
-      await loadLodging();
-    } catch (error) {
-      console.error('Error deleting lodging:', error);
-      alert('Failed to delete lodging. Please try again.');
-    }
-  });
-
-  // View toggle
-  const viewListBtn = document.getElementById('view-list');
-  const viewCalendarBtn = document.getElementById('view-calendar');
-  const listView = document.getElementById('list-view');
-  const calendarView = document.getElementById('calendar-view');
-
-  viewListBtn?.addEventListener('click', () => {
-    viewListBtn.classList.add('bg-primary-50', 'text-primary-600', 'border-primary-300');
-    viewCalendarBtn?.classList.remove('bg-primary-50', 'text-primary-600', 'border-primary-300');
-    listView?.classList.remove('hidden');
-    calendarView?.classList.add('hidden');
-  });
-
-  viewCalendarBtn?.addEventListener('click', () => {
-    viewCalendarBtn.classList.add('bg-primary-50', 'text-primary-600', 'border-primary-300');
-    viewListBtn?.classList.remove('bg-primary-50', 'text-primary-600', 'border-primary-300');
-    listView?.classList.add('hidden');
-    calendarView?.classList.remove('hidden');
-  });
-
-  // Search and filter
-  const searchInput = document.getElementById('search') as HTMLInputElement;
-  const statusFilter = document.getElementById('status-filter') as HTMLSelectElement;
-  const sortSelect = document.getElementById('sort') as HTMLSelectElement;
-
-  function filterAndSortLodging() {
-    let filtered = [...allLodging];
-    
-    // Search filter
-    const searchTerm = searchInput?.value.toLowerCase();
-    if (searchTerm) {
-      filtered = filtered.filter(lodge => 
-        lodge.superintendent?.name?.toLowerCase().includes(searchTerm) ||
-        lodge.location?.toLowerCase().includes(searchTerm) ||
-        lodge.address?.toLowerCase().includes(searchTerm) ||
-        lodge.job?.job_name?.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    // Status filter
-    const status = statusFilter?.value;
-    if (status) {
-      const today = new Date();
-      filtered = filtered.filter(lodge => {
-        const checkinDate = new Date(lodge.check_in_date);
-        const checkoutDate = lodge.check_out_date ? new Date(lodge.check_out_date) : null;
-        
-        if (status === 'active') {
-          return checkinDate <= today && (!checkoutDate || checkoutDate >= today);
-        } else if (status === 'upcoming') {
-          return checkinDate > today;
-        } else if (status === 'completed') {
-          return checkoutDate && checkoutDate < today;
-        }
-        return true;
-      });
-    }
-    
-    // Sort
-    const sortBy = sortSelect?.value;
-    filtered.sort((a, b) => {
-      if (sortBy === 'checkin') {
-        return new Date(a.check_in_date).getTime() - new Date(b.check_in_date).getTime();
-      } else if (sortBy === 'checkout') {
-        if (!a.check_out_date) return 1;
-        if (!b.check_out_date) return -1;
-        return new Date(a.check_out_date).getTime() - new Date(b.check_out_date).getTime();
-      } else if (sortBy === 'super') {
-        const aName = a.superintendent?.name || '';
-        const bName = b.superintendent?.name || '';
-        return aName.localeCompare(bName);
-      } else if (sortBy === 'cost') {
-        // Cost tracking not yet in schema, default to 0
-        return 0;
-      }
-      return 0;
+      modal.classList.remove('hidden');
     });
-    
-    renderLodging(filtered);
-  }
+    document.getElementById('close-modal')?.addEventListener('click', () => modal.classList.add('hidden'));
+    document.getElementById('cancel-btn')?.addEventListener('click', () => modal.classList.add('hidden'));
 
-  searchInput?.addEventListener('input', filterAndSortLodging);
-  statusFilter?.addEventListener('change', filterAndSortLodging);
-  sortSelect?.addEventListener('change', filterAndSortLodging);
+    // ---- Edit ----
+    (window as any).editLodging = function(id: number) {
+      const l = lodgings.find(x => x.id === id);
+      if (!l) return;
+      editingId = id;
+      (document.getElementById('modal-title') as HTMLElement).textContent = 'Edit Lodging';
+      (document.getElementById('superintendent-id') as HTMLSelectElement).value = String(l.superintendent_id);
+      (document.getElementById('job-id') as HTMLSelectElement).value = l.job_id ? String(l.job_id) : '';
+      (document.getElementById('location') as HTMLInputElement).value = l.location || '';
+      (document.getElementById('address') as HTMLInputElement).value = l.address || '';
+      (document.getElementById('jobsite-address') as HTMLInputElement).value = l.jobsite_address || '';
+      (document.getElementById('check-in') as HTMLInputElement).value = l.check_in_date ? l.check_in_date.split('T')[0] : '';
+      (document.getElementById('check-out') as HTMLInputElement).value = l.check_out_date ? l.check_out_date.split('T')[0] : '';
+      (document.getElementById('cost-per-night') as HTMLInputElement).value = l.cost_per_night ? String(l.cost_per_night) : '';
+      (document.getElementById('total-cost') as HTMLInputElement).value = l.total_cost ? String(l.total_cost) : '';
+      (document.getElementById('property-link') as HTMLInputElement).value = l.property_link || '';
+      (document.getElementById('booking-confirmation') as HTMLInputElement).value = l.booking_confirmation || '';
+      (document.getElementById('notes') as HTMLTextAreaElement).value = l.notes || '';
+      modal.classList.remove('hidden');
+    };
 
-  // Initial load
-  loadLodging();
-</script>
+    // ---- Delete ----
+    (window as any).deleteLodging = async function(id: number) {
+      if (!confirm('Delete this lodging record?')) return;
+      try {
+        const res = await fetch(`${API_URL}/lodging/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Failed');
+        await fetchLodging();
+      } catch (e) {
+        console.error(e);
+        toast.error('Failed to delete lodging');
+      }
+    };
 
-<style>
-  .tab-button {
-    transition: all 0.2s ease;
-  }
-  
-  .tab-button.active {
-    font-weight: 600;
-  }
-</style>
+    // ---- Submit — fields match backend CreateLodgingRequest / UpdateLodgingRequest ----
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const superIdVal = (document.getElementById('superintendent-id') as HTMLSelectElement).value;
+      const jobIdVal = (document.getElementById('job-id') as HTMLSelectElement).value;
+      const checkInVal = (document.getElementById('check-in') as HTMLInputElement).value;
+      const checkOutVal = (document.getElementById('check-out') as HTMLInputElement).value;
+      const costVal = (document.getElementById('cost-per-night') as HTMLInputElement).value;
+      const totalVal = (document.getElementById('total-cost') as HTMLInputElement).value;
+
+      const data: Record<string, any> = {
+        superintendent_id: parseInt(superIdVal),
+        job_id: jobIdVal ? parseInt(jobIdVal) : null,
+        location: (document.getElementById('location') as HTMLInputElement).value,
+        address: (document.getElementById('address') as HTMLInputElement).value || '',
+        jobsite_address: (document.getElementById('jobsite-address') as HTMLInputElement).value || '',
+        check_in_date: checkInVal ? checkInVal + 'T00:00:00Z' : null,
+        check_out_date: checkOutVal ? checkOutVal + 'T00:00:00Z' : null,
+        cost_per_night: costVal ? parseFloat(costVal) : null,
+        total_cost: totalVal ? parseFloat(totalVal) : null,
+        property_link: (document.getElementById('property-link') as HTMLInputElement).value || '',
+        booking_confirmation: (document.getElementById('booking-confirmation') as HTMLInputElement).value || '',
+        notes: (document.getElementById('notes') as HTMLTextAreaElement).value || '',
+      };
+
+      try {
+        const url = editingId ? `${API_URL}/lodging/${editingId}` : `${API_URL}/lodging`;
+        const method = editingId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to save');
+        }
+        modal.classList.add('hidden');
+        await fetchLodging();
+      } catch (e: any) {
+        console.error(e);
+        toast.error(e.message || 'Failed to save lodging');
+      }
+    });
+
+    // ---- Init ----
+    loadReferenceData();
+    fetchLodging();
+  </script>
+</Layout>

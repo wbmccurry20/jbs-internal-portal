@@ -80,7 +80,7 @@ import Layout from '../layouts/Layout.astro';
           </div>
           <div class="mt-4">
             <div class="text-sm text-gray-600" id="upcoming-checkouts"></div>
-            <a href="/lodging" class="text-sm font-medium text-primary-600 hover:text-primary-700">View lodging →</a>
+            <a href="/superintendents" class="text-sm font-medium text-primary-600 hover:text-primary-700">View lodging →</a>
           </div>
         </div>
       </div>
@@ -132,7 +132,7 @@ import Layout from '../layouts/Layout.astro';
             New Bid
           </a>
           <a
-            href="/lodging"
+            href="/superintendents"
             class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
           >
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,18 +204,11 @@ import Layout from '../layouts/Layout.astro';
   </div>
 
   <script>
-    const API_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
-    const token = localStorage.getItem('jbs_token');
+    import { escapeHtml } from '../utils/html';
+    import { getApiUrl } from '../utils/api';
 
-    function escapeHtml(str: string): string {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
+    const API_URL = getApiUrl();
+    const token = localStorage.getItem('jbs_token');
 
     async function loadDashboard() {
       try {

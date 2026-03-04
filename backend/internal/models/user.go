@@ -7,7 +7,7 @@ type User struct {
 	Email     string    `json:"email"`
 	Password  string    `json:"-"` // Never send to client
 	Name      string    `json:"name"`
-	Role      string    `json:"role"` // employee, accountant, admin
+	Role      string    `json:"role"` // executive, hr_admin, finance, project_manager, construction_admin, trainee, support
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

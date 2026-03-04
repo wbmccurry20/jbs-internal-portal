@@ -269,21 +269,15 @@ import USMapClean from '../components/USMapClean.astro';
   </div>
 
   <script>
-    const API_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
+    import { escapeHtml } from '../utils/html';
+    import { getApiUrl } from '../utils/api';
+    import { toast } from '../utils/toast';
+
+    const API_URL = getApiUrl();
     const token = localStorage.getItem('jbs_token');
 
     if (!token) {
       window.location.href = '/';
-    }
-
-    function escapeHtml(str: string): string {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
     }
 
     const modal = document.getElementById('license-modal')!;
@@ -529,7 +523,7 @@ import USMapClean from '../components/USMapClean.astro';
         modal.classList.add('hidden');
         loadLicenses();
       } catch (error: any) {
-        alert('Failed to save license: ' + error.message);
+        toast.error('Failed to save license: ' + error.message);
       }
     });
 
@@ -547,7 +541,7 @@ import USMapClean from '../components/USMapClean.astro';
 
         loadLicenses();
       } catch (error) {
-        alert('Failed to delete license');
+        toast.error('Failed to delete license');
       }
     };
 
@@ -585,7 +579,7 @@ import USMapClean from '../components/USMapClean.astro';
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, '', cleanUrl);
       if (spParam === 'error') {
-        alert('SharePoint connection failed. Please try again.');
+        toast.error('SharePoint connection failed. Please try again.');
       }
     }
 
@@ -652,7 +646,7 @@ import USMapClean from '../components/USMapClean.astro';
         const data = await res.json();
         window.location.href = data.auth_url;
       } catch {
-        alert('Failed to start SharePoint connection');
+        toast.error('Failed to start SharePoint connection');
       }
     });
 

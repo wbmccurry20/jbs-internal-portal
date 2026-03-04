@@ -121,7 +121,11 @@ import Layout from '../../layouts/Layout.astro';
   </div>
 
   <script>
-    const API_BASE = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
+    import { escapeHtml } from '../../utils/html';
+    import { getApiUrl } from '../../utils/api';
+    import { toast } from '../../utils/toast';
+
+    const API_BASE = getApiUrl();
     const token = localStorage.getItem('jbs_token');
     if (!token) window.location.href = '/';
 
@@ -321,12 +325,6 @@ import Layout from '../../layouts/Layout.astro';
       return icons[category] || '📎';
     }
 
-    function escapeHtml(str: string) {
-      const div = document.createElement('div');
-      div.textContent = str || '';
-      return div.innerHTML;
-    }
-
     /** Convert "HH:MM" 24-hr to "h:MM AM/PM" */
     function formatTime24to12(t: string): string {
       const [hStr, mStr] = t.split(':');
@@ -391,7 +389,7 @@ import Layout from '../../layouts/Layout.astro';
         }
         loadCalendar();
       } catch (e: any) {
-        alert('Error: ' + e.message);
+        toast.error(e.message);
       }
     };
 
@@ -435,7 +433,7 @@ import Layout from '../../layouts/Layout.astro';
         document.getElementById('override-modal')!.classList.add('hidden');
         loadCalendar();
       } catch (e: any) {
-        alert('Error: ' + e.message);
+        toast.error(e.message);
       }
     });
 

@@ -68,14 +68,14 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Validate role
+	// Validate role — "support" is system-only and cannot be assigned via API
 	validRoles := map[string]bool{
 		"executive": true, "hr_admin": true, "finance": true,
 		"project_manager": true, "construction_admin": true,
-		"trainee": true, "support": true,
+		"trainee": true,
 	}
 	if !validRoles[req.Role] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role. Must be executive, hr_admin, finance, project_manager, construction_admin, trainee, or support"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role. Must be executive, hr_admin, finance, project_manager, construction_admin, or trainee"})
 		return
 	}
 
@@ -271,11 +271,11 @@ func UpdateUserRole(c *gin.Context) {
 		return
 	}
 
-	// Validate role
+	// Validate role — "support" is system-only and cannot be assigned via API
 	validRoles := map[string]bool{
 		"executive": true, "hr_admin": true, "finance": true,
 		"project_manager": true, "construction_admin": true,
-		"trainee": true, "support": true,
+		"trainee": true,
 	}
 	if !validRoles[req.Role] {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role"})

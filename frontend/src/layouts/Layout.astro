@@ -1,6 +1,11 @@
 ---
 import '../styles/global.css';
-const title = 'JBS Internal Portal';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'JBS Internal Portal' } = Astro.props;
 ---
 
 <!DOCTYPE html>

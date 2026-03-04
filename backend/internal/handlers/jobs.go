@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -95,6 +96,7 @@ func ListJobs(c *gin.Context) {
 			&cID, &cName, &sID, &sName,
 		)
 		if err != nil {
+			log.Printf("ERROR: jobs scan failed: %v", err)
 			continue
 		}
 
@@ -495,6 +497,7 @@ func ListJobUpdates(c *gin.Context) {
 	for rows.Next() {
 		var u models.JobUpdate
 		if err := rows.Scan(&u.ID, &u.JobID, &u.UpdateText, &u.CreatedAt); err != nil {
+			log.Printf("ERROR: job update scan failed: %v", err)
 			continue
 		}
 		updates = append(updates, map[string]interface{}{

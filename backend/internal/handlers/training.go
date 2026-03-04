@@ -49,6 +49,7 @@ func ListTrainingPrograms(c *gin.Context) {
 		var p ProgramWithMeta
 		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.DurationWeeks, &p.CreatedBy,
 			&p.IsActive, &p.CreatedAt, &p.UpdatedAt, &p.CreatorName, &p.AssignmentCount); err != nil {
+			log.Printf("ERROR: training program scan failed: %v", err)
 			continue
 		}
 		programs = append(programs, p)
@@ -109,6 +110,7 @@ func GetTrainingProgram(c *gin.Context) {
 			&item.Title, &item.Description, &item.LinkURL, &item.LinkLabel, &item.TimeSlot,
 			&item.SortOrder, &item.IsHighlight, &item.StartTime, &item.EndTime,
 			&item.CreatedAt, &item.UpdatedAt); err != nil {
+			log.Printf("ERROR: schedule item scan failed: %v", err)
 			continue
 		}
 		p.Items = append(p.Items, item)
@@ -134,6 +136,7 @@ func GetTrainingProgram(c *gin.Context) {
 	for resRows.Next() {
 		var r models.TrainingResource
 		if err := resRows.Scan(&r.ID, &r.ProgramID, &r.Title, &r.URL, &r.Category, &r.Description, &r.SortOrder, &r.CreatedAt); err != nil {
+			log.Printf("ERROR: resource scan failed: %v", err)
 			continue
 		}
 		p.Resources = append(p.Resources, r)
@@ -494,6 +497,7 @@ func ListAssignments(c *gin.Context) {
 		if err := rows.Scan(&a.ID, &a.ProgramID, &a.UserID, &startDate, &a.Status, &a.Notes,
 			&a.AssignedBy, &a.CreatedAt, &a.UpdatedAt,
 			&a.TraineeName, &a.TraineeEmail, &a.ProgramName, &a.AssignedByName); err != nil {
+			log.Printf("ERROR: assignment scan failed: %v", err)
 			continue
 		}
 		a.StartDate = startDate.Format("2006-01-02")
@@ -858,6 +862,7 @@ func buildTraineeCalendar(assignment models.TraineeAssignment, startDate time.Ti
 			&item.Title, &item.Description, &item.LinkURL, &item.LinkLabel, &item.TimeSlot,
 			&item.SortOrder, &item.IsHighlight, &item.StartTime, &item.EndTime,
 			&item.CreatedAt, &item.UpdatedAt); err != nil {
+			log.Printf("ERROR: calendar schedule item scan failed: %v", err)
 			continue
 		}
 		key := dayKey{item.WeekNumber, item.DayOfWeek}
@@ -886,6 +891,7 @@ func buildTraineeCalendar(assignment models.TraineeAssignment, startDate time.Ti
 	for resRows.Next() {
 		var r models.TrainingResource
 		if err := resRows.Scan(&r.ID, &r.ProgramID, &r.Title, &r.URL, &r.Category, &r.Description, &r.SortOrder, &r.CreatedAt); err != nil {
+			log.Printf("ERROR: calendar resource scan failed: %v", err)
 			continue
 		}
 		resources = append(resources, r)
@@ -922,6 +928,7 @@ func buildTraineeCalendar(assignment models.TraineeAssignment, startDate time.Ti
 				&o.Title, &o.Description, &o.DayTitle, &o.LinkURL, &o.LinkLabel,
 				&o.TimeSlot, &o.StartTime, &o.EndTime,
 				&o.SortOrder, &o.IsHighlight, &o.CreatedBy, &o.CreatedAt, &o.UpdatedAt); err != nil {
+				log.Printf("ERROR: calendar override scan failed: %v", err)
 				continue
 			}
 			k := dayKey2{o.WeekNumber, o.DayOfWeek}
@@ -1087,6 +1094,7 @@ func ListOverrides(c *gin.Context) {
 			&o.Title, &o.Description, &o.DayTitle, &o.LinkURL, &o.LinkLabel,
 			&o.TimeSlot, &o.StartTime, &o.EndTime,
 			&o.SortOrder, &o.IsHighlight, &o.CreatedBy, &o.CreatedAt, &o.UpdatedAt); err != nil {
+			log.Printf("ERROR: override scan failed: %v", err)
 			continue
 		}
 		overrides = append(overrides, o)

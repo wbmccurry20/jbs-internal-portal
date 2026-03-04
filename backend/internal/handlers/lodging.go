@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -18,6 +19,7 @@ func ListLodging(c *gin.Context) {
 			l.id, l.superintendent_id, l.job_id, l.location,
 			l.check_in_date, l.check_out_date, l.property_link,
 			l.address, l.jobsite_address,
+			l.cost_per_night, l.total_cost, l.booking_confirmation, l.notes,
 			l.created_at, l.updated_at,
 			s.id as s_id, s.name as s_name,
 			j.id as j_id, j.job_number, j.job_name
@@ -59,31 +61,38 @@ func ListLodging(c *gin.Context) {
 	for rows.Next() {
 		var l models.SuperintendentLodging
 		var sID, jID sql.NullInt64
-		var sName, jNumber, jName, location, propertyLink, address, jobsiteAddress sql.NullString
+		var sName, jNumber, jName, location, propertyLink, address, jobsiteAddress, bookingConfirmation, notes sql.NullString
+		var costPerNight, totalCost sql.NullFloat64
 
 		err := rows.Scan(
 			&l.ID, &l.SuperintendentID, &l.JobID, &location,
 			&l.CheckInDate, &l.CheckOutDate, &propertyLink,
 			&address, &jobsiteAddress,
+			&costPerNight, &totalCost, &bookingConfirmation, &notes,
 			&l.CreatedAt, &l.UpdatedAt,
 			&sID, &sName, &jID, &jNumber, &jName,
 		)
 		if err != nil {
+			log.Printf("ERROR: lodging scan failed: %v", err)
 			continue
 		}
 
 		lodging := map[string]interface{}{
-			"id":               l.ID,
-			"superintendent_id": l.SuperintendentID,
-			"job_id":           l.JobID,
-			"location":         location.String,
-			"check_in_date":    l.CheckInDate,
-			"check_out_date":   l.CheckOutDate,
-			"property_link":    propertyLink.String,
-			"address":          address.String,
-			"jobsite_address":  jobsiteAddress.String,
-			"created_at":       l.CreatedAt,
-			"updated_at":       l.UpdatedAt,
+			"id":                   l.ID,
+			"superintendent_id":     l.SuperintendentID,
+			"job_id":               l.JobID,
+			"location":             location.String,
+			"check_in_date":        l.CheckInDate,
+			"check_out_date":       l.CheckOutDate,
+			"property_link":        propertyLink.String,
+			"address":              address.String,
+			"jobsite_address":      jobsiteAddress.String,
+			"cost_per_night":       costPerNight,
+			"total_cost":           totalCost,
+			"booking_confirmation": bookingConfirmation.String,
+			"notes":                notes.String,
+			"created_at":           l.CreatedAt,
+			"updated_at":           l.UpdatedAt,
 		}
 
 		if sName.Valid {
@@ -199,8 +208,9 @@ func CreateLodging(c *gin.Context) {
 			superintendent_id, job_id, location,
 			check_in_date, check_out_date, property_link,
 			address, jobsite_address,
+			cost_per_night, total_cost, booking_confirmation, notes,
 			created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
 		RETURNING id, created_at, updated_at
 	`
 
@@ -210,6 +220,7 @@ func CreateLodging(c *gin.Context) {
 		req.SuperintendentID, req.JobID, req.Location,
 		req.CheckInDate, req.CheckOutDate, req.PropertyLink,
 		req.Address, req.JobsiteAddress,
+		req.CostPerNight, req.TotalCost, req.BookingConfirmation, req.Notes,
 	).Scan(&lodgingID, &createdAt, &updatedAt)
 
 	if err != nil {
@@ -276,6 +287,26 @@ func UpdateLodging(c *gin.Context) {
 	if req.JobsiteAddress != "" {
 		updates = append(updates, fmt.Sprintf("jobsite_address = $%d", argPos))
 		args = append(args, req.JobsiteAddress)
+		argPos++
+	}
+	if req.CostPerNight != nil {
+		updates = append(updates, fmt.Sprintf("cost_per_night = $%d", argPos))
+		args = append(args, *req.CostPerNight)
+		argPos++
+	}
+	if req.TotalCost != nil {
+		updates = append(updates, fmt.Sprintf("total_cost = $%d", argPos))
+		args = append(args, *req.TotalCost)
+		argPos++
+	}
+	if req.BookingConfirmation != "" {
+		updates = append(updates, fmt.Sprintf("booking_confirmation = $%d", argPos))
+		args = append(args, req.BookingConfirmation)
+		argPos++
+	}
+	if req.Notes != "" {
+		updates = append(updates, fmt.Sprintf("notes = $%d", argPos))
+		args = append(args, req.Notes)
 		argPos++
 	}
 

@@ -69,7 +69,9 @@ import '../styles/global.css';
     </div>
 
     <script>
-      const API_URL = import.meta.env.PUBLIC_API_URL?.replace('/api', '') || (import.meta.env.DEV ? 'http://localhost:8080' : '');
+      import { getServerUrl } from '../utils/api';
+
+      const API_URL = getServerUrl();
       
       // Check if already logged in
       const token = localStorage.getItem('jbs_token');

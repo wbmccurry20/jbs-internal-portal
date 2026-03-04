@@ -2,13 +2,13 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout>
+<Layout title="Bid Pipeline">
   <div class="space-y-6">
     <!-- Page header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-3xl font-bold text-gray-900">Bid Pipeline</h1>
-        <p class="mt-2 text-sm text-gray-600">Track and manage sales opportunities</p>
+        <p class="mt-2 text-sm text-gray-600">Track and manage bid opportunities</p>
       </div>
       <button id="create-bid-btn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm transition-colors">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,23 +20,32 @@ import Layout from '../layouts/Layout.astro';
 
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
           <input 
             type="text" 
             id="search" 
-            placeholder="Search project name, client..." 
+            placeholder="Search location, client..." 
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
         </div>
         <div>
-          <label for="priority-filter" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-          <select id="priority-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-            <option value="">All Priorities</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
+          <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select id="status-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <option value="">All Statuses</option>
+            <option value="in_progress">In Progress</option>
+            <option value="complete">Complete</option>
+            <option value="did_not_bid">Did Not Bid</option>
+            <option value="no_access">No Access</option>
+            <option value="not_started">Not Started</option>
+            <option value="not_bidding">Not Bidding</option>
+          </select>
+        </div>
+        <div>
+          <label for="client-filter" class="block text-sm font-medium text-gray-700 mb-1">Client</label>
+          <select id="client-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <option value="">All Clients</option>
           </select>
         </div>
       </div>
@@ -53,9 +62,7 @@ import Layout from '../layouts/Layout.astro';
           </h3>
           <span id="count-in_progress" class="text-sm font-medium text-gray-500">0</span>
         </div>
-        <div id="column-in_progress" class="space-y-3 min-h-[200px]">
-          <!-- Cards will be inserted here -->
-        </div>
+        <div id="column-in_progress" class="space-y-3 min-h-[200px]"></div>
       </div>
 
       <!-- Complete -->
@@ -67,9 +74,7 @@ import Layout from '../layouts/Layout.astro';
           </h3>
           <span id="count-complete" class="text-sm font-medium text-gray-500">0</span>
         </div>
-        <div id="column-complete" class="space-y-3 min-h-[200px]">
-          <!-- Cards will be inserted here -->
-        </div>
+        <div id="column-complete" class="space-y-3 min-h-[200px]"></div>
       </div>
 
       <!-- Did Not Bid -->
@@ -81,9 +86,7 @@ import Layout from '../layouts/Layout.astro';
           </h3>
           <span id="count-did_not_bid" class="text-sm font-medium text-gray-500">0</span>
         </div>
-        <div id="column-did_not_bid" class="space-y-3 min-h-[200px]">
-          <!-- Cards will be inserted here -->
-        </div>
+        <div id="column-did_not_bid" class="space-y-3 min-h-[200px]"></div>
       </div>
 
       <!-- No Access -->
@@ -95,9 +98,7 @@ import Layout from '../layouts/Layout.astro';
           </h3>
           <span id="count-no_access" class="text-sm font-medium text-gray-500">0</span>
         </div>
-        <div id="column-no_access" class="space-y-3 min-h-[200px]">
-          <!-- Cards will be inserted here -->
-        </div>
+        <div id="column-no_access" class="space-y-3 min-h-[200px]"></div>
       </div>
     </div>
 
@@ -124,49 +125,65 @@ import Layout from '../layouts/Layout.astro';
         <input type="hidden" id="bid-id">
         
         <div>
-          <label for="project-name" class="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
-          <input type="text" id="project-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-        </div>
-
-        <div>
-          <label for="client-name" class="block text-sm font-medium text-gray-700 mb-1">Client Name *</label>
-          <input type="text" id="client-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+          <input type="text" id="location" required placeholder="e.g. Orlando, FL" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="bid-amount" class="block text-sm font-medium text-gray-700 mb-1">Bid Amount *</label>
-            <input type="number" id="bid-amount" step="0.01" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+            <input type="text" id="city" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           </div>
+          <div>
+            <label for="state" class="block text-sm font-medium text-gray-700 mb-1">State</label>
+            <input type="text" id="state" maxlength="2" placeholder="FL" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="client-id" class="block text-sm font-medium text-gray-700 mb-1">Client</label>
+            <select id="client-id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">Select client...</option>
+            </select>
+          </div>
+          <div>
+            <label for="bid-amount" class="block text-sm font-medium text-gray-700 mb-1">Bid Amount</label>
+            <input type="number" id="bid-amount" step="0.01" placeholder="0.00" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
           <div>
             <label for="due-date" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
             <input type="date" id="due-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           </div>
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select id="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="in_progress">In Progress</option>
+              <option value="complete">Complete</option>
+              <option value="not_started">Not Started</option>
+              <option value="did_not_bid">Did Not Bid</option>
+              <option value="no_access">No Access</option>
+              <option value="not_bidding">Not Bidding</option>
+            </select>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
-            <select id="status" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-              <option value="in_progress">In Progress</option>
-              <option value="complete">Complete</option>
-              <option value="did_not_bid">Did Not Bid</option>
-              <option value="no_access">No Access</option>
+            <label for="awarded" class="block text-sm font-medium text-gray-700 mb-1">Awarded</label>
+            <select id="awarded" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="">Pending</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
             </select>
           </div>
           <div>
-            <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-            <select id="priority" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
+            <label for="assigned-to" class="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+            <input type="text" id="assigned-to" placeholder="Name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
           </div>
-        </div>
-
-        <div>
-          <label for="contact" class="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-          <input type="text" id="contact" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
         </div>
 
         <div>
@@ -187,47 +204,79 @@ import Layout from '../layouts/Layout.astro';
   </div>
 
   <script>
-    function escapeHtml(str: string): string {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
+    import { escapeHtml } from '../utils/html';
+    import { getApiUrl } from '../utils/api';
+    import { toast } from '../utils/toast';
 
-    const API_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
+    const API_URL = getApiUrl();
     const token = localStorage.getItem('jbs_token');
 
-    let bids: any[] = [];
-    let filteredBids: any[] = [];
+    interface Bid {
+      id: number;
+      location: string;
+      city: string;
+      state: string;
+      client_id: number | null;
+      client?: { id: number; name: string };
+      bid_amount: number | null;
+      due_date: string | null;
+      assigned_to_name: string;
+      status: string;
+      awarded: string;
+      notes: string;
+      archived: boolean;
+    }
+
+    let bids: Bid[] = [];
+    let filteredBids: Bid[] = [];
     let editingBidId: number | null = null;
 
-    // Fetch bids
+    // Build client dropdowns from loaded bid data
+    function populateClientDropdowns() {
+      const clientMap = new Map<number, string>();
+      bids.forEach(bid => {
+        if (bid.client?.id && bid.client?.name) {
+          clientMap.set(bid.client.id, bid.client.name);
+        }
+      });
+      const clients = Array.from(clientMap, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+
+      const filterEl = document.getElementById('client-filter') as HTMLSelectElement;
+      if (filterEl) {
+        const current = filterEl.value;
+        filterEl.innerHTML = '<option value="">All Clients</option>' + 
+          clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+        filterEl.value = current;
+      }
+
+      const formEl = document.getElementById('client-id') as HTMLSelectElement;
+      if (formEl) {
+        formEl.innerHTML = '<option value="">Select client...</option>' + 
+          clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+      }
+    }
+
+    // Fetch bids from API
     async function fetchBids() {
       try {
         const response = await fetch(`${API_URL}/bids`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-
         if (!response.ok) throw new Error('Failed to fetch bids');
         
         bids = await response.json();
-        filteredBids = bids;
-        renderBids();
+        populateClientDropdowns();
+        applyFilters();
         
         const loading = document.getElementById('loading');
         if (loading) loading.classList.add('hidden');
       } catch (error) {
         console.error('Error fetching bids:', error);
-        showError('Failed to load bids');
+        toast.error('Failed to load bids');
       }
     }
 
-    // Render bids in pipeline columns
+    // Render bids into pipeline columns
     function renderBids() {
       const statuses = ['in_progress', 'complete', 'did_not_bid', 'no_access'];
       
@@ -237,126 +286,109 @@ import Layout from '../layouts/Layout.astro';
         if (!column) return;
 
         const statusBids = filteredBids.filter(bid => bid.status === status);
-        
         if (countEl) countEl.textContent = statusBids.length.toString();
 
         if (statusBids.length === 0) {
-          column.innerHTML = `
-            <div class="text-center py-8 text-gray-400 text-sm">
-              No bids
-            </div>
-          `;
+          column.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">No bids</div>';
           return;
         }
 
-        column.innerHTML = statusBids.map(bid => {
-          const priority = bid.priority || 'low';
-          const priorityColors: any = {
-            'high': 'border-red-500 bg-red-50',
-            'medium': 'border-yellow-500 bg-yellow-50',
-            'low': 'border-gray-300 bg-white'
-          };
-
-          return `
-            <div class="bg-white border-l-4 ${priorityColors[priority]} rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="editBid(${bid.id})">
-              <h4 class="font-semibold text-gray-900 mb-1">${escapeHtml(bid.location || 'Untitled Bid')}</h4>
-              <p class="text-sm text-gray-600 mb-2">${escapeHtml(bid.client?.name || 'No client')}</p>
-              <div class="flex items-center justify-between text-sm">
-                <span class="font-semibold text-primary-600">$${parseFloat(bid.bid_amount || 0).toLocaleString()}</span>
-                ${bid.due_date ? `<span class="text-gray-500">${formatDate(bid.due_date)}</span>` : ''}
-              </div>
-              ${bid.priority !== 'low' ? `
-                <div class="mt-2">
-                  <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                    priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                  }">
-                    ${escapeHtml(priority.toUpperCase())} Priority
-                  </span>
-                </div>
-              ` : ''}
+        column.innerHTML = statusBids.map(bid => `
+          <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="editBid(${bid.id})">
+            <h4 class="font-semibold text-gray-900 mb-1">${escapeHtml(bid.location || 'Untitled Bid')}</h4>
+            <p class="text-sm text-gray-600 mb-2">${escapeHtml(bid.client?.name || 'No client')}</p>
+            <div class="flex items-center justify-between text-sm">
+              ${bid.bid_amount ? `<span class="font-semibold text-primary-600">$${parseFloat(String(bid.bid_amount)).toLocaleString()}</span>` : '<span class="text-gray-400">No amount</span>'}
+              ${bid.due_date ? `<span class="text-gray-500">${formatDate(bid.due_date)}</span>` : ''}
             </div>
-          `;
-        }).join('');
+            ${bid.awarded === 'Yes' ? '<div class="mt-2"><span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">✓ Awarded</span></div>' : ''}
+            ${bid.awarded === 'No' ? '<div class="mt-2"><span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">✗ Not Awarded</span></div>' : ''}
+          </div>
+        `).join('');
       });
     }
 
     function formatDate(dateStr: string): string {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
-    // Filter
+    // Filter listeners
     document.getElementById('search')?.addEventListener('input', applyFilters);
-    document.getElementById('priority-filter')?.addEventListener('change', applyFilters);
+    document.getElementById('status-filter')?.addEventListener('change', applyFilters);
+    document.getElementById('client-filter')?.addEventListener('change', applyFilters);
 
     function applyFilters() {
       const search = (document.getElementById('search') as HTMLInputElement)?.value.toLowerCase() || '';
-      const priority = (document.getElementById('priority-filter') as HTMLSelectElement)?.value || '';
+      const statusFilter = (document.getElementById('status-filter') as HTMLSelectElement)?.value || '';
+      const clientFilter = (document.getElementById('client-filter') as HTMLSelectElement)?.value || '';
 
       filteredBids = bids.filter(bid => {
         const matchesSearch = !search || 
-          bid.project_name?.toLowerCase().includes(search) ||
-          bid.client_name?.toLowerCase().includes(search);
-        
-        const matchesPriority = !priority || bid.priority === priority;
-        
-        return matchesSearch && matchesPriority;
+          bid.location?.toLowerCase().includes(search) ||
+          bid.client?.name?.toLowerCase().includes(search) ||
+          bid.notes?.toLowerCase().includes(search);
+        const matchesStatus = !statusFilter || bid.status === statusFilter;
+        const matchesClient = !clientFilter || String(bid.client_id) === clientFilter;
+        return matchesSearch && matchesStatus && matchesClient;
       });
 
       renderBids();
     }
 
-    // Modal handling
+    // Modal
     const modal = document.getElementById('bid-modal');
-    const form = document.getElementById('bid-form');
+    const form = document.getElementById('bid-form') as HTMLFormElement;
 
     document.getElementById('create-bid-btn')?.addEventListener('click', () => {
       editingBidId = null;
       (document.getElementById('modal-title') as HTMLElement).textContent = 'New Bid';
-      (form as HTMLFormElement)?.reset();
+      form?.reset();
       modal?.classList.remove('hidden');
     });
 
-    document.getElementById('close-modal')?.addEventListener('click', () => {
-      modal?.classList.add('hidden');
-    });
+    document.getElementById('close-modal')?.addEventListener('click', () => modal?.classList.add('hidden'));
+    document.getElementById('cancel-btn')?.addEventListener('click', () => modal?.classList.add('hidden'));
 
-    document.getElementById('cancel-btn')?.addEventListener('click', () => {
-      modal?.classList.add('hidden');
-    });
-
-    // Edit bid
+    // Edit bid — populate form from real backend fields
     (window as any).editBid = function(id: number) {
       const bid = bids.find(b => b.id === id);
       if (!bid) return;
 
       editingBidId = id;
       (document.getElementById('modal-title') as HTMLElement).textContent = 'Edit Bid';
-      (document.getElementById('project-name') as HTMLInputElement).value = bid.project_name || '';
-      (document.getElementById('client-name') as HTMLInputElement).value = bid.client_name || '';
-      (document.getElementById('bid-amount') as HTMLInputElement).value = bid.bid_amount || '';
+      (document.getElementById('location') as HTMLInputElement).value = bid.location || '';
+      (document.getElementById('city') as HTMLInputElement).value = bid.city || '';
+      (document.getElementById('state') as HTMLInputElement).value = bid.state || '';
+      (document.getElementById('client-id') as HTMLSelectElement).value = bid.client_id ? String(bid.client_id) : '';
+      (document.getElementById('bid-amount') as HTMLInputElement).value = bid.bid_amount ? String(bid.bid_amount) : '';
       (document.getElementById('due-date') as HTMLInputElement).value = bid.due_date ? bid.due_date.split('T')[0] : '';
-      (document.getElementById('status') as HTMLSelectElement).value = bid.status || 'prospecting';
-      (document.getElementById('priority') as HTMLSelectElement).value = bid.priority || 'low';
-      (document.getElementById('contact') as HTMLInputElement).value = bid.contact || '';
+      (document.getElementById('status') as HTMLSelectElement).value = bid.status || 'in_progress';
+      (document.getElementById('awarded') as HTMLSelectElement).value = bid.awarded || '';
+      (document.getElementById('assigned-to') as HTMLInputElement).value = bid.assigned_to_name || '';
       (document.getElementById('notes') as HTMLTextAreaElement).value = bid.notes || '';
 
       modal?.classList.remove('hidden');
     };
 
-    // Submit form
+    // Submit — send fields that match the backend CreateBidRequest / UpdateBidRequest
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const data = {
-        project_name: (document.getElementById('project-name') as HTMLInputElement).value,
-        client_name: (document.getElementById('client-name') as HTMLInputElement).value,
-        bid_amount: (document.getElementById('bid-amount') as HTMLInputElement).value,
-        due_date: (document.getElementById('due-date') as HTMLInputElement).value || null,
+      const clientIdVal = (document.getElementById('client-id') as HTMLSelectElement).value;
+      const bidAmountVal = (document.getElementById('bid-amount') as HTMLInputElement).value;
+      const dueDateVal = (document.getElementById('due-date') as HTMLInputElement).value;
+
+      const data: Record<string, any> = {
+        location: (document.getElementById('location') as HTMLInputElement).value,
+        city: (document.getElementById('city') as HTMLInputElement).value || '',
+        state: (document.getElementById('state') as HTMLInputElement).value || '',
+        client_id: clientIdVal ? parseInt(clientIdVal) : null,
+        bid_amount: bidAmountVal ? parseFloat(bidAmountVal) : null,
+        due_date: dueDateVal ? dueDateVal + 'T00:00:00Z' : null,
         status: (document.getElementById('status') as HTMLSelectElement).value,
-        priority: (document.getElementById('priority') as HTMLSelectElement).value || 'low',
-        contact: (document.getElementById('contact') as HTMLInputElement).value || null,
-        notes: (document.getElementById('notes') as HTMLTextAreaElement).value || null
+        awarded: (document.getElementById('awarded') as HTMLSelectElement).value || '',
+        assigned_to_name: (document.getElementById('assigned-to') as HTMLInputElement).value || '',
+        notes: (document.getElementById('notes') as HTMLTextAreaElement).value || '',
       };
 
       try {
@@ -372,24 +404,18 @@ import Layout from '../layouts/Layout.astro';
           body: JSON.stringify(data)
         });
 
-        if (!response.ok) throw new Error(`Failed to ${editingBidId ? 'update' : 'create'} bid`);
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to save bid');
+        }
         
-        showSuccess(`Bid ${editingBidId ? 'updated' : 'created'} successfully`);
         modal?.classList.add('hidden');
         await fetchBids();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error saving bid:', error);
-        showError(`Failed to ${editingBidId ? 'update' : 'create'} bid`);
+        toast.error(error.message || 'Failed to save bid');
       }
     });
-
-    function showSuccess(message: string) {
-      alert(message);
-    }
-
-    function showError(message: string) {
-      alert(message);
-    }
 
     // Initial load
     fetchBids();

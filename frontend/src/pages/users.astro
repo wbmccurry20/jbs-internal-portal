@@ -83,6 +83,7 @@ import Layout from '../layouts/Layout.astro';
   </div>
 
   <script>
+    import { escapeHtml } from '../utils/html';
     import { listUsers, deleteUser, resetUserPassword, inviteUser, resendInvite, updateUserRole } from '../lib/api';
     import { toast } from '../utils/toast';
     import { ErrorHandler } from '../utils/errorHandler';
@@ -106,12 +107,6 @@ import Layout from '../layouts/Layout.astro';
     };
 
     let allUsers: any[] = [];
-
-    function escapeHtml(str: string): string {
-      const div = document.createElement('div');
-      div.textContent = str || '';
-      return div.innerHTML;
-    }
 
     function getStatusBadge(status: string): string {
       if (status === 'active') {

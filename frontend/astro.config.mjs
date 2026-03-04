@@ -1,5 +1,4 @@
 import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 import node from '@astrojs/node';
 
@@ -10,7 +9,7 @@ export default defineConfig({
     host: '0.0.0.0', // Listen on all interfaces for Railway
     port: 8080
   }),
-  integrations: [react(), tailwind()],
+  integrations: [tailwind()],
   server: {
     port: 4321,
     host: true // Allow external connections

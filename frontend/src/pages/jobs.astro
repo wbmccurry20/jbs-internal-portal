@@ -145,18 +145,12 @@ import Layout from '../layouts/Layout.astro';
   </div>
 
   <script>
-    const API_URL = import.meta.env.PUBLIC_API_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '');
-    const token = localStorage.getItem('jbs_token');
+    import { escapeHtml } from '../utils/html';
+    import { getApiUrl } from '../utils/api';
+    import { toast } from '../utils/toast';
 
-    function escapeHtml(str: string): string {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
+    const API_URL = getApiUrl();
+    const token = localStorage.getItem('jbs_token');
 
     const userStr = localStorage.getItem('jbs_user');
     let currentUser: any = null;
@@ -401,12 +395,11 @@ import Layout from '../layouts/Layout.astro';
     });
 
     function showSuccess(message: string) {
-      // Simple alert for now - can be replaced with toast notification
-      alert(message);
+      toast.success(message);
     }
 
     function showError(message: string) {
-      alert(message);
+      toast.error(message);
     }
 
     // Initial load

@@ -23,9 +23,9 @@ type GraphClient struct {
 	SiteHost     string // netorg4205680.sharepoint.com
 	SitePath     string // /sites/JBS
 
-	token      *OAuthToken
-	oauthState string
-	mu         sync.RWMutex
+	token       *OAuthToken
+	oauthStates map[string]time.Time // state → expiry (supports concurrent auth flows)
+	mu          sync.RWMutex
 }
 
 // OAuthToken holds Microsoft OAuth2 tokens
@@ -58,6 +58,7 @@ func NewGraphClient(clientID, clientSecret, tenantID, redirectURI string) *Graph
 		RedirectURI:  redirectURI,
 		SiteHost:     "netorg4205680.sharepoint.com",
 		SitePath:     "/sites/JBS",
+		oauthStates:  make(map[string]time.Time),
 	}
 }
 
@@ -77,7 +78,14 @@ func (g *GraphClient) IsConnected() bool {
 func (g *GraphClient) GetAuthURL() string {
 	state := generateState()
 	g.mu.Lock()
-	g.oauthState = state
+	// Purge expired states while we hold the lock
+	now := time.Now()
+	for s, exp := range g.oauthStates {
+		if now.After(exp) {
+			delete(g.oauthStates, s)
+		}
+	}
+	g.oauthStates[state] = now.Add(10 * time.Minute)
 	g.mu.Unlock()
 
 	params := url.Values{
@@ -93,11 +101,16 @@ func (g *GraphClient) GetAuthURL() string {
 		g.TenantID, params.Encode())
 }
 
-// ValidateState checks the OAuth state parameter
+// ValidateState checks the OAuth state parameter and consumes it (one-time use)
 func (g *GraphClient) ValidateState(state string) bool {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-	return g.oauthState != "" && g.oauthState == state
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	exp, ok := g.oauthStates[state]
+	if !ok || time.Now().After(exp) {
+		return false
+	}
+	delete(g.oauthStates, state)
+	return true
 }
 
 // ExchangeCode exchanges an auth code for tokens
@@ -135,7 +148,6 @@ func (g *GraphClient) ExchangeCode(code string) error {
 
 	g.mu.Lock()
 	g.token = &token
-	g.oauthState = ""
 	g.mu.Unlock()
 
 	log.Printf("✅ SharePoint connected (token expires: %s)", token.ExpiresAt.Format(time.Kitchen))

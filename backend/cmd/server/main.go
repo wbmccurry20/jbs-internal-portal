@@ -135,6 +135,9 @@ func main() {
 		api.PUT("/bids/:id", middleware.RequireRole("executive", "hr_admin", "project_manager", "support"), handlers.UpdateBid)
 		api.DELETE("/bids/:id", middleware.RequireRole("executive", "support"), handlers.DeleteBid)
 
+		// Superintendent lookup (for dropdowns)
+		api.GET("/superintendents", middleware.RequireRole("executive", "hr_admin", "construction_admin", "project_manager", "support"), handlers.ListSuperintendents)
+
 		// Lodging routes
 		api.GET("/lodging", middleware.RequireRole("executive", "hr_admin", "construction_admin", "project_manager", "support"), handlers.ListLodging)
 		api.GET("/lodging/:id", middleware.RequireRole("executive", "hr_admin", "construction_admin", "project_manager", "support"), handlers.GetLodging)

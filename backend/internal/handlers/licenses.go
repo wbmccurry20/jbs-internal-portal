@@ -155,6 +155,7 @@ func GetStateSummary(c *gin.Context) {
 
 		err := rows.Scan(&state, &total, &active, &expiring, &expired, &cityLicenses, &stateLicenses)
 		if err != nil {
+			log.Printf("ERROR: license state summary scan failed: %v", err)
 			continue
 		}
 
