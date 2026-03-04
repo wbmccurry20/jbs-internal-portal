@@ -144,9 +144,9 @@ func GetBid(c *gin.Context) {
 	query := `
 		SELECT 
 			b.id, b.client_id, b.location, b.city, b.state,
-			b.due_date, b.assigned_to_id, b.status,
+			b.due_date, b.assigned_to_id, b.assigned_to_name, b.status,
 			b.building_connected_date, b.plan_hub_date,
-			b.awarded, b.job_id, b.archived,
+			b.awarded, b.bid_amount, b.notes, b.job_id, b.archived,
 			b.created_at, b.updated_at,
 			c.id as c_id, c.name as c_name, c.contact_name, c.contact_phone, c.contact_email,
 			j.id as j_id, j.job_number, j.job_name
@@ -160,13 +160,13 @@ func GetBid(c *gin.Context) {
 	var cID sql.NullInt64
 	var cName, cContact, cPhone, cEmail sql.NullString
 	var jID sql.NullInt64
-	var jNumber, jName, awarded sql.NullString
+	var jNumber, jName, awarded, notes, assignedToName sql.NullString
 
 	err := database.DB.QueryRow(query, id).Scan(
 		&b.ID, &b.ClientID, &b.Location, &b.City, &b.State,
-		&b.DueDate, &b.AssignedToID, &b.Status,
+		&b.DueDate, &b.AssignedToID, &assignedToName, &b.Status,
 		&b.BuildingConnectedDate, &b.PlanHubDate,
-		&awarded, &b.JobID, &b.Archived,
+		&awarded, &b.BidAmount, &notes, &b.JobID, &b.Archived,
 		&b.CreatedAt, &b.UpdatedAt,
 		&cID, &cName, &cContact, &cPhone, &cEmail,
 		&jID, &jNumber, &jName,
@@ -188,10 +188,13 @@ func GetBid(c *gin.Context) {
 		"state":                  b.State,
 		"due_date":               b.DueDate,
 		"assigned_to_id":         b.AssignedToID,
+		"assigned_to_name":       assignedToName.String,
 		"status":                 b.Status,
 		"building_connected_date": b.BuildingConnectedDate,
 		"plan_hub_date":          b.PlanHubDate,
 		"awarded":                awarded.String,
+		"bid_amount":             b.BidAmount,
+		"notes":                  notes.String,
 		"job_id":                 b.JobID,
 		"archived":               b.Archived,
 		"created_at":             b.CreatedAt,
@@ -235,9 +238,9 @@ func CreateBid(c *gin.Context) {
 	query := `
 		INSERT INTO bids (
 			client_id, location, city, state, due_date,
-			assigned_to_id, status, building_connected_date, plan_hub_date,
-			awarded, archived, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false, NOW(), NOW())
+			assigned_to_id, assigned_to_name, status, building_connected_date, plan_hub_date,
+			awarded, bid_amount, notes, archived, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, false, NOW(), NOW())
 		RETURNING id, created_at, updated_at
 	`
 
@@ -245,8 +248,8 @@ func CreateBid(c *gin.Context) {
 	var createdAt, updatedAt string
 	err := database.DB.QueryRow(query,
 		req.ClientID, req.Location, req.City, req.State, req.DueDate,
-		req.AssignedToID, req.Status, req.BuildingConnectedDate, req.PlanHubDate,
-		req.Awarded,
+		req.AssignedToID, req.AssignedToName, req.Status, req.BuildingConnectedDate, req.PlanHubDate,
+		req.Awarded, req.BidAmount, req.Notes,
 	).Scan(&bidID, &createdAt, &updatedAt)
 
 	if err != nil {
@@ -328,6 +331,21 @@ func UpdateBid(c *gin.Context) {
 	if req.JobID != nil {
 		updates = append(updates, fmt.Sprintf("job_id = $%d", argPos))
 		args = append(args, *req.JobID)
+		argPos++
+	}
+	if req.BidAmount != nil {
+		updates = append(updates, fmt.Sprintf("bid_amount = $%d", argPos))
+		args = append(args, *req.BidAmount)
+		argPos++
+	}
+	if req.Notes != "" {
+		updates = append(updates, fmt.Sprintf("notes = $%d", argPos))
+		args = append(args, req.Notes)
+		argPos++
+	}
+	if req.AssignedToName != "" {
+		updates = append(updates, fmt.Sprintf("assigned_to_name = $%d", argPos))
+		args = append(args, req.AssignedToName)
 		argPos++
 	}
 	if req.Archived != nil {
