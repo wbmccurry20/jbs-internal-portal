@@ -26,14 +26,14 @@ const { title = 'JBS Internal Portal' } = Astro.props;
           <div class="flex items-center">
             <!-- Logo -->
             <div class="flex-shrink-0 flex items-center mr-6">
-              <a href="/dashboard" class="flex items-center">
+              <a href="/dashboard" id="logo-link" class="flex items-center">
                 <img src="/jbs-logo.svg" alt="JBS Construction" class="h-8 w-auto">
               </a>
             </div>
 
             <!-- Desktop navigation -->
             <div class="hidden lg:flex lg:items-center lg:space-x-1">
-              <a href="/dashboard" class="nav-link" id="nav-dashboard">Dashboard</a>
+              <a href="/dashboard" class="nav-link hidden" id="nav-dashboard">Dashboard</a>
               <a href="/jobs" class="nav-link hidden" id="nav-jobs">Jobs</a>
               <a href="/bids" class="nav-link hidden" id="nav-bids">Bids</a>
               <a href="/superintendents" class="nav-link hidden" id="nav-supers">Supers</a>
@@ -76,7 +76,7 @@ const { title = 'JBS Internal Portal' } = Astro.props;
                 </svg>
               </button>
               <div id="user-dropdown" class="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 py-1 hidden z-50">
-                <a href="/dashboard" class="dropdown-item">Dashboard</a>
+                <a href="/dashboard" class="dropdown-item" id="home-link">Home</a>
                 <hr class="my-1 border-gray-100">
                 <button id="logout-btn" class="dropdown-item w-full text-left text-red-600 hover:text-red-700 hover:bg-red-50">
                   Sign Out
@@ -104,7 +104,7 @@ const { title = 'JBS Internal Portal' } = Astro.props;
       <!-- Mobile menu -->
       <div id="mobile-menu" class="hidden lg:hidden border-t border-gray-200 bg-white">
         <div class="py-2 space-y-0.5">
-          <a href="/dashboard" class="mobile-nav-link" id="mobile-nav-dashboard">Dashboard</a>
+          <a href="/dashboard" class="mobile-nav-link hidden" id="mobile-nav-dashboard">Dashboard</a>
           <a href="/jobs" class="mobile-nav-link hidden" id="mobile-nav-jobs">Jobs</a>
           <a href="/bids" class="mobile-nav-link hidden" id="mobile-nav-bids">Bids</a>
           <a href="/superintendents" class="mobile-nav-link hidden" id="mobile-nav-supers">Superintendents</a>
@@ -220,17 +220,33 @@ const { title = 'JBS Internal Portal' } = Astro.props;
             mobileUserInitials.textContent = initials.toUpperCase();
           }
 
-          // RBAC nav visibility
+          // RBAC nav visibility + role-based home routing
           const role = user.role;
           const show = (ids: string[]) => ids.forEach(id => {
             document.getElementById(id)?.classList.remove('hidden');
           });
 
-          // Everyone gets dashboard
+          // Role-based landing page
+          const landingPages: Record<string, string> = {
+            executive: '/dashboard',
+            support: '/dashboard',
+            hr_admin: '/training',
+            finance: '/concur',
+            project_manager: '/jobs',
+            construction_admin: '/jobs',
+            trainee: '/training',
+          };
+          const homePage = landingPages[role] || '/jobs';
+          const logoLink = document.getElementById('logo-link');
+          const homeLink = document.getElementById('home-link');
+          if (logoLink) logoLink.setAttribute('href', homePage);
+          if (homeLink) homeLink.setAttribute('href', homePage);
+
           // Role-specific nav items:
           if (role === 'executive' || role === 'support') {
-            // Full access to everything
-            show(['nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training', 'nav-users', 'nav-finance',
+            // Execs get Dashboard nav + everything
+            show(['nav-dashboard', 'mobile-nav-dashboard',
+                  'nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training', 'nav-users', 'nav-finance',
                   'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training', 'mobile-nav-users',
                   'mobile-nav-finance-divider', 'mobile-nav-concur', 'mobile-nav-reconciliation']);
           } else if (role === 'hr_admin') {

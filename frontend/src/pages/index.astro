@@ -73,10 +73,27 @@ import '../styles/global.css';
 
       const API_URL = getServerUrl();
       
+      // Role-based landing pages
+      function getLandingPage(role: string): string {
+        switch (role) {
+          case 'executive': return '/dashboard';
+          case 'hr_admin': return '/training';
+          case 'finance': return '/concur';
+          case 'project_manager': return '/jobs';
+          case 'construction_admin': return '/jobs';
+          case 'trainee': return '/training';
+          case 'support': return '/dashboard';
+          default: return '/jobs';
+        }
+      }
+
       // Check if already logged in
       const token = localStorage.getItem('jbs_token');
       if (token) {
-        window.location.href = '/dashboard';
+        const userStr = localStorage.getItem('jbs_user');
+        let role = '';
+        try { role = userStr ? JSON.parse(userStr).role : ''; } catch {}
+        window.location.href = getLandingPage(role);
       }
 
       document.getElementById('login-form')?.addEventListener('submit', async (e) => {
@@ -122,8 +139,8 @@ import '../styles/global.css';
           localStorage.setItem('jbs_token', data.token);
           localStorage.setItem('jbs_user', JSON.stringify(data.user));
 
-          // Redirect to dashboard
-          window.location.href = '/dashboard';
+          // Redirect based on role
+          window.location.href = getLandingPage(data.user?.role || '');
         } catch (error) {
           if (errorDiv && errorText) {
             errorDiv.classList.remove('hidden');

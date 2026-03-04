@@ -2,200 +2,159 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout>
-  <div class="space-y-6">
-    <div class="flex justify-between items-center">
+<Layout title="Executive Dashboard - JBS Portal">
+  <div id="dashboard-content" class="hidden">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p class="mt-1 text-sm text-gray-500">Welcome to JBS Internal Portal</p>
+        <h1 class="text-2xl font-bold text-gray-900" id="greeting">Dashboard</h1>
+        <p class="mt-1 text-sm text-gray-500" id="date-display"></p>
       </div>
-      <a href="/change-password" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
-        Change Password
-      </a>
-    </div>
-    
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <!-- Jobs -->
-      <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-        <div class="px-6 py-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-10 w-10 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-              </svg>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-              <dt class="text-sm font-medium text-gray-500 truncate">Active Jobs</dt>
-              <dd class="flex items-baseline">
-                <div class="text-3xl font-semibold text-gray-900" id="active-jobs">-</div>
-                <div class="ml-2 text-sm text-gray-500" id="total-jobs"></div>
-              </dd>
-            </div>
-          </div>
-          <div class="mt-4">
-            <a href="/jobs" class="text-sm font-medium text-primary-600 hover:text-primary-700">View all jobs →</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bids -->
-      <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-        <div class="px-6 py-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-10 w-10 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-              <dt class="text-sm font-medium text-gray-500 truncate">Pipeline Value</dt>
-              <dd class="flex items-baseline">
-                <div class="text-3xl font-semibold text-gray-900" id="pipeline-value">-</div>
-              </dd>
-            </div>
-          </div>
-          <div class="mt-4">
-            <div class="text-sm text-gray-600" id="bid-breakdown"></div>
-            <a href="/bids" class="text-sm font-medium text-primary-600 hover:text-primary-700">View pipeline →</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Lodging -->
-      <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-        <div class="px-6 py-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-              </svg>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-              <dt class="text-sm font-medium text-gray-500 truncate">Active Lodging</dt>
-              <dd class="flex items-baseline">
-                <div class="text-3xl font-semibold text-gray-900" id="active-lodging">-</div>
-              </dd>
-            </div>
-          </div>
-          <div class="mt-4">
-            <div class="text-sm text-gray-600" id="upcoming-checkouts"></div>
-            <a href="/superintendents" class="text-sm font-medium text-primary-600 hover:text-primary-700">View lodging →</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Finance Tools -->
-      <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-        <div class="px-6 py-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-10 w-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-              <dt class="text-sm font-medium text-gray-500 truncate">Finance Activity</dt>
-              <dd class="flex items-baseline">
-                <div class="text-3xl font-semibold text-gray-900" id="finance-activity">-</div>
-              </dd>
-            </div>
-          </div>
-          <div class="mt-4">
-            <div class="text-sm text-gray-600" id="finance-breakdown"></div>
-          </div>
-        </div>
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
+          Live
+        </span>
+        <button id="refresh-btn" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Refresh
+        </button>
       </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-      <div class="px-6 py-5">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          <a
-            href="/jobs"
-            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors"
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            New Job
-          </a>
-          <a
-            href="/bids"
-            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-yellow-600 hover:bg-yellow-700 transition-colors"
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            New Bid
-          </a>
-          <a
-            href="/superintendents"
-            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Add Lodging
-          </a>
-          <a
-            href="/concur"
-            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-teal-600 hover:bg-teal-700 transition-colors"
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-            Concur Converter
-          </a>
-          <a
-            href="/reconciliation"
-            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-rose-600 hover:bg-rose-700 transition-colors"
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-            </svg>
-            Reconciliation
-          </a>
-          <a
-            href="/training"
-            class="inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
-          >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-            </svg>
-            Training
-          </a>
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <!-- Active Jobs -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-gray-500">Active Jobs</span>
+          <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-blue-50">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+          </span>
         </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-bold text-gray-900" id="kpi-active-jobs">&mdash;</span>
+          <span class="text-sm text-gray-400" id="kpi-total-jobs"></span>
+        </div>
+        <a href="/jobs" class="mt-3 inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-700">
+          View all jobs <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+
+      <!-- Pipeline Value -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-gray-500">Bid Pipeline</span>
+          <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-amber-50">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-bold text-gray-900" id="kpi-pipeline">&mdash;</span>
+        </div>
+        <div class="text-xs text-gray-400 mt-1" id="kpi-pipeline-detail"></div>
+        <a href="/bids" class="mt-3 inline-flex items-center text-xs font-medium text-amber-600 hover:text-amber-700">
+          View pipeline <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+
+      <!-- Win Rate -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-gray-500">Bid Win Rate</span>
+          <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-green-50">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-bold text-gray-900" id="kpi-win-rate">&mdash;</span>
+        </div>
+        <div class="text-xs text-gray-400 mt-1" id="kpi-win-detail"></div>
+      </div>
+
+      <!-- Active Lodging -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-gray-500">Active Lodging</span>
+          <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-purple-50">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-bold text-gray-900" id="kpi-lodging-count">&mdash;</span>
+          <span class="text-sm text-gray-400">bookings</span>
+        </div>
+        <div class="text-xs text-gray-400 mt-1" id="kpi-lodging-detail"></div>
+        <a href="/superintendents" class="mt-3 inline-flex items-center text-xs font-medium text-purple-600 hover:text-purple-700">
+          View lodging <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </a>
       </div>
     </div>
 
-    <!-- Recent Activity -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Recent Jobs -->
-      <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-        <div class="px-6 py-5">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Jobs</h2>
-          <div id="recent-jobs" class="space-y-3">
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <h2 class="text-base font-semibold text-gray-900 mb-4">Bid Pipeline Breakdown</h2>
+        <div class="flex items-center justify-center" style="height: 260px;">
+          <canvas id="chart-bids"></canvas>
+        </div>
+        <div id="bid-chart-legend" class="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4 text-xs text-gray-500"></div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <h2 class="text-base font-semibold text-gray-900 mb-4">Job Status Overview</h2>
+        <div class="flex items-center justify-center" style="height: 260px;">
+          <canvas id="chart-jobs"></canvas>
+        </div>
+        <div id="job-chart-legend" class="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4 text-xs text-gray-500"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Row: Tables -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Upcoming Bid Deadlines -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-100">
+          <h2 class="text-base font-semibold text-gray-900">Upcoming Bid Deadlines</h2>
+        </div>
+        <div id="upcoming-bids" class="divide-y divide-gray-100">
+          <div class="px-6 py-8 text-center">
             <div class="animate-pulse space-y-3">
-              <div class="h-16 bg-gray-200 rounded"></div>
-              <div class="h-16 bg-gray-200 rounded"></div>
-              <div class="h-16 bg-gray-200 rounded"></div>
+              <div class="h-10 bg-gray-100 rounded"></div>
+              <div class="h-10 bg-gray-100 rounded"></div>
+              <div class="h-10 bg-gray-100 rounded"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Active Bids -->
-      <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-        <div class="px-6 py-5">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Active Bids</h2>
-          <div id="active-bids" class="space-y-3">
+      <!-- Recently Awarded -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-100">
+          <h2 class="text-base font-semibold text-gray-900">Recently Awarded</h2>
+        </div>
+        <div id="awarded-bids" class="divide-y divide-gray-100">
+          <div class="px-6 py-8 text-center">
             <div class="animate-pulse space-y-3">
-              <div class="h-16 bg-gray-200 rounded"></div>
-              <div class="h-16 bg-gray-200 rounded"></div>
-              <div class="h-16 bg-gray-200 rounded"></div>
+              <div class="h-10 bg-gray-100 rounded"></div>
+              <div class="h-10 bg-gray-100 rounded"></div>
+              <div class="h-10 bg-gray-100 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Superintendent Deployment -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-100">
+          <h2 class="text-base font-semibold text-gray-900">Superintendent Deployment</h2>
+        </div>
+        <div id="super-deployment" class="divide-y divide-gray-100">
+          <div class="px-6 py-8 text-center">
+            <div class="animate-pulse space-y-3">
+              <div class="h-10 bg-gray-100 rounded"></div>
+              <div class="h-10 bg-gray-100 rounded"></div>
+              <div class="h-10 bg-gray-100 rounded"></div>
             </div>
           </div>
         </div>
@@ -203,143 +162,344 @@ import Layout from '../layouts/Layout.astro';
     </div>
   </div>
 
+  <!-- Chart.js CDN -->
+  <script is:inline src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
   <script>
     import { escapeHtml } from '../utils/html';
     import { getApiUrl } from '../utils/api';
+
+    // --- Role Guard: only exec/support see this dashboard ---
+    const userStr = localStorage.getItem('jbs_user');
+    let userRole = '';
+    let userName = '';
+    try {
+      const u = userStr ? JSON.parse(userStr) : {};
+      userRole = u.role || '';
+      userName = u.name || '';
+    } catch {}
+
+    if (userRole !== 'executive' && userRole !== 'support') {
+      const landing: Record<string, string> = {
+        hr_admin: '/training',
+        finance: '/concur',
+        project_manager: '/jobs',
+        construction_admin: '/jobs',
+        trainee: '/training',
+      };
+      window.location.href = landing[userRole] || '/jobs';
+    }
+
+    document.getElementById('dashboard-content')?.classList.remove('hidden');
+
+    // Personalized greeting
+    const hour = new Date().getHours();
+    const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const firstName = userName.split(' ')[0] || '';
+    document.getElementById('greeting')!.textContent = `${timeGreeting}, ${firstName}`;
+    document.getElementById('date-display')!.textContent = new Date().toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
 
     const API_URL = getApiUrl();
     const token = localStorage.getItem('jbs_token');
 
     async function loadDashboard() {
       try {
-        // Fetch all data in parallel
-        const [jobsRes, bidsRes, lodgingRes, concurRes, reconRes] = await Promise.all([
-          fetch(`${API_URL}/jobs`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API_URL}/bids`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API_URL}/lodging`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API_URL}/concur/history`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API_URL}/reconciliation/history`, { headers: { 'Authorization': `Bearer ${token}` } })
+        const headers = { 'Authorization': `Bearer ${token}` };
+        const [jobsRes, bidsRes, lodgingRes, supersRes] = await Promise.all([
+          fetch(`${API_URL}/jobs`, { headers }),
+          fetch(`${API_URL}/bids`, { headers }),
+          fetch(`${API_URL}/lodging`, { headers }),
+          fetch(`${API_URL}/superintendents`, { headers }),
         ]);
 
         const jobs = jobsRes.ok ? await jobsRes.json() : [];
         const bids = bidsRes.ok ? await bidsRes.json() : [];
         const lodging = lodgingRes.ok ? await lodgingRes.json() : [];
-        const concurHistory = concurRes.ok ? await concurRes.json() : [];
-        const reconHistory = reconRes.ok ? await reconRes.json() : [];
+        const supers = supersRes.ok ? await supersRes.json() : [];
 
-        // Update Jobs stats
-        const activeJobs = jobs.filter((j: any) => j.status === 'active').length;
-        document.getElementById('active-jobs')!.textContent = activeJobs.toString();
-        document.getElementById('total-jobs')!.textContent = `of ${jobs.length} total`;
-
-        // Update Bids stats
-        const activeBids = bids.filter((b: any) => b.status === 'prospecting' || b.status === 'submitted');
-        const pipelineValue = activeBids.reduce((sum: number, b: any) => sum + (parseFloat(b.bid_amount) || 0), 0);
-        document.getElementById('pipeline-value')!.textContent = `$${(pipelineValue / 1000).toFixed(0)}K`;
-        
-        const bidsByStatus = {
-          prospecting: bids.filter((b: any) => b.status === 'prospecting').length,
-          submitted: bids.filter((b: any) => b.status === 'submitted').length,
-          won: bids.filter((b: any) => b.status === 'won').length
-        };
-        document.getElementById('bid-breakdown')!.textContent = 
-          `${bidsByStatus.prospecting} prospecting, ${bidsByStatus.submitted} submitted, ${bidsByStatus.won} won`;
-
-        // Update Lodging stats
-        const now = new Date();
-        const activeLodging = lodging.filter((l: any) => {
-          const checkIn = new Date(l.check_in_date);
-          const checkOut = l.check_out_date ? new Date(l.check_out_date) : null;
-          return now >= checkIn && (!checkOut || now <= checkOut);
-        });
-        document.getElementById('active-lodging')!.textContent = activeLodging.length.toString();
-
-        // Find upcoming checkouts (within 7 days)
-        const upcomingCheckouts = lodging.filter((l: any) => {
-          if (!l.check_out_date) return false;
-          const checkOut = new Date(l.check_out_date);
-          const daysUntil = Math.ceil((checkOut.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-          return daysUntil >= 0 && daysUntil <= 7;
-        });
-        document.getElementById('upcoming-checkouts')!.textContent = 
-          upcomingCheckouts.length > 0 ? `${upcomingCheckouts.length} checkout${upcomingCheckouts.length > 1 ? 's' : ''} this week` : 'No upcoming checkouts';
-
-        // Update Finance stats
-        const totalFinance = concurHistory.length + reconHistory.length;
-        document.getElementById('finance-activity')!.textContent = totalFinance.toString();
-        document.getElementById('finance-breakdown')!.textContent = 
-          `${concurHistory.length} Concur, ${reconHistory.length} Reconciliation`;
-
-        // Render Recent Jobs
-        const recentJobs = jobs
-          .sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-          .slice(0, 3);
-        
-        const recentJobsEl = document.getElementById('recent-jobs');
-        if (recentJobs.length === 0) {
-          recentJobsEl!.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No jobs yet</p>';
-        } else {
-          recentJobsEl!.innerHTML = recentJobs.map((job: any) => `
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-900 truncate">${escapeHtml(job.job_number)}</p>
-                <p class="text-sm text-gray-600 truncate">${escapeHtml(job.project_name || 'Untitled')}</p>
-              </div>
-              <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                job.status === 'active' ? 'bg-green-100 text-green-800' : 
-                job.status === 'completed' ? 'bg-blue-100 text-blue-800' : 
-                'bg-yellow-100 text-yellow-800'
-              }">${escapeHtml(job.status)}</span>
-            </div>
-          `).join('');
-        }
-
-        // Render Active Bids
-        const activeBidsList = bids
-          .filter((b: any) => b.status === 'prospecting' || b.status === 'submitted')
-          .sort((a: any, b: any) => {
-            if (!a.due_date) return 1;
-            if (!b.due_date) return -1;
-            return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-          })
-          .slice(0, 3);
-        
-        const activeBidsEl = document.getElementById('active-bids');
-        if (activeBidsList.length === 0) {
-          activeBidsEl!.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No active bids</p>';
-        } else {
-          activeBidsEl!.innerHTML = activeBidsList.map((bid: any) => `
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-900 truncate">${escapeHtml(bid.project_name)}</p>
-                <p class="text-sm text-gray-600 truncate">${escapeHtml(bid.client_name)}</p>
-              </div>
-              <div class="ml-3 text-right">
-                <p class="text-sm font-semibold text-primary-600">$${(parseFloat(bid.bid_amount) / 1000).toFixed(0)}K</p>
-                ${bid.due_date ? `<p class="text-xs text-gray-500">${formatDate(bid.due_date)}</p>` : ''}
-              </div>
-            </div>
-          `).join('');
-        }
-
+        renderKPIs(jobs, bids, lodging);
+        renderCharts(jobs, bids);
+        renderUpcomingBids(bids);
+        renderAwardedBids(bids);
+        renderSuperDeployment(lodging, supers);
       } catch (error) {
-        console.error('Error loading dashboard:', error);
+        console.error('Dashboard load error:', error);
       }
     }
 
-    function formatDate(dateStr: string): string {
-      const date = new Date(dateStr);
+    // --- KPI Cards ---
+    function renderKPIs(jobs: any[], bids: any[], lodging: any[]) {
+      const activeJobs = jobs.filter((j: any) => j.status === 'active');
+      document.getElementById('kpi-active-jobs')!.textContent = activeJobs.length.toString();
+      document.getElementById('kpi-total-jobs')!.textContent = `of ${jobs.length} total`;
+
+      const activeBids = bids.filter((b: any) => b.status === 'in_progress' || b.status === 'not_started');
+      const pipelineValue = activeBids.reduce((sum: number, b: any) => sum + (parseFloat(b.bid_amount) || 0), 0);
+      document.getElementById('kpi-pipeline')!.textContent = formatCurrency(pipelineValue);
+      document.getElementById('kpi-pipeline-detail')!.textContent =
+        `${activeBids.length} active bid${activeBids.length !== 1 ? 's' : ''} in pipeline`;
+
+      const awarded = bids.filter((b: any) => b.awarded === 'Yes');
+      const decided = bids.filter((b: any) =>
+        b.awarded === 'Yes' || b.status === 'complete' || b.status === 'did_not_bid' || b.status === 'not_bidding'
+      );
+      const winRate = decided.length > 0 ? Math.round((awarded.length / decided.length) * 100) : 0;
+      document.getElementById('kpi-win-rate')!.textContent = `${winRate}%`;
+      document.getElementById('kpi-win-detail')!.textContent =
+        `${awarded.length} won of ${decided.length} decided`;
+
       const now = new Date();
-      const diffDays = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (diffDays === 0) return 'Today';
-      if (diffDays === 1) return 'Tomorrow';
-      if (diffDays < 0) return 'Overdue';
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const activeLodging = lodging.filter((l: any) => {
+        const checkIn = new Date(l.check_in_date);
+        const checkOut = l.check_out_date ? new Date(l.check_out_date) : null;
+        return now >= checkIn && (!checkOut || now <= checkOut);
+      });
+      const lodgingSpend = activeLodging.reduce((sum: number, l: any) => sum + (parseFloat(l.total_cost) || 0), 0);
+      document.getElementById('kpi-lodging-count')!.textContent = activeLodging.length.toString();
+      const checkoutsThisWeek = lodging.filter((l: any) => {
+        if (!l.check_out_date) return false;
+        const d = Math.ceil((new Date(l.check_out_date).getTime() - now.getTime()) / 86400000);
+        return d >= 0 && d <= 7;
+      }).length;
+      document.getElementById('kpi-lodging-detail')!.textContent =
+        lodgingSpend > 0
+          ? `${formatCurrency(lodgingSpend)} total cost · ${checkoutsThisWeek} checkout${checkoutsThisWeek !== 1 ? 's' : ''} this week`
+          : `${checkoutsThisWeek} checkout${checkoutsThisWeek !== 1 ? 's' : ''} this week`;
     }
 
-    // Load dashboard on page load
+    // --- Charts ---
+    function renderCharts(jobs: any[], bids: any[]) {
+      const Chart = (window as any).Chart;
+      if (!Chart) return;
+
+      // Bid pipeline doughnut
+      const bidStatusMap: Record<string, { label: string; color: string; count: number }> = {
+        in_progress: { label: 'In Progress', color: '#f59e0b', count: 0 },
+        not_started: { label: 'Not Started', color: '#6b7280', count: 0 },
+        complete: { label: 'Complete', color: '#3b82f6', count: 0 },
+        did_not_bid: { label: 'Did Not Bid', color: '#ef4444', count: 0 },
+        not_bidding: { label: 'Not Bidding', color: '#f97316', count: 0 },
+      };
+      let awardedCount = 0;
+      bids.forEach((b: any) => {
+        if (b.awarded === 'Yes') {
+          awardedCount++;
+        } else if (bidStatusMap[b.status]) {
+          bidStatusMap[b.status].count++;
+        }
+      });
+
+      const bidEntries = Object.values(bidStatusMap).filter(s => s.count > 0);
+      const bidLabels = bidEntries.map(s => s.label);
+      const bidData = bidEntries.map(s => s.count);
+      const bidColors = bidEntries.map(s => s.color);
+      if (awardedCount > 0) {
+        bidLabels.push('Awarded');
+        bidData.push(awardedCount);
+        bidColors.push('#10b981');
+      }
+
+      const bidCtx = (document.getElementById('chart-bids') as HTMLCanvasElement)?.getContext('2d');
+      if (bidCtx && bidData.length > 0) {
+        new Chart(bidCtx, {
+          type: 'doughnut',
+          data: {
+            labels: bidLabels,
+            datasets: [{ data: bidData, backgroundColor: bidColors, borderWidth: 0, hoverOffset: 4 }],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false, cutout: '65%',
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (ctx: any) => ` ${ctx.label}: ${ctx.parsed} bid${ctx.parsed !== 1 ? 's' : ''}` } },
+            },
+          },
+        });
+        document.getElementById('bid-chart-legend')!.innerHTML = bidLabels.map((label: string, i: number) =>
+          `<span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full mr-1.5" style="background:${bidColors[i]}"></span>${label} (${bidData[i]})</span>`
+        ).join('');
+      } else {
+        document.getElementById('chart-bids')!.parentElement!.innerHTML =
+          '<p class="text-sm text-gray-400 text-center py-16">No bid data available</p>';
+      }
+
+      // Job status bar chart
+      const jobStatusMap: Record<string, { label: string; color: string; count: number }> = {
+        active: { label: 'Active', color: '#10b981', count: 0 },
+        completed: { label: 'Completed', color: '#3b82f6', count: 0 },
+        on_hold: { label: 'On Hold', color: '#f59e0b', count: 0 },
+        cancelled: { label: 'Cancelled', color: '#ef4444', count: 0 },
+      };
+      jobs.forEach((j: any) => {
+        if (jobStatusMap[j.status]) {
+          jobStatusMap[j.status].count++;
+        } else {
+          if (!jobStatusMap['other']) jobStatusMap['other'] = { label: 'Other', color: '#9ca3af', count: 0 };
+          jobStatusMap['other'].count++;
+        }
+      });
+
+      const jobEntries = Object.values(jobStatusMap).filter(s => s.count > 0);
+      const jobCtx = (document.getElementById('chart-jobs') as HTMLCanvasElement)?.getContext('2d');
+      if (jobCtx && jobEntries.length > 0) {
+        new Chart(jobCtx, {
+          type: 'bar',
+          data: {
+            labels: jobEntries.map(s => s.label),
+            datasets: [{ data: jobEntries.map(s => s.count), backgroundColor: jobEntries.map(s => s.color), borderRadius: 6, barPercentage: 0.6 }],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (ctx: any) => ` ${ctx.parsed.y} job${ctx.parsed.y !== 1 ? 's' : ''}` } },
+            },
+            scales: {
+              y: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 } }, grid: { color: '#f3f4f6' } },
+              x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            },
+          },
+        });
+        document.getElementById('job-chart-legend')!.innerHTML = jobEntries.map(s =>
+          `<span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full mr-1.5" style="background:${s.color}"></span>${s.label} (${s.count})</span>`
+        ).join('');
+      } else {
+        document.getElementById('chart-jobs')!.parentElement!.innerHTML =
+          '<p class="text-sm text-gray-400 text-center py-16">No job data available</p>';
+      }
+    }
+
+    // --- Upcoming Bid Deadlines ---
+    function renderUpcomingBids(bids: any[]) {
+      const now = new Date();
+      const upcoming = bids
+        .filter((b: any) => b.due_date && (b.status === 'in_progress' || b.status === 'not_started'))
+        .map((b: any) => ({ ...b, _daysUntil: Math.ceil((new Date(b.due_date).getTime() - now.getTime()) / 86400000) }))
+        .filter((b: any) => b._daysUntil >= -7)
+        .sort((a: any, b: any) => a._daysUntil - b._daysUntil)
+        .slice(0, 6);
+
+      const el = document.getElementById('upcoming-bids')!;
+      if (upcoming.length === 0) {
+        el.innerHTML = '<div class="px-6 py-8 text-center text-sm text-gray-400">No upcoming deadlines</div>';
+        return;
+      }
+
+      el.innerHTML = upcoming.map((bid: any) => {
+        const urgencyClass = bid._daysUntil < 0
+          ? 'bg-red-50 border-l-4 border-l-red-400'
+          : bid._daysUntil <= 3 ? 'bg-amber-50 border-l-4 border-l-amber-400'
+            : 'border-l-4 border-l-blue-400';
+        const urgencyText = bid._daysUntil < 0 ? 'text-red-700' : bid._daysUntil <= 3 ? 'text-amber-700' : 'text-gray-600';
+        const dueText = bid._daysUntil < 0 ? `${Math.abs(bid._daysUntil)}d overdue`
+          : bid._daysUntil === 0 ? 'Due today' : bid._daysUntil === 1 ? 'Due tomorrow' : `${bid._daysUntil}d left`;
+
+        return `<div class="px-5 py-3 ${urgencyClass} flex items-center justify-between">
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-gray-900 truncate">${escapeHtml(bid.location || 'Untitled')}</p>
+            <p class="text-xs text-gray-400">${escapeHtml(bid.client?.name || '')}${bid.bid_amount ? ' · ' + formatCurrency(parseFloat(bid.bid_amount)) : ''}</p>
+          </div>
+          <span class="ml-3 text-xs font-semibold whitespace-nowrap ${urgencyText}">${dueText}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // --- Recently Awarded ---
+    function renderAwardedBids(bids: any[]) {
+      const awarded = bids
+        .filter((b: any) => b.awarded === 'Yes')
+        .sort((a: any, b: any) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime())
+        .slice(0, 6);
+
+      const el = document.getElementById('awarded-bids')!;
+      if (awarded.length === 0) {
+        el.innerHTML = '<div class="px-6 py-8 text-center text-sm text-gray-400">No awarded bids yet</div>';
+        return;
+      }
+
+      el.innerHTML = awarded.map((bid: any) => `
+        <div class="px-5 py-3 flex items-center justify-between hover:bg-gray-50">
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-gray-900 truncate">${escapeHtml(bid.location || 'Untitled')}</p>
+            <p class="text-xs text-gray-400">${escapeHtml(bid.client?.name || '')}</p>
+          </div>
+          <div class="ml-3 text-right">
+            <p class="text-sm font-semibold text-green-600">${bid.bid_amount ? formatCurrency(parseFloat(bid.bid_amount)) : '—'}</p>
+            <span class="inline-flex items-center text-xs text-green-600">
+              <svg class="w-3 h-3 mr-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              Won
+            </span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // --- Superintendent Deployment ---
+    function renderSuperDeployment(lodging: any[], supers: any[]) {
+      const now = new Date();
+      const activeLodging = lodging.filter((l: any) => {
+        const checkIn = new Date(l.check_in_date);
+        const checkOut = l.check_out_date ? new Date(l.check_out_date) : null;
+        return now >= checkIn && (!checkOut || now <= checkOut);
+      });
+
+      const el = document.getElementById('super-deployment')!;
+      const superMap = new Map<number, string>();
+      supers.forEach((s: any) => superMap.set(s.id, s.name));
+
+      if (activeLodging.length === 0) {
+        const totalSupers = supers.length;
+        el.innerHTML = `<div class="px-6 py-8 text-center text-sm text-gray-400">No active deployments${totalSupers > 0 ? ' · ' + totalSupers + ' superintendent' + (totalSupers !== 1 ? 's' : '') + ' available' : ''}</div>`;
+        return;
+      }
+
+      const deployedSuperIds = new Set(activeLodging.map((l: any) => l.superintendent_id));
+      const availableCount = supers.filter((s: any) => s.active && !deployedSuperIds.has(s.id)).length;
+
+      el.innerHTML = [
+        ...activeLodging.slice(0, 5).map((l: any) => {
+          const superName = superMap.get(l.superintendent_id) || l.superintendent?.name || 'Unknown';
+          const daysLeft = l.check_out_date
+            ? Math.ceil((new Date(l.check_out_date).getTime() - now.getTime()) / 86400000)
+            : null;
+          return `<div class="px-5 py-3 flex items-center justify-between hover:bg-gray-50">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-gray-900 truncate">${escapeHtml(superName)}</p>
+              <p class="text-xs text-gray-400 truncate">${escapeHtml(l.location || 'No location')}</p>
+            </div>
+            <div class="ml-3">
+              ${daysLeft !== null && daysLeft <= 5
+                ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">' + daysLeft + 'd left</span>'
+                : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Deployed</span>'
+              }
+            </div>
+          </div>`;
+        }),
+        `<div class="px-5 py-3 text-xs text-gray-400 bg-gray-50 text-center">
+          ${deployedSuperIds.size} deployed · ${availableCount} available
+        </div>`
+      ].join('');
+    }
+
+    // --- Helpers ---
+    function formatCurrency(value: number): string {
+      if (value >= 1000000) return '$' + (value / 1000000).toFixed(1) + 'M';
+      if (value >= 1000) return '$' + (value / 1000).toFixed(0) + 'K';
+      return '$' + value.toLocaleString();
+    }
+
+    // --- Init ---
     loadDashboard();
+
+    document.getElementById('refresh-btn')?.addEventListener('click', () => {
+      const Chart = (window as any).Chart;
+      if (Chart) {
+        Object.values(Chart.instances || {}).forEach((instance: any) => instance.destroy());
+      }
+      loadDashboard();
+    });
   </script>
 </Layout>
 
