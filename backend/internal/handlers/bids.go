@@ -17,7 +17,7 @@ func ListBids(c *gin.Context) {
 	query := `
 		SELECT 
 			b.id, b.client_id, b.location, b.city, b.state,
-			b.due_date, b.assigned_to_id, b.status,
+			b.due_date, b.assigned_to_id, b.assigned_to_name, b.status,
 			b.building_connected_date, b.plan_hub_date,
 			b.awarded, b.bid_amount, b.notes, b.job_id, b.archived,
 			b.created_at, b.updated_at,
@@ -82,9 +82,10 @@ func ListBids(c *gin.Context) {
 		var cID, jID sql.NullInt64
 		var cName, jNumber, jName, awarded, notes sql.NullString
 
+		var assignedToName sql.NullString
 		err := rows.Scan(
 			&b.ID, &b.ClientID, &b.Location, &b.City, &b.State,
-			&b.DueDate, &b.AssignedToID, &b.Status,
+			&b.DueDate, &b.AssignedToID, &assignedToName, &b.Status,
 			&b.BuildingConnectedDate, &b.PlanHubDate,
 			&awarded, &b.BidAmount, &notes, &b.JobID, &b.Archived,
 			&b.CreatedAt, &b.UpdatedAt,
@@ -103,6 +104,7 @@ func ListBids(c *gin.Context) {
 			"state":                  b.State,
 			"due_date":               b.DueDate,
 			"assigned_to_id":         b.AssignedToID,
+			"assigned_to_name":       assignedToName.String,
 			"status":                 b.Status,
 			"building_connected_date": b.BuildingConnectedDate,
 			"plan_hub_date":          b.PlanHubDate,

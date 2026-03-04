@@ -52,11 +52,23 @@ import Layout from '../layouts/Layout.astro';
     </div>
 
     <!-- Pipeline columns -->
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <!-- Not Started -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center">
+            <span class="w-3 h-3 rounded-full bg-gray-400 mr-2"></span>
+            Not Started
+          </h3>
+          <span id="count-not_started" class="text-sm font-medium text-gray-500">0</span>
+        </div>
+        <div id="column-not_started" class="space-y-3 min-h-[200px]"></div>
+      </div>
+
       <!-- In Progress -->
       <div class="bg-gray-50 rounded-lg p-4">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center">
             <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
             In Progress
           </h3>
@@ -68,7 +80,7 @@ import Layout from '../layouts/Layout.astro';
       <!-- Complete -->
       <div class="bg-gray-50 rounded-lg p-4">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center">
             <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
             Complete
           </h3>
@@ -80,7 +92,7 @@ import Layout from '../layouts/Layout.astro';
       <!-- Did Not Bid -->
       <div class="bg-gray-50 rounded-lg p-4">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center">
             <span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
             Did Not Bid
           </h3>
@@ -92,13 +104,25 @@ import Layout from '../layouts/Layout.astro';
       <!-- No Access -->
       <div class="bg-gray-50 rounded-lg p-4">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center">
             <span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
             No Access
           </h3>
           <span id="count-no_access" class="text-sm font-medium text-gray-500">0</span>
         </div>
         <div id="column-no_access" class="space-y-3 min-h-[200px]"></div>
+      </div>
+
+      <!-- Not Bidding -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center">
+            <span class="w-3 h-3 rounded-full bg-orange-500 mr-2"></span>
+            Not Bidding
+          </h3>
+          <span id="count-not_bidding" class="text-sm font-medium text-gray-500">0</span>
+        </div>
+        <div id="column-not_bidding" class="space-y-3 min-h-[200px]"></div>
       </div>
     </div>
 
@@ -278,7 +302,7 @@ import Layout from '../layouts/Layout.astro';
 
     // Render bids into pipeline columns
     function renderBids() {
-      const statuses = ['in_progress', 'complete', 'did_not_bid', 'no_access'];
+      const statuses = ['not_started', 'in_progress', 'complete', 'did_not_bid', 'no_access', 'not_bidding'];
       
       statuses.forEach(status => {
         const column = document.getElementById(`column-${status}`);
