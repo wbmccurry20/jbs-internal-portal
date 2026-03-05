@@ -18,9 +18,6 @@ var requiredConcurColumns = []string{
 	"Expense Type",
 	"Account Code",
 	"Transaction Date",
-	"Allocation:Cost Code (Code)",
-	"Allocation:Cost Class (Code)",
-	"Allocation:Job (Code)",
 	"SUM Allocation Claimed Amount (USD)",
 }
 
@@ -131,6 +128,12 @@ func (c *ConcurConverter) parseExpenseRow(row []string, columnMap map[string]int
 		return ""
 	}
 
+	// Skip empty rows
+	employeeName := getValue("Employee Name")
+	if employeeName == "" {
+		return nil, fmt.Errorf("empty row (no employee name)")
+	}
+
 	// Parse transaction date
 	dateStr := getValue("Transaction Date")
 	if dateStr == "" {
@@ -154,7 +157,7 @@ func (c *ConcurConverter) parseExpenseRow(row []string, columnMap map[string]int
 	}
 
 	expense := &models.ConcurExpense{
-		EmployeeName:     getValue("Employee Name"),
+		EmployeeName:     employeeName,
 		ExpenseType:      getValue("Expense Type"),
 		AccountCode:      getValue("Account Code"),
 		TransactionDate:  transDate,
