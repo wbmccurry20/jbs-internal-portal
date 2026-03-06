@@ -16,10 +16,9 @@ const { title = 'JBS Internal Portal' } = Astro.props;
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body class="bg-gray-50 min-h-screen font-sans">
-    <nav class="bg-white shadow-sm border-b border-gray-200">
+    <nav class="bg-jbs-dark border-b border-white/10">
       <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-14">
           <!-- Logo and primary navigation -->
@@ -27,7 +26,7 @@ const { title = 'JBS Internal Portal' } = Astro.props;
             <!-- Logo -->
             <div class="flex-shrink-0 flex items-center mr-6">
               <a href="/dashboard" id="logo-link" class="flex items-center">
-                <img src="/jbs-logo.svg" alt="JBS Construction" class="h-8 w-auto">
+                <img src="/jbs_new_logo.png" alt="JBS" class="h-7 w-auto" style="mix-blend-mode:screen;filter:brightness(1.1);">
               </a>
             </div>
 
@@ -63,13 +62,13 @@ const { title = 'JBS Internal Portal' } = Astro.props;
           <div class="flex items-center space-x-3">
             <!-- User dropdown -->
             <div class="relative hidden sm:block" id="user-menu-wrapper">
-              <button id="user-menu-btn" class="flex items-center space-x-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+              <button id="user-menu-btn" class="flex items-center space-x-2 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
                 <div class="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-semibold">
                   <span id="user-initials"></span>
                 </div>
                 <div class="text-left">
-                  <p id="user-name" class="text-sm font-medium text-gray-900 leading-tight"></p>
-                  <p id="user-role" class="text-xs text-gray-500 leading-tight"></p>
+                  <p id="user-name" class="text-sm font-medium text-white leading-tight"></p>
+                  <p id="user-role" class="text-xs text-white/50 leading-tight"></p>
                 </div>
                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -92,7 +91,7 @@ const { title = 'JBS Internal Portal' } = Astro.props;
             </div>
 
             <!-- Mobile menu button -->
-            <button id="mobile-menu-btn" class="lg:hidden inline-flex items-center justify-center p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none">
+            <button id="mobile-menu-btn" class="lg:hidden inline-flex items-center justify-center p-1.5 rounded-md text-white/60 hover:text-white hover:bg-white/10 focus:outline-none">
               <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
               </svg>
@@ -102,7 +101,7 @@ const { title = 'JBS Internal Portal' } = Astro.props;
       </div>
 
       <!-- Mobile menu -->
-      <div id="mobile-menu" class="hidden lg:hidden border-t border-gray-200 bg-white">
+      <div id="mobile-menu" class="hidden lg:hidden border-t border-white/10 bg-jbs-dark">
         <div class="py-2 space-y-0.5">
           <a href="/dashboard" class="mobile-nav-link hidden" id="mobile-nav-dashboard">Dashboard</a>
           <a href="/jobs" class="mobile-nav-link hidden" id="mobile-nav-jobs">Jobs</a>
@@ -121,8 +120,8 @@ const { title = 'JBS Internal Portal' } = Astro.props;
               <span id="mobile-user-initials"></span>
             </div>
             <div>
-              <p id="mobile-user-name" class="text-sm font-medium text-gray-900"></p>
-              <p id="mobile-user-role" class="text-xs text-gray-500"></p>
+              <p id="mobile-user-name" class="text-sm font-medium text-white"></p>
+              <p id="mobile-user-role" class="text-xs text-white/50"></p>
             </div>
           </div>
           <button id="mobile-logout-btn" class="w-full text-left text-sm font-medium text-red-600 hover:text-red-700 py-2">
@@ -134,11 +133,11 @@ const { title = 'JBS Internal Portal' } = Astro.props;
 
     <style>
       .nav-link {
-        @apply inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors;
+        @apply inline-flex items-center px-3 py-1.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 rounded-md transition-colors;
       }
       
       .nav-link.active {
-        @apply text-primary-600 bg-primary-50;
+        @apply text-white bg-primary-500/20;
       }
       
       .dropdown-item {
@@ -146,11 +145,11 @@ const { title = 'JBS Internal Portal' } = Astro.props;
       }
       
       .mobile-nav-link {
-        @apply block px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50;
+        @apply block px-4 py-2.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10;
       }
 
       .mobile-nav-link.active {
-        @apply text-primary-600 bg-primary-50;
+        @apply text-white bg-primary-500/20;
       }
     </style>
 
