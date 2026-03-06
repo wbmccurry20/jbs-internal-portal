@@ -8,63 +8,100 @@ import '../styles/global.css';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - JBS Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   </head>
-  <body class="bg-gray-100">
-    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-md w-full space-y-6 bg-white p-8 rounded-lg shadow-lg">
+  <body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex">
+
+      <!-- LEFT: Brand panel (desktop only) -->
+      <div class="hidden lg:flex lg:w-1/2 xl:w-2/5 bg-[#1A1A1A] flex-col justify-between p-12 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-[400px] h-[400px] bg-white/[0.02] rotate-45 -translate-y-1/4 translate-x-1/4 pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#00A0E0]/[0.07] rotate-45 translate-y-1/4 -translate-x-1/4 pointer-events-none"></div>
+
+        <!-- Logo -->
         <div>
-          <!-- JBS Logo -->
-          <div class="mx-auto w-56 mb-4">
-            <img src="/jbs-logo.svg" alt="JBS Construction" class="w-full h-auto" />
-          </div>
-          <h2 class="text-center text-2xl font-bold text-gray-900">
-            Internal Portal
-          </h2>
-          <p class="mt-1 text-center text-sm text-gray-600">
-            Sign in to access your dashboard
+          <img src="/jbs_new_logo.png" alt="JBS" class="h-12 w-auto" style="mix-blend-mode:screen;filter:brightness(1.1);" />
+        </div>
+
+        <!-- Center copy -->
+        <div class="relative z-10">
+          <div class="w-12 h-1 bg-[#00A0E0] mb-8"></div>
+          <h1 style="font-family:'Barlow Condensed',sans-serif;" class="text-5xl font-bold text-white uppercase leading-tight tracking-wide mb-4">
+            Built<br/>Different.
+          </h1>
+          <p class="text-white/40 text-sm leading-relaxed max-w-xs">
+            Internal operations platform for JBS Construction. Manage jobs, track bids, and run your projects from anywhere.
           </p>
         </div>
-        <form id="login-form" class="space-y-6">
-          <div class="rounded-md shadow-sm -space-y-px">
+
+        <!-- Footer -->
+        <div>
+          <p class="text-white/20 text-xs">JBS Construction Group &copy; 2026</p>
+        </div>
+      </div>
+
+      <!-- RIGHT: Login form -->
+      <div class="flex-1 flex flex-col items-center justify-center px-6 py-12 lg:px-16">
+
+        <!-- Mobile-only logo -->
+        <div class="lg:hidden mb-8 w-36">
+          <img src="/jbs_new_logo.png" alt="JBS" class="w-full h-auto" />
+        </div>
+
+        <div class="w-full max-w-sm">
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Sign in to your account</h2>
+            <p class="mt-1 text-sm text-gray-500">JBS Internal Portal &mdash; authorized users only</p>
+          </div>
+
+          <form id="login-form" class="space-y-5">
             <div>
-              <label for="email" class="sr-only">Email address</label>
+              <label for="email" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Email Address</label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 autocomplete="email"
                 required
-                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                class="block w-full px-4 py-3 border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00A0E0] focus:border-transparent focus:bg-white transition-all text-sm"
+                placeholder="you@jbsconstructiongroup.com"
               />
             </div>
             <div>
-              <label for="password" class="sr-only">Password</label>
+              <label for="password" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Password</label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 autocomplete="current-password"
                 required
-                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Password"
+                class="block w-full px-4 py-3 border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00A0E0] focus:border-transparent focus:bg-white transition-all text-sm"
+                placeholder="••••••••"
               />
             </div>
-          </div>
 
-          <div id="error-message" class="hidden">
-            <p class="text-sm text-red-600 text-center font-medium"></p>
-          </div>
+            <div id="error-message" class="hidden bg-red-50 border border-red-200 px-4 py-3">
+              <p class="text-sm text-red-600 font-medium"></p>
+            </div>
 
-          <div>
             <button
               type="submit"
-              class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              id="submit-btn"
+              class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#00A0E0] hover:bg-[#0088CC] text-white text-sm font-semibold tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00A0E0] disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Sign in
+              <span id="btn-text">Sign In</span>
+              <svg id="btn-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
             </button>
-          </div>
-        </form>
+          </form>
+
+          <p class="mt-8 text-center text-xs text-gray-400">
+            Access issues? Contact <a href="mailto:hello@itwill.dev" class="text-[#00A0E0] hover:underline">IT Support</a>
+          </p>
+        </div>
       </div>
     </div>
 
@@ -72,8 +109,7 @@ import '../styles/global.css';
       import { getServerUrl } from '../utils/api';
 
       const API_URL = getServerUrl();
-      
-      // Role-based landing pages
+
       function getLandingPage(role: string): string {
         switch (role) {
           case 'executive': return '/dashboard';
@@ -87,7 +123,6 @@ import '../styles/global.css';
         }
       }
 
-      // Check if already logged in
       const token = localStorage.getItem('jbs_token');
       if (token) {
         const userStr = localStorage.getItem('jbs_user');
@@ -98,33 +133,35 @@ import '../styles/global.css';
 
       document.getElementById('login-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const email = (document.getElementById('email') as HTMLInputElement).value;
         const password = (document.getElementById('password') as HTMLInputElement).value;
         const errorDiv = document.getElementById('error-message');
         const errorText = errorDiv?.querySelector('p');
+        const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
 
-        // Hide any previous errors
-        if (errorDiv) {
-          errorDiv.classList.add('hidden');
-        }
+        if (errorDiv) errorDiv.classList.add('hidden');
+        if (submitBtn) submitBtn.disabled = true;
+        if (btnText) btnText.textContent = 'Signing in...';
+        if (btnSpinner) btnSpinner.classList.remove('hidden');
 
-        // Check API URL is configured
         if (!API_URL) {
-          console.error('PUBLIC_API_URL environment variable is required in production');
           if (errorDiv && errorText) {
             errorDiv.classList.remove('hidden');
             errorText.textContent = 'Configuration error. Please contact support.';
           }
+          if (submitBtn) submitBtn.disabled = false;
+          if (btnText) btnText.textContent = 'Sign In';
+          if (btnSpinner) btnSpinner.classList.add('hidden');
           return;
         }
 
         try {
           const response = await fetch(`${API_URL}/api/login`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
           });
 
@@ -134,18 +171,17 @@ import '../styles/global.css';
           }
 
           const data = await response.json();
-          
-          // Store token and user info
           localStorage.setItem('jbs_token', data.token);
           localStorage.setItem('jbs_user', JSON.stringify(data.user));
-
-          // Redirect based on role
           window.location.href = getLandingPage(data.user?.role || '');
         } catch (error) {
           if (errorDiv && errorText) {
             errorDiv.classList.remove('hidden');
             errorText.textContent = error instanceof Error ? error.message : 'An error occurred';
           }
+          if (submitBtn) submitBtn.disabled = false;
+          if (btnText) btnText.textContent = 'Sign In';
+          if (btnSpinner) btnSpinner.classList.add('hidden');
         }
       });
     </script>

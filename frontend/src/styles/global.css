@@ -7,3 +7,31 @@
 body {
   font-family: 'Roboto', system-ui, -apple-system, sans-serif;
 }
+
+/* Blue top accent line on the nav */
+nav.bg-\[\#1A1A1A\],
+nav.bg-jbs-dark {
+  border-top: 3px solid #00A0E0;
+}
+
+/* Page-level heading style */
+.page-header h1,
+h1.page-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Focus ring brand color */
+*:focus-visible {
+  outline: 2px solid #00A0E0;
+  outline-offset: 2px;
+}
+
+/* Selection brand color */
+::selection {
+  background-color: #00A0E0;
+  color: white;
+}
+
