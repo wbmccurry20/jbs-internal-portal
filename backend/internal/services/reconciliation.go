@@ -467,8 +467,16 @@ func LoadBankTransactions(filePath string) ([]models.BankTransaction, error) {
 	if ext == ".xlsx" {
 		return loadBankFromExcel(filePath)
 	} else if ext == ".xls" {
-		// Convert .xls to data format we can parse
-		return loadBankFromXLS(filePath)
+		// Try legacy XLS format first; fall back to XLSX in case the file was
+		// saved with a .xls extension but is actually XLSX (common on macOS).
+		result, err := loadBankFromXLS(filePath)
+		if err != nil {
+			if xlsxResult, xlsxErr := loadBankFromExcel(filePath); xlsxErr == nil {
+				return xlsxResult, nil
+			}
+			return nil, err
+		}
+		return result, nil
 	}
 	return loadBankFromCSV(filePath)
 }
@@ -644,7 +652,14 @@ func loadBankFromExcel(filePath string) ([]models.BankTransaction, error) {
 	return transactions, nil
 }
 
-func loadBankFromXLS(filePath string) ([]models.BankTransaction, error) {
+func loadBankFromXLS(filePath string) (transactions []models.BankTransaction, retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			transactions = nil
+			retErr = fmt.Errorf("XLS file could not be parsed (file may be corrupt or in an unsupported format): %v", r)
+		}
+	}()
+
 	xlsFile, err := xls.Open(filePath, "utf-8")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open XLS file: %v", err)
@@ -692,7 +707,7 @@ func loadBankFromXLS(filePath string) ([]models.BankTransaction, error) {
 		colMap[strings.TrimSpace(col)] = i
 	}
 
-	transactions := make([]models.BankTransaction, 0)
+	transactions = make([]models.BankTransaction, 0)
 
 	// Start parsing from row after header
 	for i := headerRowIdx + 1; i < len(rows); i++ {
@@ -747,7 +762,16 @@ func LoadFoundationTransactions(filePath string) ([]models.FoundationTransaction
 	if ext == ".xlsx" {
 		return loadFoundationFromExcel(filePath)
 	} else if ext == ".xls" {
-		return loadFoundationFromXLS(filePath)
+		// Try legacy XLS format first; fall back to XLSX in case the file was
+		// saved with a .xls extension but is actually XLSX (common on macOS).
+		result, err := loadFoundationFromXLS(filePath)
+		if err != nil {
+			if xlsxResult, xlsxErr := loadFoundationFromExcel(filePath); xlsxErr == nil {
+				return xlsxResult, nil
+			}
+			return nil, err
+		}
+		return result, nil
 	}
 	return loadFoundationFromCSV(filePath)
 }
@@ -912,7 +936,14 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 	return transactions, nil
 }
 
-func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, error) {
+func loadFoundationFromXLS(filePath string) (transactions []models.FoundationTransaction, retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			transactions = nil
+			retErr = fmt.Errorf("XLS file could not be parsed (file may be corrupt or in an unsupported format): %v", r)
+		}
+	}()
+
 	xlsFile, err := xls.Open(filePath, "utf-8")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open XLS file: %v", err)
@@ -954,7 +985,7 @@ func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, err
 		colMap[strings.TrimSpace(col)] = i
 	}
 
-	transactions := make([]models.FoundationTransaction, 0)
+	transactions = make([]models.FoundationTransaction, 0)
 
 	for i := 1; i < len(rows); i++ {
 		row := rows[i]

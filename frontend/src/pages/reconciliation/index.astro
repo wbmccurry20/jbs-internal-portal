@@ -234,7 +234,13 @@ import Layout from '../../layouts/Layout.astro';
           body: formData,
         });
 
-        const data = await response.json();
+        let data: any = {};
+        try {
+          data = await response.json();
+        } catch {
+          // Server returned a non-JSON response (e.g. a panic/crash)
+          throw new Error('Server error processing files — please check the file formats and try again');
+        }
 
         if (!response.ok) {
           throw new Error(data.error || 'Reconciliation failed');
