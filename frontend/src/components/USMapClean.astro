@@ -96,6 +96,24 @@
     .status-expired { background: #EF4444; }
     .status-none { background: #D1D5DB; }
 
+    .state-right {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .license-count {
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: #0088CC;
+      background: #E0F2FE;
+      border-radius: 9999px;
+      padding: 0 0.375rem;
+      line-height: 1.25rem;
+      min-width: 1.25rem;
+      text-align: center;
+    }
+
     .search-box {
       position: relative;
       margin-bottom: 1.5rem;
@@ -167,13 +185,27 @@
 
 <script>
   interface License {
+    id?: number;
     state: string;
-    expiration_date?: string;
+    expiration_date?: string | null;
+    status?: string;
+    license_type?: string;
+    city?: string | null;
+    is_city_license?: boolean;
+    license_number?: string | null;
   }
 
   interface StateItem {
     code: string;
     name: string;
+  }
+
+  // Returns worst-case status across all licenses for a state
+  function aggregateStateStatus(licenses: License[]): string {
+    if (!licenses || licenses.length === 0) return 'none';
+    if (licenses.some(l => l.status === 'expired')) return 'expired';
+    if (licenses.some(l => l.status === 'expiring')) return 'expiring';
+    return 'active';
   }
 
   const states: StateItem[] = [
@@ -229,45 +261,44 @@
     { code: 'WY', name: 'Wyoming' }
   ];
 
-  let currentLicenses: { [key: string]: License } = {};
+  let currentLicenseMap: { [key: string]: License[] } = {};
 
   (window as any).renderCleanMap = function(licenses: License[] = []) {
     const container = document.getElementById('states-list-clean');
-    const searchInput = document.getElementById('state-search-clean');
-    
+    const searchInput = document.getElementById('state-search-clean') as HTMLInputElement | null;
+
     if (!container) return;
 
-    // Create license map
-    currentLicenses = {};
+    // Group all licenses by state (supports multiple per state)
+    currentLicenseMap = {};
     licenses.forEach(license => {
-      currentLicenses[license.state] = license;
+      if (!currentLicenseMap[license.state]) {
+        currentLicenseMap[license.state] = [];
+      }
+      currentLicenseMap[license.state].push(license);
     });
 
-    // Count statuses
-    let activeCount = 0, expiringCount = 0, expiredCount = 0, noneCount = 0;
+    // Count states in each status bucket
+    let activeStates = 0, expiringStates = 0, expiredStates = 0, noneCount = 0;
 
-    // Clear container
     container.innerHTML = '';
 
-    // Render all states
     states.forEach(state => {
-      const license = currentLicenses[state.code];
+      const stateLicenses = currentLicenseMap[state.code] || [];
+      const licenseCount = stateLicenses.length;
       let statusClass = 'status-none';
-      
-      if (license && license.expiration_date) {
-        const expDate = new Date(license.expiration_date);
-        const now = new Date();
-        const daysUntilExpiry = Math.floor((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (daysUntilExpiry < 0) {
+
+      if (licenseCount > 0) {
+        const aggregated = aggregateStateStatus(stateLicenses);
+        if (aggregated === 'expired') {
           statusClass = 'status-expired';
-          expiredCount++;
-        } else if (daysUntilExpiry <= 90) {
+          expiredStates++;
+        } else if (aggregated === 'expiring') {
           statusClass = 'status-expiring';
-          expiringCount++;
+          expiringStates++;
         } else {
           statusClass = 'status-active';
-          activeCount++;
+          activeStates++;
         }
       } else {
         noneCount++;
@@ -277,38 +308,42 @@
       item.className = 'state-item';
       item.dataset.code = state.code;
       item.dataset.name = state.name;
-      
+
       item.innerHTML = `
         <span class="state-code">${state.code}</span>
-        <div class="state-status ${statusClass}"></div>
+        <div class="state-right">
+          ${licenseCount > 0 ? `<span class="license-count">${licenseCount}</span>` : ''}
+          <div class="state-status ${statusClass}"></div>
+        </div>
       `;
 
       item.addEventListener('click', () => {
-        if (typeof (window as any).editLicense === 'function') {
-          (window as any).editLicense(state.code, state.name);
+        if (typeof (window as any).openStatePanel === 'function') {
+          (window as any).openStatePanel(state.code, state.name);
         }
       });
 
       container.appendChild(item);
     });
 
-    // Update stats
-    const licensedCount = activeCount + expiringCount + expiredCount;
+    // Update header legend counts (per-state, not per-license)
+    const licensedCount = activeStates + expiringStates + expiredStates;
     document.getElementById('licensed-count-clean')!.textContent = String(licensedCount);
-    document.getElementById('active-count-clean')!.textContent = String(activeCount);
-    document.getElementById('expiring-count-clean')!.textContent = String(expiringCount);
-    document.getElementById('expired-count-clean')!.textContent = String(expiredCount);
+    document.getElementById('active-count-clean')!.textContent = String(activeStates);
+    document.getElementById('expiring-count-clean')!.textContent = String(expiringStates);
+    document.getElementById('expired-count-clean')!.textContent = String(expiredStates);
     document.getElementById('none-count-clean')!.textContent = String(noneCount);
 
-    // Search functionality
-    if (searchInput) {
+    // Bind search once
+    if (searchInput && !searchInput.dataset.listenerBound) {
+      searchInput.dataset.listenerBound = 'true';
       searchInput.addEventListener('input', (e) => {
         const term = (e.target as HTMLInputElement).value.toLowerCase();
-        document.querySelectorAll('.state-item').forEach(item => {
-          const el = item as HTMLElement;
-          const code = el.dataset.code?.toLowerCase() || '';
-          const name = el.dataset.name?.toLowerCase() || '';
-          el.style.display = (code.includes(term) || name.includes(term)) ? '' : 'none';
+        document.querySelectorAll('.state-item').forEach(el => {
+          const item = el as HTMLElement;
+          const code = item.dataset.code?.toLowerCase() || '';
+          const name = item.dataset.name?.toLowerCase() || '';
+          item.style.display = (code.includes(term) || name.includes(term)) ? '' : 'none';
         });
       });
     }

@@ -21,8 +21,9 @@ import USMapClean from '../components/USMapClean.astro';
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div class="text-sm text-gray-600">Total States</div>
-        <div id="total-states" class="text-2xl font-bold text-gray-900">-</div>
+        <div class="text-sm text-gray-600">Total Licenses</div>
+        <div id="total-licenses" class="text-2xl font-bold text-gray-900">-</div>
+        <div id="total-licenses-sub" class="text-xs text-gray-400 mt-0.5">— states licensed</div>
       </div>
       <div class="bg-green-50 p-4 rounded-lg shadow-sm border border-green-200">
         <div class="text-sm text-green-700">Active</div>
@@ -121,6 +122,42 @@ import USMapClean from '../components/USMapClean.astro';
       </div>
     </div>
   </div>
+
+  <!-- State Detail Panel (right drawer) -->
+  <div id="state-panel" class="fixed inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl z-50 flex flex-col" style="transform: translateX(100%); transition: transform 0.3s ease;">
+    <!-- Panel Header -->
+    <div class="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+      <div>
+        <h2 id="panel-state-name" class="text-xl font-bold text-gray-900">—</h2>
+        <p id="panel-license-meta" class="text-sm text-gray-500 mt-0.5">Loading...</p>
+      </div>
+      <button id="close-state-panel" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <!-- Panel Action -->
+    <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+      <button id="panel-add-btn" class="w-full inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        Add License for this State
+      </button>
+    </div>
+    <!-- Panel License List -->
+    <div id="panel-license-list" class="flex-1 overflow-y-auto p-6">
+      <div class="text-center text-gray-400 py-12">
+        <svg class="mx-auto h-10 w-10 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <p class="text-sm">Select a state to view its licenses</p>
+      </div>
+    </div>
+  </div>
+  <!-- Panel overlay -->
+  <div id="state-panel-overlay" class="fixed inset-0 bg-black bg-opacity-40 hidden z-40"></div>
 
   <!-- Add/Edit License Modal -->
   <div id="license-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
@@ -301,8 +338,189 @@ import USMapClean from '../components/USMapClean.astro';
       is_active: boolean;
     }
 
+    // State code → full name lookup
+    const STATE_NAMES: { [key: string]: string } = {
+      'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
+      'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
+      'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+      'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
+      'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+      'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
+      'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
+      'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
+      'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
+      'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+      'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
+      'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
+      'WI': 'Wisconsin', 'WY': 'Wyoming'
+    };
+
     // Track current licenses globally
     let currentLicenses: License[] = [];
+    // Track which state panel is open
+    let currentPanelState = '';
+    let currentPanelStateName = '';
+
+    // Returns worst-case status across a group of licenses
+    function getWorstStatus(licenses: License[]): string {
+      if (licenses.some(l => l.status === 'expired')) return 'expired';
+      if (licenses.some(l => l.status === 'expiring')) return 'expiring';
+      if (licenses.some(l => l.status === 'active')) return 'active';
+      return 'active';
+    }
+
+    function statusBadgeClasses(status: string): string {
+      if (status === 'active') return 'bg-green-100 text-green-800';
+      if (status === 'expiring') return 'bg-yellow-100 text-yellow-800';
+      return 'bg-red-100 text-red-800';
+    }
+
+    function formatDate(dateStr: string): string {
+      try {
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } catch {
+        return dateStr;
+      }
+    }
+
+    // Render a single license row for the accordion table
+    function renderLicenseRow(license: License): string {
+      const sc = statusBadgeClasses(license.status);
+      const expiry = license.expiration_date ? formatDate(license.expiration_date) : null;
+      return `
+        <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4 min-w-0 flex-1 flex-wrap">
+            <div class="min-w-0">
+              <div class="text-sm font-medium text-gray-900">${escapeHtml(license.license_type)}</div>
+              ${license.license_number ? `<div class="text-xs text-gray-400 font-mono">${escapeHtml(license.license_number)}</div>` : ''}
+            </div>
+            ${expiry ? `<span class="text-xs text-gray-500 flex-shrink-0">${license.status === 'expired' ? 'Expired' : 'Expires'}: ${escapeHtml(expiry)}</span>` : ''}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${sc} flex-shrink-0 capitalize">${escapeHtml(license.status || 'unknown')}</span>
+          </div>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button onclick="window.editLicenseRow(${license.id})" class="text-xs text-primary-600 hover:text-primary-900 font-medium px-2 py-1 rounded hover:bg-primary-50 transition-colors">Edit</button>
+            <button onclick="deleteLicense(${license.id})" class="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors">Delete</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render a license card for the state detail panel
+    function renderPanelLicenseCard(license: License): string {
+      const expiry = license.expiration_date ? formatDate(license.expiration_date) : null;
+      const expiryColor = license.status === 'expired' ? 'text-red-600 font-medium' :
+                          license.status === 'expiring' ? 'text-yellow-600 font-medium' : 'text-gray-500';
+      return `
+        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                <span class="font-semibold text-gray-900 text-sm">${escapeHtml(license.license_type)}</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusBadgeClasses(license.status)} capitalize">${escapeHtml(license.status || 'unknown')}</span>
+              </div>
+              ${license.license_number ? `<div class="text-xs text-gray-500 font-mono mb-1"># ${escapeHtml(license.license_number)}</div>` : ''}
+              ${license.entity_name ? `<div class="text-xs text-gray-500 mb-1">${escapeHtml(license.entity_name)}</div>` : ''}
+              ${expiry ? `<div class="text-xs ${expiryColor}">${license.status === 'expired' ? 'Expired' : 'Expires'}: ${escapeHtml(expiry)}</div>` : ''}
+            </div>
+            <div class="flex flex-col gap-1.5 flex-shrink-0">
+              <button onclick="window.editLicenseRow(${license.id})" class="text-xs text-primary-600 font-medium px-3 py-1.5 rounded-lg hover:bg-primary-50 border border-primary-200 transition-colors">Edit</button>
+              <button onclick="deleteLicense(${license.id})" class="text-xs text-red-500 font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 border border-red-200 transition-colors">Delete</button>
+            </div>
+          </div>
+          ${license.notes ? `<div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400 italic">${escapeHtml(license.notes)}</div>` : ''}
+        </div>
+      `;
+    }
+
+    // Render the grouped accordion table
+    function renderGroupedTable(licenses: License[]) {
+      if (licenses.length === 0) {
+        container.innerHTML = '<div class="text-center py-12 text-gray-500">No licenses yet. Add your first license to get started!</div>';
+        return;
+      }
+
+      // Group by state
+      const byState = new Map<string, License[]>();
+      licenses.forEach(l => {
+        if (!byState.has(l.state)) byState.set(l.state, []);
+        byState.get(l.state)!.push(l);
+      });
+
+      const sortedStates = [...byState.keys()].sort();
+
+      const rows = sortedStates.map(stateCode => {
+        const stateLicenses = byState.get(stateCode)!;
+        const fullName = STATE_NAMES[stateCode] || stateCode;
+        const worstStatus = getWorstStatus(stateLicenses);
+        const sc = statusBadgeClasses(worstStatus);
+
+        const stateLevelLicenses = stateLicenses.filter(l => !l.is_city_license);
+        const cityLicenses = stateLicenses.filter(l => l.is_city_license);
+        const cities = [...new Set(cityLicenses.map(l => l.city || 'Unknown'))].sort();
+
+        const stateSectionHtml = stateLevelLicenses.length > 0 ? `
+          <div class="mb-4">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">State License</div>
+            <div class="space-y-1.5">${stateLevelLicenses.map(renderLicenseRow).join('')}</div>
+          </div>
+        ` : '';
+
+        const citySectionsHtml = cities.map(city => {
+          const cityLics = cityLicenses.filter(l => (l.city || 'Unknown') === city);
+          return `
+            <div class="mb-4">
+              <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                ${escapeHtml(city)}
+              </div>
+              <div class="space-y-1.5">${cityLics.map(renderLicenseRow).join('')}</div>
+            </div>
+          `;
+        }).join('');
+
+        const cityCountLabel = cities.length > 0
+          ? `<span class="text-xs text-blue-500">${cities.length} cit${cities.length !== 1 ? 'ies' : 'y'}</span>`
+          : '';
+
+        return `
+          <div class="border-b border-gray-100 last:border-b-0">
+            <div class="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50 select-none" onclick="window.toggleStateGroup('${escapeHtml(stateCode)}')">
+              <div class="flex items-center gap-3 min-w-0 flex-wrap">
+                <svg id="chevron-${escapeHtml(stateCode)}" class="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                <span class="font-semibold text-gray-900 text-sm">${escapeHtml(fullName)}</span>
+                <span class="text-xs text-gray-400 font-mono">${escapeHtml(stateCode)}</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">${stateLicenses.length} license${stateLicenses.length !== 1 ? 's' : ''}</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${sc} capitalize">${escapeHtml(worstStatus)}</span>
+                ${cityCountLabel}
+              </div>
+              <button
+                class="flex-shrink-0 ml-4 inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 transition-colors"
+                onclick="event.stopPropagation(); window.openAddLicenseForState('${escapeHtml(stateCode)}', '${escapeHtml(fullName)}')"
+              >
+                + Add
+              </button>
+            </div>
+            <div id="group-${escapeHtml(stateCode)}" class="hidden bg-gray-50 border-t border-gray-100 px-8 py-4">
+              ${stateSectionHtml}${citySectionsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+          <h3 class="text-sm font-medium text-gray-700">${licenses.length} license${licenses.length !== 1 ? 's' : ''} across ${byState.size} state${byState.size !== 1 ? 's' : ''}</h3>
+          <p class="text-xs text-gray-400">Click a state row to expand</p>
+        </div>
+        <div class="divide-y divide-gray-100">${rows}</div>
+      `;
+    }
 
     // Load licenses
     async function loadLicenses() {
@@ -314,144 +532,171 @@ import USMapClean from '../components/USMapClean.astro';
         if (!response.ok) throw new Error('Failed to load licenses');
 
         const licenses: License[] = await response.json();
-        currentLicenses = licenses; // Store for later access
+        currentLicenses = licenses;
         loading.classList.add('hidden');
 
-        if (licenses.length === 0) {
-          container.innerHTML = '<div class="text-center py-12 text-gray-500">No licenses yet. Add your first license to get started!</div>';
-          return;
-        }
-
-        // Render table
-        container.innerHTML = `
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License #</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiration</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              ${licenses.map((license: License) => `
-                <tr class="${license.is_city_license ? 'bg-blue-50' : ''}">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${escapeHtml(license.state)}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ${license.is_city_license ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">${escapeHtml(license.city || 'City')}</span>` : '-'}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${escapeHtml(license.license_type)}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${escapeHtml(license.license_number || '-')}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${escapeHtml(license.expiration_date || '-')}</td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${license.status === 'active' ? 'bg-green-100 text-green-800' : 
-                        license.status === 'expiring' ? 'bg-yellow-100 text-yellow-800' : 
-                        'bg-red-100 text-red-800'}">
-                      ${escapeHtml(license.status || 'unknown')}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                    <button onclick="window.editLicenseRow(${license.id})" class="text-primary-600 hover:text-primary-900">Edit</button>
-                    <button onclick="deleteLicense(${license.id})" class="text-red-600 hover:text-red-900">Delete</button>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        `;
-
-        // Update stats
+        renderGroupedTable(licenses);
         updateStats(licenses);
-        
-        // Update map
         renderUSMap(licenses);
+
+        // Refresh the panel if it's currently open
+        if (currentPanelState) {
+          updatePanelContent(currentPanelState, licenses.filter(l => l.state === currentPanelState));
+        }
 
       } catch (error: any) {
         loading.classList.add('hidden');
         container.innerHTML = '<div class="text-center py-12 text-red-500">Failed to load licenses</div>';
-        
-        // Still render empty grid even if API fails
         renderUSMap([]);
       }
     }
 
     function updateStats(licenses: License[]) {
-      const statesWithLicenses = new Set(licenses.map((l: License) => l.state)).size;
-      const active = licenses.filter((l: License) => l.status === 'active').length;
-      const expiring = licenses.filter((l: License) => l.status === 'expiring').length;
-      const expired = licenses.filter((l: License) => l.status === 'expired').length;
+      const total = licenses.length;
+      const statesWithLicenses = new Set(licenses.map(l => l.state)).size;
+      const active = licenses.filter(l => l.status === 'active').length;
+      const expiring = licenses.filter(l => l.status === 'expiring').length;
+      const expired = licenses.filter(l => l.status === 'expired').length;
 
-      document.getElementById('total-states')!.textContent = String(statesWithLicenses);
+      document.getElementById('total-licenses')!.textContent = String(total);
+      document.getElementById('total-licenses-sub')!.textContent =
+        `${statesWithLicenses} state${statesWithLicenses !== 1 ? 's' : ''} licensed`;
       document.getElementById('active-count')!.textContent = String(active);
       document.getElementById('expiring-count')!.textContent = String(expiring);
       document.getElementById('expired-count')!.textContent = String(expired);
     }
-
-    // Map full state names to abbreviations
-    const stateToAbbr: {[key: string]: string} = {
-      'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 'California': 'CA',
-      'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE', 'Florida': 'FL', 'Georgia': 'GA',
-      'Hawaii': 'HI', 'Idaho': 'ID', 'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA',
-      'Kansas': 'KS', 'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD',
-      'Massachusetts': 'MA', 'Michigan': 'MI', 'Minnesota': 'MN', 'Mississippi': 'MS', 'Missouri': 'MO',
-      'Montana': 'MT', 'Nebraska': 'NE', 'Nevada': 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
-      'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', 'Ohio': 'OH',
-      'Oklahoma': 'OK', 'Oregon': 'OR', 'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
-      'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT', 'Vermont': 'VT',
-      'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV', 'Wisconsin': 'WI', 'Wyoming': 'WY'
-    };
 
     function renderUSMap(licenses: License[]) {
       if (typeof (window as any).renderCleanMap === 'function') {
         (window as any).renderCleanMap(licenses);
       }
     }
-    
-    // Make editLicenseRow globally accessible for table Edit buttons
+
+    // ─── State Detail Panel ────────────────────────────────────────────
+
+    function updatePanelContent(stateCode: string, stateLicenses: License[]) {
+      const metaEl = document.getElementById('panel-license-meta')!;
+      const listEl = document.getElementById('panel-license-list')!;
+      const count = stateLicenses.length;
+
+      metaEl.textContent = count === 0
+        ? 'No licenses yet'
+        : `${count} license${count !== 1 ? 's' : ''}`;
+
+      if (count === 0) {
+        listEl.innerHTML = `
+          <div class="text-center text-gray-400 py-12">
+            <svg class="mx-auto h-10 w-10 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <p class="text-sm">No licenses for this state yet</p>
+            <p class="text-xs text-gray-400 mt-1">Click "Add License" above to get started</p>
+          </div>
+        `;
+        return;
+      }
+
+      const stateLevelLicenses = stateLicenses.filter(l => !l.is_city_license);
+      const cityLicenses = stateLicenses.filter(l => l.is_city_license);
+      const cities = [...new Set(cityLicenses.map(l => l.city || 'Unknown'))].sort();
+
+      let html = '';
+
+      if (stateLevelLicenses.length > 0) {
+        html += `
+          <div class="mb-5">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">State License</h3>
+            <div class="space-y-3">${stateLevelLicenses.map(renderPanelLicenseCard).join('')}</div>
+          </div>
+        `;
+      }
+
+      cities.forEach(city => {
+        const cityLics = cityLicenses.filter(l => (l.city || 'Unknown') === city);
+        html += `
+          <div class="mb-5">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              ${escapeHtml(city)}
+            </h3>
+            <div class="space-y-3">${cityLics.map(renderPanelLicenseCard).join('')}</div>
+          </div>
+        `;
+      });
+
+      listEl.innerHTML = html;
+    }
+
+    function openPanelState() {
+      const panel = document.getElementById('state-panel')!;
+      const overlay = document.getElementById('state-panel-overlay')!;
+      panel.style.transform = 'translateX(0)';
+      overlay.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePanelState() {
+      const panel = document.getElementById('state-panel')!;
+      const overlay = document.getElementById('state-panel-overlay')!;
+      panel.style.transform = 'translateX(100%)';
+      overlay.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('close-state-panel')!.addEventListener('click', closePanelState);
+    document.getElementById('state-panel-overlay')!.addEventListener('click', closePanelState);
+
+    document.getElementById('panel-add-btn')!.addEventListener('click', () => {
+      closePanelState();
+      (window as any).openAddLicenseForState(currentPanelState, currentPanelStateName);
+    });
+
+    // ─── Global functions called from map + table ───────────────────────
+
+    // Open state panel — called by map tile click
+    (window as any).openStatePanel = function(stateCode: string, stateName: string) {
+      currentPanelState = stateCode;
+      currentPanelStateName = stateName;
+      document.getElementById('panel-state-name')!.textContent = stateName;
+      updatePanelContent(stateCode, currentLicenses.filter(l => l.state === stateCode));
+      openPanelState();
+    };
+
+    // Backward-compat: old map click used window.editLicense → now opens panel
+    (window as any).editLicense = function(stateCode: string, stateName: string) {
+      (window as any).openStatePanel(stateCode, stateName);
+    };
+
+    // Toggle accordion row open/closed
+    (window as any).toggleStateGroup = function(stateCode: string) {
+      const group = document.getElementById(`group-${stateCode}`);
+      const chevron = document.getElementById(`chevron-${stateCode}`);
+      if (!group) return;
+      const isOpen = !group.classList.contains('hidden');
+      group.classList.toggle('hidden', isOpen);
+      if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(90deg)';
+    };
+
+    // Open add modal pre-filled with state (called from accordion "+ Add" and panel button)
+    (window as any).openAddLicenseForState = function(stateCode: string, stateName: string) {
+      form.reset();
+      (document.getElementById('license-id') as HTMLInputElement).value = '';
+      (document.getElementById('state') as HTMLSelectElement).value = stateCode;
+      (document.getElementById('is-city-license') as HTMLInputElement).checked = false;
+      document.getElementById('modal-title')!.textContent = `Add License — ${stateName}`;
+      modal.classList.remove('hidden');
+    };
+
+    // Edit a specific license by id (called from row Edit buttons everywhere)
     (window as any).editLicenseRow = function(licenseId: number) {
       const license = currentLicenses.find(l => l.id === licenseId);
       if (!license) return;
       editLicense(license);
     };
 
-    // Make editLicense globally accessible for state cards
-    (window as any).editLicense = function(stateCode: string, stateName: string) {
-      const licenseMap = new Map<string, License>();
-      currentLicenses.forEach(l => licenseMap.set(l.state, l));
-      
-      const license = licenseMap.get(stateCode);
-      
-      if (license) {
-        // Edit existing license
-        (document.getElementById('license-id') as HTMLInputElement).value = String(license.id);
-        (document.getElementById('state') as HTMLSelectElement).value = license.state;
-        (document.getElementById('license-type') as HTMLInputElement).value = license.license_type;
-        (document.getElementById('license-number') as HTMLInputElement).value = license.license_number || '';
-        (document.getElementById('entity-name') as HTMLInputElement).value = license.entity_name || '';
-        (document.getElementById('issue-date') as HTMLInputElement).value = license.issue_date || '';
-        (document.getElementById('expiration-date') as HTMLInputElement).value = license.expiration_date || '';
-        (document.getElementById('status') as HTMLSelectElement).value = license.status;
-        (document.getElementById('renewal-fee') as HTMLInputElement).value = String(license.renewal_fee || 0);
-        (document.getElementById('notes') as HTMLTextAreaElement).value = license.notes || '';
-        (document.getElementById('city') as HTMLInputElement).value = license.city || '';
-        (document.getElementById('is-city-license') as HTMLInputElement).checked = license.is_city_license || false;
-        
-        document.getElementById('modal-title')!.textContent = `Edit License - ${stateName}`;
-      } else {
-        // Add new license for this state
-        form.reset();
-        (document.getElementById('license-id') as HTMLInputElement).value = '';
-        (document.getElementById('state') as HTMLSelectElement).value = stateCode;
-        document.getElementById('modal-title')!.textContent = `Add License - ${stateName}`;
-      }
-      
-      modal.classList.remove('hidden');
-    };
-    
     function editLicense(license: License) {
       (document.getElementById('license-id') as HTMLInputElement).value = String(license.id);
       (document.getElementById('state') as HTMLSelectElement).value = license.state;
@@ -465,12 +710,12 @@ import USMapClean from '../components/USMapClean.astro';
       (document.getElementById('notes') as HTMLTextAreaElement).value = license.notes || '';
       (document.getElementById('city') as HTMLInputElement).value = license.city || '';
       (document.getElementById('is-city-license') as HTMLInputElement).checked = license.is_city_license || false;
-      
-      document.getElementById('modal-title')!.textContent = `Edit License - ${license.state}`;
+      const fullName = STATE_NAMES[license.state] || license.state;
+      document.getElementById('modal-title')!.textContent = `Edit License — ${fullName}`;
       modal.classList.remove('hidden');
     }
 
-    // Open modal
+    // Open modal for blank new license
     document.getElementById('add-license-btn')!.addEventListener('click', () => {
       form.reset();
       (document.getElementById('license-id') as HTMLInputElement).value = '';
@@ -508,7 +753,7 @@ import USMapClean from '../components/USMapClean.astro';
       try {
         const url = isEdit ? `${API_URL}/licenses/${licenseId}` : `${API_URL}/licenses`;
         const method = isEdit ? 'PUT' : 'POST';
-        
+
         const response = await fetch(url, {
           method,
           headers: {
@@ -547,8 +792,8 @@ import USMapClean from '../components/USMapClean.astro';
 
     // Initial load
     loadLicenses();
-    
-    // Render empty map immediately
+
+    // Render empty map immediately while data loads
     if (typeof (window as any).renderCleanMap === 'function') {
       (window as any).renderCleanMap([]);
     }
