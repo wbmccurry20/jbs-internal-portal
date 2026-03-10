@@ -652,14 +652,21 @@ func loadBankFromExcel(filePath string) ([]models.BankTransaction, error) {
 	return transactions, nil
 }
 
-func loadBankFromXLS(filePath string) (transactions []models.BankTransaction, retErr error) {
-	defer func() {
-		if r := recover(); r != nil {
-			transactions = nil
-			retErr = fmt.Errorf("XLS file could not be parsed (file may be corrupt or in an unsupported format): %v", r)
-		}
-	}()
+// xlsRowSafe reads a single XLS row; returns nil if the library panics (e.g. merged/empty cells).
+func xlsRowSafe(sheet *xls.WorkSheet, i int) (rowData []string) {
+	defer func() { recover() }() //nolint:errcheck
+	row := sheet.Row(i)
+	if row == nil {
+		return nil
+	}
+	rowData = make([]string, 0, row.LastCol()-row.FirstCol())
+	for j := row.FirstCol(); j < row.LastCol(); j++ {
+		rowData = append(rowData, row.Col(j))
+	}
+	return rowData
+}
 
+func loadBankFromXLS(filePath string) ([]models.BankTransaction, error) {
 	xlsFile, err := xls.Open(filePath, "utf-8")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open XLS file: %v", err)
@@ -674,20 +681,12 @@ func loadBankFromXLS(filePath string) (transactions []models.BankTransaction, re
 		return nil, fmt.Errorf("failed to get first sheet")
 	}
 
-	// Convert to [][]string format
+	// Convert to [][]string format, skipping rows that cause the library to panic.
 	rows := make([][]string, 0)
 	for i := 0; i <= int(sheet.MaxRow); i++ {
-		row := sheet.Row(i)
-		if row == nil {
-			continue
+		if rowData := xlsRowSafe(sheet, i); rowData != nil {
+			rows = append(rows, rowData)
 		}
-		
-		rowData := make([]string, 0)
-		for j := row.FirstCol(); j < row.LastCol(); j++ {
-			cell := row.Col(j)
-			rowData = append(rowData, cell)
-		}
-		rows = append(rows, rowData)
 	}
 
 	if len(rows) == 0 {
@@ -707,7 +706,7 @@ func loadBankFromXLS(filePath string) (transactions []models.BankTransaction, re
 		colMap[strings.TrimSpace(col)] = i
 	}
 
-	transactions = make([]models.BankTransaction, 0)
+	transactions := make([]models.BankTransaction, 0)
 
 	// Start parsing from row after header
 	for i := headerRowIdx + 1; i < len(rows); i++ {
@@ -811,8 +810,9 @@ func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, err
 	for i := 1; i < len(records); i++ {
 		row := records[i]
 		
-		// Support multiple column name formats (Foundation exports vary)
-		dateStr := getBankColumn(row, colMap, "Date", "Trx Date", "Inv Date")
+		// Prefer Inv Date (actual charge date) over Trx Date (Foundation posting date)
+		// so dates align correctly with bank/AmEx statement transaction dates.
+		dateStr := getBankColumn(row, colMap, "Date", "Inv Date", "Trx Date")
 		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount")
 
 		if dateStr == "" || amountStr == "" {
@@ -892,8 +892,8 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 	for i := 1; i < len(rows); i++ {
 		row := rows[i]
 		
-		// Support multiple column name formats (Foundation exports vary)
-		dateStr := getBankColumn(row, colMap, "Date", "Trx Date", "Inv Date")
+		// Prefer Inv Date (actual charge date) over Trx Date (Foundation posting date)
+		dateStr := getBankColumn(row, colMap, "Date", "Inv Date", "Trx Date")
 		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount")
 
 		if dateStr == "" || amountStr == "" {
@@ -936,14 +936,7 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 	return transactions, nil
 }
 
-func loadFoundationFromXLS(filePath string) (transactions []models.FoundationTransaction, retErr error) {
-	defer func() {
-		if r := recover(); r != nil {
-			transactions = nil
-			retErr = fmt.Errorf("XLS file could not be parsed (file may be corrupt or in an unsupported format): %v", r)
-		}
-	}()
-
+func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, error) {
 	xlsFile, err := xls.Open(filePath, "utf-8")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open XLS file: %v", err)
@@ -958,20 +951,12 @@ func loadFoundationFromXLS(filePath string) (transactions []models.FoundationTra
 		return nil, fmt.Errorf("failed to get first sheet")
 	}
 
-	// Convert to [][]string format
+	// Convert to [][]string format, skipping rows that cause the library to panic.
 	rows := make([][]string, 0)
 	for i := 0; i <= int(sheet.MaxRow); i++ {
-		row := sheet.Row(i)
-		if row == nil {
-			continue
+		if rowData := xlsRowSafe(sheet, i); rowData != nil {
+			rows = append(rows, rowData)
 		}
-		
-		rowData := make([]string, 0)
-		for j := row.FirstCol(); j < row.LastCol(); j++ {
-			cell := row.Col(j)
-			rowData = append(rowData, cell)
-		}
-		rows = append(rows, rowData)
 	}
 
 	if len(rows) == 0 {
@@ -985,13 +970,13 @@ func loadFoundationFromXLS(filePath string) (transactions []models.FoundationTra
 		colMap[strings.TrimSpace(col)] = i
 	}
 
-	transactions = make([]models.FoundationTransaction, 0)
+	transactions := make([]models.FoundationTransaction, 0)
 
 	for i := 1; i < len(rows); i++ {
 		row := rows[i]
 		
-		// Support multiple column name formats (Foundation exports vary)
-		dateStr := getBankColumn(row, colMap, "Date", "Trx Date", "Inv Date")
+		// Prefer Inv Date (actual charge date) over Trx Date (Foundation posting date)
+		dateStr := getBankColumn(row, colMap, "Date", "Inv Date", "Trx Date")
 		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount")
 
 		if dateStr == "" || amountStr == "" {
