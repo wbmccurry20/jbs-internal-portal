@@ -23,6 +23,10 @@ type BankTransaction struct {
 // FoundationTransaction represents a Foundation accounting system transaction
 type FoundationTransaction struct {
 	Transaction
+	// AltDate holds a secondary date from the source file (e.g. Concur
+	// transaction_date when invoice_date is stored as the primary Date).
+	// Used during matching when the primary Date is outside the bank's window.
+	AltDate           *time.Time
 	VendorID          string
 	VendorName        string
 	TransactionNumber int
