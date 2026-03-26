@@ -3,8 +3,10 @@ package services
 import (
 	"encoding/csv"
 	"fmt"
+	"log"
 	"math"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -232,35 +234,36 @@ func (e *ReconciliationEngine) classifyUnmatched(report *models.ReconciliationRe
 	if len(foundAll) > 0 {
 		minD, maxD := foundAll[0].Date, foundAll[0].Date
 		for _, t := range foundAll {
+			// Consider AltDate when computing the Concur/Foundation date range
+			d := t.Date
+			if t.AltDate != nil && t.AltDate.After(t.Date) {
+				d = *t.AltDate
+			}
 			if t.Date.Before(minD) {
 				minD = t.Date
 			}
-			if t.Date.After(maxD) {
-				maxD = t.Date
+			if d.After(maxD) {
+				maxD = d
 			}
 		}
 		report.FoundationMinDate = &minD
 		report.FoundationMaxDate = &maxD
 	}
 
-	// Compute overlap period (with tolerance buffer)
-	if report.BankMinDate != nil && report.FoundationMinDate != nil {
+	// Build the reconciliation window anchored on the BANK statement.
+	// AmEx and similar bank statements use settlement/batch dates (typically the
+	// last few days of the billing period) rather than individual purchase dates.
+	// The full billing cycle typically spans ~35 days before the statement
+	// closing date. We use bankMaxDate as the anchor and reach back 35 days so
+	// that Concur/Foundation entries made throughout the billing cycle are all
+	// considered in-range — not just those whose date happens to land within a
+	// few days of the batch settlement date.
+	if report.BankMaxDate != nil {
 		tolerance := time.Duration(e.DateToleranceDays) * 24 * time.Hour
-
-		overlapStart := *report.BankMinDate
-		if report.FoundationMinDate.After(overlapStart) {
-			overlapStart = *report.FoundationMinDate
-		}
-		// Subtract tolerance from overlap start so edge transactions aren't penalized
-		adjustedStart := overlapStart.Add(-tolerance)
-		report.OverlapStart = &adjustedStart
-
-		overlapEnd := *report.BankMaxDate
-		if report.FoundationMaxDate.Before(overlapEnd) {
-			overlapEnd = *report.FoundationMaxDate
-		}
-		// Add tolerance to overlap end
-		adjustedEnd := overlapEnd.Add(tolerance)
+		// Extend look-back to cover the full billing cycle (~35 days) plus tolerance
+		billingCycleStart := report.BankMaxDate.Add(-(35 * 24 * time.Hour)).Add(-tolerance)
+		report.OverlapStart = &billingCycleStart
+		adjustedEnd := report.BankMaxDate.Add(tolerance)
 		report.OverlapEnd = &adjustedEnd
 	}
 
@@ -280,16 +283,30 @@ func (e *ReconciliationEngine) classifyUnmatched(report *models.ReconciliationRe
 		}
 	}
 
-	// Classify foundation-only transactions
+	// Classify foundation-only transactions.
+	// A Foundation/Concur entry is in-range if EITHER its primary date OR its
+	// AltDate falls within the billing cycle window.
 	report.FoundationOutOfRange = make([]models.FoundationTransaction, 0)
 	report.FoundationTrueDiscrepancies = make([]models.FoundationTransaction, 0)
 
 	for _, txn := range report.FoundationOnlyTransactions {
-		if report.OverlapStart != nil && report.OverlapEnd != nil &&
-			(txn.Date.Before(*report.OverlapStart) || txn.Date.After(*report.OverlapEnd)) {
-			report.FoundationOutOfRange = append(report.FoundationOutOfRange, txn)
+		inWindow := false
+		if report.OverlapStart != nil && report.OverlapEnd != nil {
+			if !txn.Date.Before(*report.OverlapStart) && !txn.Date.After(*report.OverlapEnd) {
+				inWindow = true
+			}
+			if !inWindow && txn.AltDate != nil {
+				if !txn.AltDate.Before(*report.OverlapStart) && !txn.AltDate.After(*report.OverlapEnd) {
+					inWindow = true
+				}
+			}
 		} else {
+			inWindow = true
+		}
+		if inWindow {
 			report.FoundationTrueDiscrepancies = append(report.FoundationTrueDiscrepancies, txn)
+		} else {
+			report.FoundationOutOfRange = append(report.FoundationOutOfRange, txn)
 		}
 	}
 }
@@ -423,13 +440,20 @@ func (e *ReconciliationEngine) isMatch(bankTxn models.BankTransaction, foundTxn 
 		return false
 	}
 
-	// Check date match
+	// Check date match — try primary date first, then AltDate (e.g. Concur
+	// transaction_date vs invoice_date) so AmEx settlement-date statements
+	// can match Concur entries whose purchase date is within the billing cycle.
 	dateDiff := int(math.Abs(float64(bankTxn.Date.Sub(foundTxn.Date).Hours() / 24)))
-	if dateDiff > e.DateToleranceDays {
-		return false
+	if dateDiff <= e.DateToleranceDays {
+		return true
 	}
-
-	return true
+	if foundTxn.AltDate != nil {
+		altDiff := int(math.Abs(float64(bankTxn.Date.Sub(*foundTxn.AltDate).Hours() / 24)))
+		if altDiff <= e.DateToleranceDays {
+			return true
+		}
+	}
+	return false
 }
 
 func (e *ReconciliationEngine) calculateMatchScore(bankTxn models.BankTransaction, foundTxn models.FoundationTransaction) float64 {
@@ -445,8 +469,14 @@ func (e *ReconciliationEngine) calculateMatchScore(bankTxn models.BankTransactio
 		score += 0.1
 	}
 
-	// Date proximity (50% weight)
+	// Date proximity (50% weight) — try both primary date and AltDate
 	dateDiff := int(math.Abs(float64(bankTxn.Date.Sub(foundTxn.Date).Hours() / 24)))
+	if foundTxn.AltDate != nil {
+		altDiff := int(math.Abs(float64(bankTxn.Date.Sub(*foundTxn.AltDate).Hours() / 24)))
+		if altDiff < dateDiff {
+			dateDiff = altDiff
+		}
+	}
 	if dateDiff == 0 {
 		score += 0.5
 	} else if dateDiff <= 1 {
@@ -454,7 +484,13 @@ func (e *ReconciliationEngine) calculateMatchScore(bankTxn models.BankTransactio
 	} else if dateDiff <= 3 {
 		score += 0.3
 	} else if dateDiff <= 7 {
-		score += 0.1
+		score += 0.15
+	} else if dateDiff <= 35 && amountDiff < 0.01 {
+		// Billing-cycle match: AmEx statements use settlement/batch dates which
+		// cluster in the last few days of the billing period. The actual purchase
+		// date may be up to ~35 days earlier. When the amount is an exact match,
+		// score high enough to surface as a potential match for review.
+		score += 0.12
 	}
 
 	return score
@@ -463,22 +499,135 @@ func (e *ReconciliationEngine) calculateMatchScore(bankTxn models.BankTransactio
 // LoadBankTransactions loads bank transactions from CSV or Excel file
 func LoadBankTransactions(filePath string) ([]models.BankTransaction, error) {
 	ext := strings.ToLower(filepath.Ext(filePath))
-	
+
 	if ext == ".xlsx" {
-		return loadBankFromExcel(filePath)
+		result, err := loadBankFromExcel(filePath)
+		if err != nil {
+			return nil, err
+		}
+		log.Printf("[reconciliation] Loaded %d bank transactions from XLSX: %s", len(result), filepath.Base(filePath))
+		return result, nil
 	} else if ext == ".xls" {
-		// Try legacy XLS format first; fall back to XLSX in case the file was
-		// saved with a .xls extension but is actually XLSX (common on macOS).
+		// Preferred: use Node.js/SheetJS which handles all BIFF variants and gets all rows.
+		if result, err := loadBankFromXLSViaNode(filePath); err == nil {
+			log.Printf("[reconciliation] Loaded %d bank transactions via Node.js/SheetJS: %s", len(result), filepath.Base(filePath))
+			return result, nil
+		} else {
+			log.Printf("[reconciliation] Node.js XLS conversion failed for %s: %v — trying extrame/xls fallback", filepath.Base(filePath), err)
+		}
+		// Fallback: extrame/xls (may miss rows on some files)
 		result, err := loadBankFromXLS(filePath)
 		if err != nil {
+			log.Printf("[reconciliation] extrame/xls failed for %s: %v — trying excelize fallback", filepath.Base(filePath), err)
 			if xlsxResult, xlsxErr := loadBankFromExcel(filePath); xlsxErr == nil {
+				log.Printf("[reconciliation] Loaded %d bank transactions via excelize fallback: %s", len(xlsxResult), filepath.Base(filePath))
 				return xlsxResult, nil
 			}
 			return nil, err
 		}
+		log.Printf("[reconciliation] Loaded %d bank transactions via extrame/xls: %s", len(result), filepath.Base(filePath))
 		return result, nil
 	}
 	return loadBankFromCSV(filePath)
+}
+
+// loadBankFromXLSViaNode converts the XLS to CSV using Node.js/SheetJS, which handles
+// all BIFF variants correctly (including cases where extrame/xls only reads a subset of rows).
+func loadBankFromXLSViaNode(filePath string) ([]models.BankTransaction, error) {
+	scriptPath, err := findXLSConvertScript(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("xls_to_csv.js not found: %v", err)
+	}
+
+	// Run: node xls_to_csv.js <xlsFile> and capture CSV output
+	cmd := exec.Command("node", scriptPath, filePath)
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("node xls_to_csv.js failed: %v", err)
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("node xls_to_csv.js produced no output")
+	}
+
+	// Write to a temp CSV file and reuse the existing CSV parser
+	tmp, err := os.CreateTemp("", "bank_xls_*.csv")
+	if err != nil {
+		return nil, fmt.Errorf("could not create temp file: %v", err)
+	}
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName)
+
+	if _, err := tmp.Write(out); err != nil {
+		tmp.Close()
+		return nil, fmt.Errorf("could not write temp CSV: %v", err)
+	}
+	tmp.Close()
+
+	return loadBankFromCSV(tmpName)
+}
+
+// findXLSConvertScript locates scripts/xls_to_csv.js using multiple strategies:
+//  1. XLS_CONVERT_SCRIPT env var (explicit override)
+//  2. Relative to the running executable (works in deployed containers)
+//  3. Relative to the current working directory (works during development)
+//  4. Walking up from the XLS file's directory (legacy fallback)
+func findXLSConvertScript(xlsFilePath string) (string, error) {
+	// Strategy 1: Explicit env var
+	if envPath := os.Getenv("XLS_CONVERT_SCRIPT"); envPath != "" {
+		if _, err := os.Stat(envPath); err == nil {
+			return envPath, nil
+		}
+	}
+
+	// Strategy 2: Relative to the running executable
+	if exePath, err := os.Executable(); err == nil {
+		exeDir := filepath.Dir(exePath)
+		// Try scripts/ next to the executable and one level up (common layout:
+		// backend/server + scripts/xls_to_csv.js both under project root)
+		for _, rel := range []string{
+			filepath.Join(exeDir, "scripts", "xls_to_csv.js"),
+			filepath.Join(exeDir, "..", "scripts", "xls_to_csv.js"),
+			filepath.Join(exeDir, "..", "..", "scripts", "xls_to_csv.js"),
+		} {
+			if abs, err := filepath.Abs(rel); err == nil {
+				if _, err := os.Stat(abs); err == nil {
+					return abs, nil
+				}
+			}
+		}
+	}
+
+	// Strategy 3: Relative to current working directory
+	if cwd, err := os.Getwd(); err == nil {
+		for _, rel := range []string{
+			filepath.Join(cwd, "scripts", "xls_to_csv.js"),
+			filepath.Join(cwd, "..", "scripts", "xls_to_csv.js"),
+		} {
+			if abs, err := filepath.Abs(rel); err == nil {
+				if _, err := os.Stat(abs); err == nil {
+					return abs, nil
+				}
+			}
+		}
+	}
+
+	// Strategy 4: Walk up from the XLS file's directory (legacy fallback)
+	dir, err := filepath.Abs(filepath.Dir(xlsFilePath))
+	if err != nil {
+		return "", err
+	}
+	for i := 0; i < 8; i++ {
+		candidate := filepath.Join(dir, "scripts", "xls_to_csv.js")
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "", fmt.Errorf("scripts/xls_to_csv.js not found (checked env XLS_CONVERT_SCRIPT, exe dir, cwd, and near %s)", xlsFilePath)
 }
 
 func loadBankFromCSV(filePath string) ([]models.BankTransaction, error) {
@@ -536,10 +685,11 @@ func loadBankFromCSV(filePath string) ([]models.BankTransaction, error) {
 			continue
 		}
 
-		// Parse amount, handling currency symbols and commas
+		// Parse amount, handling currency symbols, commas, and any residual whitespace
 		cleanAmount := strings.TrimSpace(amountStr)
 		cleanAmount = strings.ReplaceAll(cleanAmount, "$", "")
 		cleanAmount = strings.ReplaceAll(cleanAmount, ",", "")
+		cleanAmount = strings.TrimSpace(cleanAmount)
 		amount, err := strconv.ParseFloat(cleanAmount, 64)
 		if err != nil {
 			continue
@@ -622,10 +772,11 @@ func loadBankFromExcel(filePath string) ([]models.BankTransaction, error) {
 			continue
 		}
 
-		// Parse amount, handling currency symbols and commas
+		// Parse amount, handling currency symbols, commas, and any residual whitespace
 		cleanAmount := strings.TrimSpace(amountStr)
 		cleanAmount = strings.ReplaceAll(cleanAmount, "$", "")
 		cleanAmount = strings.ReplaceAll(cleanAmount, ",", "")
+		cleanAmount = strings.TrimSpace(cleanAmount)
 		amount, err := strconv.ParseFloat(cleanAmount, 64)
 		if err != nil {
 			continue
@@ -653,15 +804,29 @@ func loadBankFromExcel(filePath string) ([]models.BankTransaction, error) {
 }
 
 // xlsRowSafe reads a single XLS row; returns nil if the library panics (e.g. merged/empty cells).
+// IMPORTANT: always returns a slice indexed from column 0 (padding leading empty columns with "")
+// so that the column indices in colMap (built from the header row) stay aligned with data rows.
+// The extrame/xls library's Row.Col() can be called for any column index but FirstCol() varies
+// per row — using FirstCol() as slice offset 0 caused massive column misalignment.
+// Per-cell panics (e.g. unusual cell types like ######JmKohk reference numbers) are caught
+// individually so only that one cell is blanked out rather than dropping the entire row.
 func xlsRowSafe(sheet *xls.WorkSheet, i int) (rowData []string) {
 	defer func() { recover() }() //nolint:errcheck
 	row := sheet.Row(i)
 	if row == nil {
 		return nil
 	}
-	rowData = make([]string, 0, row.LastCol()-row.FirstCol())
-	for j := row.FirstCol(); j < row.LastCol(); j++ {
-		rowData = append(rowData, row.Col(j))
+	lastCol := int(row.LastCol())
+	if lastCol <= 0 {
+		return nil
+	}
+	// Allocate from 0 so index j in the slice == column j in the sheet
+	rowData = make([]string, lastCol)
+	for j := int(row.FirstCol()); j < lastCol; j++ {
+		func() {
+			defer func() { recover() }() //nolint:errcheck
+			rowData[j] = row.Col(j)
+		}()
 	}
 	return rowData
 }
@@ -708,36 +873,59 @@ func loadBankFromXLS(filePath string) ([]models.BankTransaction, error) {
 
 	transactions := make([]models.BankTransaction, 0)
 
-	// Start parsing from row after header
 	for i := headerRowIdx + 1; i < len(rows); i++ {
 		row := rows[i]
-		
+
+		// AmEx XLS files occasionally insert an extra asterisk-wrapped tracking ID
+		// at the Transaction Reference No. column, shifting amount/desc right by one.
+		refColIdx := colMap["Transaction Reference No."]
+		if refColIdx > 0 && refColIdx < len(row) {
+			cell := strings.TrimSpace(row[refColIdx])
+			if len(cell) >= 2 && cell[0] == '*' && cell[len(cell)-1] == '*' {
+				adjusted := make([]string, len(row)-1)
+				copy(adjusted, row[:refColIdx])
+				copy(adjusted[refColIdx:], row[refColIdx+1:])
+				row = adjusted
+			}
+		}
+
+		// --- Fast path: use column-map indices (works for well-aligned rows) ---
 		dateStr := getBankColumn(row, colMap, "Date", "Transaction Date")
 		amountStr := getBankColumn(row, colMap, "Amount", "Transaction Amount USD")
 
-		if dateStr == "" || amountStr == "" {
-			continue
-		}
+		date, dateOk := func() (time.Time, bool) {
+			if dateStr == "" {
+				return time.Time{}, false
+			}
+			t, err := parseDate(dateStr)
+			return t, err == nil
+		}()
 
-		date, err := parseDate(dateStr)
-		if err != nil {
-			continue
-		}
+		amount, amountOk := func() (float64, bool) {
+			if amountStr == "" {
+				return 0, false
+			}
+			clean := strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(amountStr, "$", ""), ",", ""))
+			clean = strings.TrimSpace(clean)
+			v, err := strconv.ParseFloat(clean, 64)
+			return v, err == nil
+		}()
 
-		// Parse amount, handling currency symbols and commas
-		cleanAmount := strings.TrimSpace(amountStr)
-		cleanAmount = strings.ReplaceAll(cleanAmount, "$", "")
-		cleanAmount = strings.ReplaceAll(cleanAmount, ",", "")
-		amount, err := strconv.ParseFloat(cleanAmount, 64)
-		if err != nil {
-			continue
-		}
+		var description, cardmemberName string
 
-		// Build description from multiple AmEx fields or single field
-		description := buildBankDescription(row, colMap)
-		
-		// Get cardmember name (combine first/last for AmEx format)
-		cardmemberName := getBankCardmember(row, colMap)
+		if dateOk && amountOk {
+			// Normal path — column map is aligned
+			description = buildBankDescription(row, colMap)
+			cardmemberName = getBankCardmember(row, colMap)
+		} else {
+			// --- Content-based fallback for AmEx rows where the extrame/xls library  ---
+			// --- returns cells at wrong column indices due to sparse/shifted BIFF rows ---
+			var ok bool
+			date, amount, cardmemberName, description, ok = scanXLSRowForBankFields(row)
+			if !ok {
+				continue // not a real transaction row (continuation/hash-only row)
+			}
+		}
 
 		transactions = append(transactions, models.BankTransaction{
 			Transaction: models.Transaction{
@@ -754,25 +942,120 @@ func loadBankFromXLS(filePath string) ([]models.BankTransaction, error) {
 	return transactions, nil
 }
 
+// scanXLSRowForBankFields performs content-based extraction from XLS rows where
+// the extrame/xls library has returned cells at wrong column positions (common in
+// AmEx exports where sparse BIFF rows start at col 12+, making cols 0-11 all empty).
+//
+// Strategy:
+//   - Find MM/DD/YYYY dates (4-digit year only; skips 2-digit-year description dates)
+//   - Find the first $-prefixed amount
+//   - Use the 2nd full date as Transaction Date (1st is Business Process Date)
+//   - Collect cells after the amount as description
+//   - If no dollar amount found → not a real transaction row → return ok=false
+func scanXLSRowForBankFields(row []string) (date time.Time, amount float64, cardmember, desc string, ok bool) {
+	var fullDates []time.Time
+	amtIdx := -1
+
+	for i, raw := range row {
+		cell := strings.TrimSpace(raw)
+		if cell == "" {
+			continue
+		}
+		// Skip AmEx asterisk-wrapped hash cells (e.g. "*875145409423900000012634*")
+		if len(cell) >= 2 && cell[0] == '*' && cell[len(cell)-1] == '*' {
+			continue
+		}
+		// Detect MM/DD/YYYY date — must have exactly 4-digit year to avoid grabbing
+		// description date strings like "02/28/26" (2-digit year).
+		if parts := strings.Split(cell, "/"); len(parts) == 3 && len(parts[2]) == 4 {
+			if t, err := parseDate(cell); err == nil && t.Year() >= 2020 {
+				fullDates = append(fullDates, t)
+				continue
+			}
+		}
+		// Detect dollar-prefixed amount ($X.XX, $X,XXX.XX, -$X.XX)
+		if amtIdx == -1 {
+			rawAmt := cell
+			neg := strings.HasPrefix(rawAmt, "-$")
+			if strings.HasPrefix(rawAmt, "$") || neg {
+				clean := strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(rawAmt, "$", ""), ",", ""))
+				if v, err := strconv.ParseFloat(clean, 64); err == nil {
+					amount = v
+					amtIdx = i
+				}
+			}
+		}
+	}
+
+	// A real transaction row must have at least one date AND a dollar amount
+	if len(fullDates) == 0 || amtIdx == -1 {
+		return
+	}
+
+	// Business Process Date comes before Transaction Date in the AmEx column order.
+	// Use the 2nd full date encountered; if only one exists use it.
+	if len(fullDates) >= 2 {
+		date = fullDates[1]
+	} else {
+		date = fullDates[0]
+	}
+
+	// Cardmember name: available only when col 0 has "Corporate Card" (aligned rows).
+	// Shifted rows (col0="") won't have names here, which is acceptable.
+	if len(row) > 2 && strings.TrimSpace(row[0]) == "Corporate Card" {
+		last := strings.TrimSpace(row[1])
+		first := strings.TrimSpace(row[2])
+		if last != "" {
+			cardmember = strings.TrimSpace(first + " " + last)
+		}
+	}
+
+	// Description: collect cells after the amount, skipping hash values
+	var descParts []string
+	for _, raw := range row[amtIdx+1:] {
+		cell := strings.TrimSpace(raw)
+		if cell == "" {
+			continue
+		}
+		if len(cell) >= 2 && cell[0] == '*' && cell[len(cell)-1] == '*' {
+			continue
+		}
+		descParts = append(descParts, cell)
+	}
+	desc = strings.Join(descParts, " ")
+	ok = true
+	return
+}
+
+
 // LoadFoundationTransactions loads foundation transactions from CSV or Excel file
 func LoadFoundationTransactions(filePath string) ([]models.FoundationTransaction, error) {
 	ext := strings.ToLower(filepath.Ext(filePath))
 	
+	var result []models.FoundationTransaction
+	var err error
+
 	if ext == ".xlsx" {
-		return loadFoundationFromExcel(filePath)
+		result, err = loadFoundationFromExcel(filePath)
 	} else if ext == ".xls" {
 		// Try legacy XLS format first; fall back to XLSX in case the file was
 		// saved with a .xls extension but is actually XLSX (common on macOS).
-		result, err := loadFoundationFromXLS(filePath)
+		result, err = loadFoundationFromXLS(filePath)
 		if err != nil {
 			if xlsxResult, xlsxErr := loadFoundationFromExcel(filePath); xlsxErr == nil {
-				return xlsxResult, nil
+				result = xlsxResult
+				err = nil
 			}
-			return nil, err
 		}
-		return result, nil
+	} else {
+		result, err = loadFoundationFromCSV(filePath)
 	}
-	return loadFoundationFromCSV(filePath)
+
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("[reconciliation] Loaded %d foundation transactions from %s: %s", len(result), ext, filepath.Base(filePath))
+	return result, nil
 }
 
 func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, error) {
@@ -810,10 +1093,19 @@ func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, err
 	for i := 1; i < len(records); i++ {
 		row := records[i]
 		
-		// Prefer Inv Date (actual charge date) over Trx Date (Foundation posting date)
-		// so dates align correctly with bank/AmEx statement transaction dates.
-		dateStr := getBankColumn(row, colMap, "Date", "Inv Date", "Trx Date")
-		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount")
+		// Prefer Inv Date / invoice_date (actual charge date) over Trx Date / transaction_date
+		// (Foundation posting date) so dates align with bank/AmEx statement dates.
+		// Column names support Foundation Title Case, Foundation snake_case, and Concur exports.
+		// Also capture the secondary date so isMatch can try both against the bank.
+		primaryDateStr := getBankColumn(row, colMap, "Date", "Inv Date", "invoice_date")
+		secondaryDateStr := getBankColumn(row, colMap, "Trx Date", "transaction_date", "Transaction Date")
+		// Fall back: if neither 'invoice_date' nor 'transaction_date' is present, accept 'Date'
+		if primaryDateStr == "" {
+			primaryDateStr = secondaryDateStr
+			secondaryDateStr = ""
+		}
+		dateStr := primaryDateStr
+		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount", "transaction_amount", "SUM Allocation Claimed Amount (USD)")
 
 		if dateStr == "" || amountStr == "" {
 			continue
@@ -822,6 +1114,14 @@ func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, err
 		date, err := parseDate(dateStr)
 		if err != nil {
 			continue
+		}
+
+		// Parse optional secondary/alt date
+		var altDate *time.Time
+		if secondaryDateStr != "" && secondaryDateStr != dateStr {
+			if ad, aerr := parseDate(secondaryDateStr); aerr == nil && !ad.Equal(date) {
+				altDate = &ad
+			}
 		}
 
 		// Parse amount, handling currency symbols and commas
@@ -833,7 +1133,7 @@ func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, err
 			continue
 		}
 
-		trxNoStr := getBankColumn(row, colMap, "Trx No", "Transaction Number")
+		trxNoStr := getBankColumn(row, colMap, "Trx No", "Transaction Number", "voucher")
 		var trxNo int
 		if trxNoStr != "" {
 			trxNo, _ = strconv.Atoi(strings.TrimSpace(trxNoStr))
@@ -843,12 +1143,13 @@ func loadFoundationFromCSV(filePath string) ([]models.FoundationTransaction, err
 			Transaction: models.Transaction{
 				Date:        date,
 				Amount:      amount,
-				Description: getBankColumn(row, colMap, "Description", "Trx Description"),
-				Reference:   getBankColumn(row, colMap, "Trx No", "Transaction Number"),
+				Description: getBankColumn(row, colMap, "Description", "description", "Trx Description", "Expense Type"),
+				Reference:   getBankColumn(row, colMap, "Trx No", "Transaction Number", "voucher"),
 			},
-			VendorName:        getBankColumn(row, colMap, "Vendor Name", "VendorName"),
+			AltDate:           altDate,
+			VendorName:        getBankColumn(row, colMap, "Vendor Name", "vendor_name", "VendorName", "Employee Name"),
 			TransactionNumber: trxNo,
-			JobNumber:         getBankColumn(row, colMap, "Job No", "Job Number"),
+			JobNumber:         getBankColumn(row, colMap, "Job No", "job_no", "Job Number"),
 		})
 	}
 
@@ -891,10 +1192,16 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 
 	for i := 1; i < len(rows); i++ {
 		row := rows[i]
-		
-		// Prefer Inv Date (actual charge date) over Trx Date (Foundation posting date)
-		dateStr := getBankColumn(row, colMap, "Date", "Inv Date", "Trx Date")
-		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount")
+
+		// Prefer Inv Date / invoice_date. Also capture the secondary date as AltDate.
+		primaryDateStr := getBankColumn(row, colMap, "Date", "Inv Date", "invoice_date")
+		secondaryDateStr := getBankColumn(row, colMap, "Trx Date", "transaction_date", "Transaction Date")
+		if primaryDateStr == "" {
+			primaryDateStr = secondaryDateStr
+			secondaryDateStr = ""
+		}
+		dateStr := primaryDateStr
+		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount", "transaction_amount", "SUM Allocation Claimed Amount (USD)")
 
 		if dateStr == "" || amountStr == "" {
 			continue
@@ -903,6 +1210,13 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 		date, err := parseDate(dateStr)
 		if err != nil {
 			continue
+		}
+
+		var altDate *time.Time
+		if secondaryDateStr != "" && secondaryDateStr != dateStr {
+			if ad, aerr := parseDate(secondaryDateStr); aerr == nil && !ad.Equal(date) {
+				altDate = &ad
+			}
 		}
 
 		// Parse amount, handling currency symbols and commas
@@ -914,7 +1228,7 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 			continue
 		}
 
-		trxNoStr := getBankColumn(row, colMap, "Trx No", "Transaction Number")
+		trxNoStr := getBankColumn(row, colMap, "Trx No", "Transaction Number", "voucher")
 		var trxNo int
 		if trxNoStr != "" {
 			trxNo, _ = strconv.Atoi(strings.TrimSpace(trxNoStr))
@@ -924,12 +1238,13 @@ func loadFoundationFromExcel(filePath string) ([]models.FoundationTransaction, e
 			Transaction: models.Transaction{
 				Date:        date,
 				Amount:      amount,
-				Description: getBankColumn(row, colMap, "Description", "Trx Description"),
-				Reference:   getBankColumn(row, colMap, "Trx No", "Transaction Number"),
+				Description: getBankColumn(row, colMap, "Description", "description", "Trx Description", "Expense Type"),
+				Reference:   getBankColumn(row, colMap, "Trx No", "Transaction Number", "voucher"),
 			},
-			VendorName:        getBankColumn(row, colMap, "Vendor Name", "VendorName"),
+			AltDate:           altDate,
+			VendorName:        getBankColumn(row, colMap, "Vendor Name", "vendor_name", "VendorName", "Employee Name"),
 			TransactionNumber: trxNo,
-			JobNumber:         getBankColumn(row, colMap, "Job No", "Job Number"),
+			JobNumber:         getBankColumn(row, colMap, "Job No", "job_no", "Job Number"),
 		})
 	}
 
@@ -974,10 +1289,11 @@ func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, err
 
 	for i := 1; i < len(rows); i++ {
 		row := rows[i]
-		
-		// Prefer Inv Date (actual charge date) over Trx Date (Foundation posting date)
-		dateStr := getBankColumn(row, colMap, "Date", "Inv Date", "Trx Date")
-		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount")
+
+		// Prefer Inv Date / invoice_date (actual charge date) over Trx Date / transaction_date.
+		// Column names support Foundation Title Case, Foundation snake_case, and Concur exports.
+		dateStr := getBankColumn(row, colMap, "Date", "Inv Date", "invoice_date", "Trx Date", "transaction_date", "Transaction Date")
+		amountStr := getBankColumn(row, colMap, "Amount", "Trx Amount", "transaction_amount", "SUM Allocation Claimed Amount (USD)")
 
 		if dateStr == "" || amountStr == "" {
 			continue
@@ -997,7 +1313,7 @@ func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, err
 			continue
 		}
 
-		trxNoStr := getBankColumn(row, colMap, "Trx No", "Transaction Number")
+		trxNoStr := getBankColumn(row, colMap, "Trx No", "Transaction Number", "voucher")
 		var trxNo int
 		if trxNoStr != "" {
 			trxNo, _ = strconv.Atoi(strings.TrimSpace(trxNoStr))
@@ -1007,12 +1323,12 @@ func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, err
 			Transaction: models.Transaction{
 				Date:        date,
 				Amount:      amount,
-				Description: getBankColumn(row, colMap, "Description", "Trx Description"),
-				Reference:   getBankColumn(row, colMap, "Trx No", "Transaction Number"),
+				Description: getBankColumn(row, colMap, "Description", "description", "Trx Description", "Expense Type"),
+				Reference:   getBankColumn(row, colMap, "Trx No", "Transaction Number", "voucher"),
 			},
-			VendorName:        getBankColumn(row, colMap, "Vendor Name", "VendorName"),
+			VendorName:        getBankColumn(row, colMap, "Vendor Name", "vendor_name", "VendorName", "Employee Name"),
 			TransactionNumber: trxNo,
-			JobNumber:         getBankColumn(row, colMap, "Job No", "Job Number"),
+			JobNumber:         getBankColumn(row, colMap, "Job No", "job_no", "Job Number"),
 		})
 	}
 
@@ -1021,8 +1337,16 @@ func loadFoundationFromXLS(filePath string) ([]models.FoundationTransaction, err
 
 // Helper functions
 func getColumn(row []string, colMap map[string]int, colName string) string {
+	// Exact match first
 	if idx, ok := colMap[colName]; ok && idx < len(row) {
 		return strings.TrimSpace(row[idx])
+	}
+	// Case-insensitive fallback (handles snake_case from Concur exports, Title Case from Foundation, etc.)
+	lower := strings.ToLower(colName)
+	for k, idx := range colMap {
+		if strings.ToLower(k) == lower && idx < len(row) {
+			return strings.TrimSpace(row[idx])
+		}
 	}
 	return ""
 }
@@ -1052,7 +1376,8 @@ func findBankHeaderRow(rows [][]string) int {
 		// Check for AmEx format headers
 		for _, cell := range row {
 			cell = strings.TrimSpace(cell)
-			if cell == "Transaction Date" || cell == "Transaction Amount USD" {
+			if cell == "Transaction Date" || cell == "Transaction Amount USD" ||
+				cell == "Cardmember Last Name" || cell == "Business Process Date" {
 				return i
 			}
 		}
@@ -1074,6 +1399,11 @@ func findBankHeaderRow(rows [][]string) int {
 func buildBankDescription(row []string, colMap map[string]int) string {
 	// Try single Description field first
 	if desc := getColumn(row, colMap, "Description"); desc != "" {
+		return desc
+	}
+	
+	// Try single "Transaction Description" column (some AmEx formats use this)
+	if desc := getColumn(row, colMap, "Transaction Description"); desc != "" {
 		return desc
 	}
 	

@@ -172,6 +172,8 @@ func (c *ConcurConverter) parseExpenseRow(row []string, columnMap map[string]int
 
 // parseDate attempts to parse date in multiple formats
 func parseDate(dateStr string) (time.Time, error) {
+	// Trim any surrounding whitespace
+	dateStr = strings.TrimSpace(dateStr)
 	formats := []string{
 		"2006-01-02",
 		"01/02/2006",
@@ -182,6 +184,11 @@ func parseDate(dateStr string) (time.Time, error) {
 		"2006-01-02 15:04:05",
 		"01/02/2006 15:04:05",
 		"1/2/2006 15:04:05",
+		// 2-digit year formats (e.g. Concur export: "2/6/26 00:00")
+		"1/2/06 15:04",
+		"01/02/06 15:04",
+		"1/2/06",
+		"01/02/06",
 		time.RFC3339,
 	}
 
@@ -191,7 +198,25 @@ func parseDate(dateStr string) (time.Time, error) {
 		}
 	}
 
-	return time.Time{}, fmt.Errorf("unable to parse date")
+	// Fallback: Excel serial date number (days since 1899-12-30).
+	// SheetJS or excelize may emit raw serial numbers for date cells when
+	// the cell lacks a display format (e.g. "46082" for 02/28/2026).
+	if serial, err := strconv.ParseFloat(dateStr, 64); err == nil && serial > 40000 && serial < 60000 {
+		// Excel epoch: serial 1 = January 1, 1900, but the Lotus 1-2-3 bug
+		// treats 1900 as a leap year (inserting a phantom Feb 29, 1900).
+		// For serial > 60, subtract 1 to compensate.
+		epoch := time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
+		days := int(serial)
+		if days > 60 {
+			days-- // compensate for Lotus 1-2-3 leap year bug
+		}
+		t := epoch.AddDate(0, 0, days)
+		if t.Year() >= 2020 && t.Year() <= 2040 {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("unable to parse date: %q", dateStr)
 }
 
 // createFoundationCSV generates the Foundation import CSV file
