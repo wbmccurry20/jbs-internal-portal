@@ -44,6 +44,80 @@ import USMapClean from '../components/USMapClean.astro';
       <USMapClean />
     </div>
 
+    <!-- Auto-Discover from SharePoint -->
+    <div id="scan-section" class="hidden bg-white rounded-lg shadow-sm border border-blue-200">
+      <div class="px-6 py-4 border-b border-blue-100 flex justify-between items-center bg-blue-50/50">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <div>
+            <h2 class="text-base font-semibold text-gray-900">Auto-Discover from SharePoint</h2>
+            <p class="text-xs text-gray-500">Scan state folders to create license records</p>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 py-4">
+        <!-- Scan Controls -->
+        <div class="flex items-center gap-3 mb-4">
+          <select id="scan-state-select" class="flex-1 max-w-xs rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
+            <option value="">Select a state to scan...</option>
+          </select>
+          <button id="scan-btn" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Scan
+          </button>
+        </div>
+
+        <!-- Scan spinner -->
+        <div id="scan-loading" class="hidden text-center py-6">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p class="mt-2 text-sm text-gray-500">Scanning SharePoint folder...</p>
+        </div>
+
+        <!-- Scan Results -->
+        <div id="scan-results" class="hidden">
+          <div id="scan-summary" class="text-sm text-gray-600 mb-3"></div>
+
+          <!-- Suggestions table -->
+          <div id="scan-suggestions" class="space-y-2 mb-4"></div>
+
+          <!-- Already tracked (collapsed) -->
+          <div id="scan-tracked-section" class="hidden mb-4">
+            <button id="scan-tracked-toggle" class="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">
+              <svg id="scan-tracked-chevron" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+              <span id="scan-tracked-label">Already tracked</span>
+            </button>
+            <div id="scan-tracked-list" class="hidden mt-2 space-y-1"></div>
+          </div>
+
+          <!-- Skipped folders (collapsed) -->
+          <div id="scan-skipped-section" class="hidden mb-4">
+            <button id="scan-skipped-toggle" class="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
+              <svg id="scan-skipped-chevron" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+              <span id="scan-skipped-label">Skipped folders</span>
+            </button>
+            <div id="scan-skipped-list" class="hidden mt-2 text-xs text-gray-400"></div>
+          </div>
+
+          <!-- Approve button -->
+          <div id="scan-actions" class="flex items-center gap-3 pt-3 border-t border-gray-200">
+            <button id="scan-select-all" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Select All</button>
+            <div class="flex-1"></div>
+            <button id="scan-approve-btn" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              Approve Selected (<span id="scan-selected-count">0</span>)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- License List -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
       <div id="licenses-container" class="overflow-x-auto">
@@ -336,6 +410,7 @@ import USMapClean from '../components/USMapClean.astro';
       city: string | null;
       is_city_license: boolean;
       is_active: boolean;
+      document_count?: number;
     }
 
     // State code → full name lookup
@@ -397,6 +472,7 @@ import USMapClean from '../components/USMapClean.astro';
             </div>
             ${expiry ? `<span class="text-xs text-gray-500 flex-shrink-0">${license.status === 'expired' ? 'Expired' : 'Expires'}: ${escapeHtml(expiry)}</span>` : ''}
             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${sc} flex-shrink-0 capitalize">${escapeHtml(license.status || 'unknown')}</span>
+            ${(license.document_count && license.document_count > 0) ? `<span class="inline-flex items-center gap-0.5 text-xs text-gray-400 flex-shrink-0" title="${license.document_count} doc${license.document_count > 1 ? 's' : ''} linked"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>${license.document_count}</span>` : ''}
           </div>
           <div class="flex items-center gap-1 flex-shrink-0">
             <button onclick="window.editLicenseRow(${license.id})" class="text-xs text-primary-600 hover:text-primary-900 font-medium px-2 py-1 rounded hover:bg-primary-50 transition-colors">Edit</button>
@@ -411,6 +487,12 @@ import USMapClean from '../components/USMapClean.astro';
       const expiry = license.expiration_date ? formatDate(license.expiration_date) : null;
       const expiryColor = license.status === 'expired' ? 'text-red-600 font-medium' :
                           license.status === 'expiring' ? 'text-yellow-600 font-medium' : 'text-gray-500';
+      const docCount = license.document_count || 0;
+      const docsBtn = docCount > 0
+        ? `<button onclick="window.toggleLicenseDocs(${license.id})" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium mt-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            ${docCount} document${docCount > 1 ? 's' : ''}
+          </button>` : '';
       return `
         <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
           <div class="flex items-start justify-between gap-3">
@@ -422,6 +504,7 @@ import USMapClean from '../components/USMapClean.astro';
               ${license.license_number ? `<div class="text-xs text-gray-500 font-mono mb-1"># ${escapeHtml(license.license_number)}</div>` : ''}
               ${license.entity_name ? `<div class="text-xs text-gray-500 mb-1">${escapeHtml(license.entity_name)}</div>` : ''}
               ${expiry ? `<div class="text-xs ${expiryColor}">${license.status === 'expired' ? 'Expired' : 'Expires'}: ${escapeHtml(expiry)}</div>` : ''}
+              ${docsBtn}
             </div>
             <div class="flex flex-col gap-1.5 flex-shrink-0">
               <button onclick="window.editLicenseRow(${license.id})" class="text-xs text-primary-600 font-medium px-3 py-1.5 rounded-lg hover:bg-primary-50 border border-primary-200 transition-colors">Edit</button>
@@ -429,6 +512,7 @@ import USMapClean from '../components/USMapClean.astro';
             </div>
           </div>
           ${license.notes ? `<div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400 italic">${escapeHtml(license.notes)}</div>` : ''}
+          <div id="license-docs-${license.id}" class="hidden mt-2 pt-2 border-t border-gray-100"></div>
         </div>
       `;
     }
@@ -867,6 +951,9 @@ import USMapClean from '../components/USMapClean.astro';
       spBrowser.classList.remove('hidden');
       spNotConnected.classList.add('hidden');
       spNotConfigured.classList.add('hidden');
+      // Show auto-discover section when SharePoint is connected
+      scanSection.classList.remove('hidden');
+      loadScanStates();
     }
 
     function showDisconnectedState() {
@@ -879,6 +966,8 @@ import USMapClean from '../components/USMapClean.astro';
       spNotConnected.classList.remove('hidden');
       spNotConfigured.classList.add('hidden');
       spItems.innerHTML = '';
+      // Hide auto-discover when not connected
+      scanSection.classList.add('hidden');
     }
 
     // Connect button → start OAuth
@@ -1029,6 +1118,13 @@ import USMapClean from '../components/USMapClean.astro';
                 </svg>
                 Open
               </a>
+              <button class="sp-link-btn inline-flex items-center px-2.5 py-1 text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 transition-colors opacity-0 group-hover:opacity-100 ml-1"
+                      data-name="${escapeHtml(item.name)}" data-url="${escapeHtml(item.web_url)}" data-id="${escapeHtml(item.id)}">
+                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                </svg>
+                Link
+              </button>
             </div>
           `;
         }
@@ -1040,6 +1136,15 @@ import USMapClean from '../components/USMapClean.astro';
       const btn = (e.target as HTMLElement).closest('.sp-folder-btn') as HTMLElement | null;
       if (btn) {
         browseSP(btn.dataset.path || '');
+        return;
+      }
+      // Link button delegation
+      const linkBtn = (e.target as HTMLElement).closest('.sp-link-btn') as HTMLElement | null;
+      if (linkBtn) {
+        const fileName = linkBtn.dataset.name || '';
+        const fileUrl = linkBtn.dataset.url || '';
+        const itemId = linkBtn.dataset.id || '';
+        showLinkDocumentPopover(fileName, fileUrl, itemId, linkBtn);
       }
     });
 
@@ -1074,6 +1179,418 @@ import USMapClean from '../components/USMapClean.astro';
       // Default
       return `<svg class="${iconClass} text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>`;
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // Auto-Discover from SharePoint
+    // ═══════════════════════════════════════════════════════════
+
+    const scanSection = document.getElementById('scan-section')!;
+    const scanStateSelect = document.getElementById('scan-state-select') as HTMLSelectElement;
+    const scanBtn = document.getElementById('scan-btn')!;
+    const scanLoading = document.getElementById('scan-loading')!;
+    const scanResults = document.getElementById('scan-results')!;
+    const scanSummary = document.getElementById('scan-summary')!;
+    const scanSuggestions = document.getElementById('scan-suggestions')!;
+    const scanTrackedSection = document.getElementById('scan-tracked-section')!;
+    const scanTrackedToggle = document.getElementById('scan-tracked-toggle')!;
+    const scanTrackedChevron = document.getElementById('scan-tracked-chevron')!;
+    const scanTrackedLabel = document.getElementById('scan-tracked-label')!;
+    const scanTrackedList = document.getElementById('scan-tracked-list')!;
+    const scanSkippedSection = document.getElementById('scan-skipped-section')!;
+    const scanSkippedToggle = document.getElementById('scan-skipped-toggle')!;
+    const scanSkippedChevron = document.getElementById('scan-skipped-chevron')!;
+    const scanSkippedLabel = document.getElementById('scan-skipped-label')!;
+    const scanSkippedList = document.getElementById('scan-skipped-list')!;
+    const scanSelectAllBtn = document.getElementById('scan-select-all')!;
+    const scanApproveBtn = document.getElementById('scan-approve-btn')!;
+    const scanSelectedCount = document.getElementById('scan-selected-count')!;
+
+    interface ScanSuggestion {
+      state: string;
+      state_name: string;
+      city: string;
+      folder_path: string;
+      web_url: string;
+      is_city_license: boolean;
+    }
+
+    let scanStates: { name: string; web_url: string }[] = [];
+    let currentSuggestions: ScanSuggestion[] = [];
+
+    async function loadScanStates() {
+      try {
+        const res = await fetch(`${API_URL}/licenses/scan/states`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        scanStates = await res.json();
+        scanStateSelect.innerHTML = '<option value="">Select a state to scan...</option>';
+        for (const s of scanStates) {
+          const opt = document.createElement('option');
+          opt.value = s.name;
+          opt.textContent = s.name;
+          scanStateSelect.appendChild(opt);
+        }
+      } catch {
+        // Silently fail
+      }
+    }
+
+    scanBtn.addEventListener('click', async () => {
+      const folderName = scanStateSelect.value;
+      if (!folderName) {
+        toast.warning('Please select a state to scan');
+        return;
+      }
+
+      const stateInfo = scanStates.find(s => s.name === folderName);
+      scanBtn.setAttribute('disabled', '');
+      scanResults.classList.add('hidden');
+      scanLoading.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${API_URL}/licenses/scan`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ folder_name: folderName, web_url: stateInfo?.web_url || '' })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Scan failed');
+        }
+
+        const data = await res.json();
+        currentSuggestions = data.suggestions || [];
+        const tracked = data.already_tracked || [];
+        const skipped = data.skipped_folders || [];
+
+        // Summary
+        const parts = [];
+        if (currentSuggestions.length > 0) parts.push(`<span class="font-semibold text-blue-700">${currentSuggestions.length} new</span>`);
+        if (tracked.length > 0) parts.push(`<span class="text-gray-500">${tracked.length} already tracked</span>`);
+        scanSummary.innerHTML = parts.join(', ') || 'No folders found';
+
+        // Render new suggestions
+        scanSuggestions.innerHTML = '';
+        for (let i = 0; i < currentSuggestions.length; i++) {
+          const s = currentSuggestions[i];
+          const label = s.is_city_license ? s.city : 'State License';
+          const badge = s.is_city_license
+            ? '<span class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">City</span>'
+            : '<span class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">State</span>';
+
+          scanSuggestions.innerHTML += `
+            <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 border border-gray-100">
+              <input type="checkbox" class="scan-cb rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-idx="${i}" checked>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold bg-gray-100 text-gray-700">${escapeHtml(s.state)}</span>
+              ${badge}
+              <span class="text-sm font-medium text-gray-800 flex-1">${escapeHtml(label)}</span>
+              <input type="text" class="scan-type-input text-xs border border-gray-200 rounded px-2 py-1 w-40" data-idx="${i}" value="General Contractor" placeholder="License type">
+              <input type="text" class="scan-entity-input text-xs border border-gray-200 rounded px-2 py-1 w-44" data-idx="${i}" value="JBS Construction Group" placeholder="Entity name">
+            </div>
+          `;
+        }
+
+        // Already tracked
+        if (tracked.length > 0) {
+          scanTrackedSection.classList.remove('hidden');
+          scanTrackedLabel.textContent = `Already tracked (${tracked.length})`;
+          scanTrackedList.innerHTML = tracked.map((t: ScanSuggestion) => {
+            const label = t.is_city_license ? t.city : 'State License';
+            return `<div class="flex items-center gap-2 text-xs text-gray-400 py-0.5">
+              <span class="font-mono">${escapeHtml(t.state)}</span>
+              <span>${escapeHtml(label)}</span>
+              <svg class="w-3.5 h-3.5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+            </div>`;
+          }).join('');
+        } else {
+          scanTrackedSection.classList.add('hidden');
+        }
+
+        // Skipped folders
+        if (skipped.length > 0) {
+          scanSkippedSection.classList.remove('hidden');
+          scanSkippedLabel.textContent = `Skipped folders (${skipped.length})`;
+          scanSkippedList.innerHTML = skipped.map((name: string) =>
+            `<span class="inline-block mr-2 text-gray-400">${escapeHtml(name)}</span>`
+          ).join('');
+        } else {
+          scanSkippedSection.classList.add('hidden');
+        }
+
+        updateScanSelection();
+        scanResults.classList.remove('hidden');
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to scan SharePoint');
+      } finally {
+        scanLoading.classList.add('hidden');
+        scanBtn.removeAttribute('disabled');
+      }
+    });
+
+    // Toggle tracked list
+    scanTrackedToggle.addEventListener('click', () => {
+      scanTrackedList.classList.toggle('hidden');
+      scanTrackedChevron.style.transform = scanTrackedList.classList.contains('hidden') ? '' : 'rotate(90deg)';
+    });
+
+    // Toggle skipped list
+    scanSkippedToggle.addEventListener('click', () => {
+      scanSkippedList.classList.toggle('hidden');
+      scanSkippedChevron.style.transform = scanSkippedList.classList.contains('hidden') ? '' : 'rotate(90deg)';
+    });
+
+    // Select all
+    scanSelectAllBtn.addEventListener('click', () => {
+      const cbs = scanSuggestions.querySelectorAll<HTMLInputElement>('.scan-cb');
+      const allChecked = Array.from(cbs).every(cb => cb.checked);
+      cbs.forEach(cb => cb.checked = !allChecked);
+      scanSelectAllBtn.textContent = allChecked ? 'Select All' : 'Deselect All';
+      updateScanSelection();
+    });
+
+    // Update selection count on checkbox change
+    scanSuggestions.addEventListener('change', (e) => {
+      if ((e.target as HTMLElement).classList.contains('scan-cb')) {
+        updateScanSelection();
+      }
+    });
+
+    function updateScanSelection() {
+      const cbs = scanSuggestions.querySelectorAll<HTMLInputElement>('.scan-cb:checked');
+      const count = cbs.length;
+      scanSelectedCount.textContent = String(count);
+      if (count === 0) {
+        scanApproveBtn.setAttribute('disabled', '');
+      } else {
+        scanApproveBtn.removeAttribute('disabled');
+      }
+    }
+
+    // Approve selected suggestions
+    scanApproveBtn.addEventListener('click', async () => {
+      const cbs = scanSuggestions.querySelectorAll<HTMLInputElement>('.scan-cb:checked');
+      if (cbs.length === 0) return;
+
+      const toApprove = Array.from(cbs).map(cb => {
+        const idx = parseInt(cb.dataset.idx || '0');
+        const s = currentSuggestions[idx];
+        const typeInput = scanSuggestions.querySelector<HTMLInputElement>(`.scan-type-input[data-idx="${idx}"]`);
+        const entityInput = scanSuggestions.querySelector<HTMLInputElement>(`.scan-entity-input[data-idx="${idx}"]`);
+        return {
+          state: s.state,
+          city: s.city,
+          is_city_license: s.is_city_license,
+          folder_path: s.folder_path,
+          license_type: typeInput?.value || 'General Contractor',
+          entity_name: entityInput?.value || 'JBS Construction Group',
+        };
+      });
+
+      scanApproveBtn.setAttribute('disabled', '');
+      try {
+        const res = await fetch(`${API_URL}/licenses/approve-suggestions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ suggestions: toApprove })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to approve');
+        }
+
+        const data = await res.json();
+        toast.success(`Created ${data.created} license${data.created !== 1 ? 's' : ''}`);
+        scanResults.classList.add('hidden');
+        currentSuggestions = [];
+        loadLicenses();
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to approve suggestions');
+        scanApproveBtn.removeAttribute('disabled');
+      }
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // Document Linking
+    // ═══════════════════════════════════════════════════════════
+
+    // Infer state code from current SharePoint browsing path
+    function inferStateFromPath(): { code: string; name: string } | null {
+      if (!spCurrentPath) return null;
+      const match = spCurrentPath.match(/^([^/]+?)\s*\(([A-Z]{2})\)/);
+      if (!match) return null;
+      return { name: match[1].trim(), code: match[2] };
+    }
+
+    // Infer document type from filename/path
+    function inferDocType(fileName: string): string {
+      const lower = fileName.toLowerCase();
+      if (lower.includes('application') || spCurrentPath.includes('.Application')) return 'application';
+      if (lower.includes('renewal') || spCurrentPath.includes('.Renewal')) return 'renewal';
+      if (lower.includes('bond')) return 'bond';
+      if (lower.includes('coi') || lower.includes('insurance')) return 'coi';
+      if (lower.includes('license') || lower.includes('certificate')) return 'certificate';
+      return 'other';
+    }
+
+    const DOC_TYPES = ['application', 'bond', 'certificate', 'coi', 'renewal', 'license_copy', 'other'];
+
+    // Show a popover to select which license to link a file to
+    function showLinkDocumentPopover(fileName: string, fileUrl: string, itemId: string, anchorEl: HTMLElement) {
+      // Remove any existing popover
+      document.getElementById('link-doc-popover')?.remove();
+
+      const stateInfo = inferStateFromPath();
+      const inferredType = inferDocType(fileName);
+
+      // Filter licenses to the current state being browsed
+      const filteredLicenses = stateInfo
+        ? currentLicenses.filter(l => l.state === stateInfo.code)
+        : currentLicenses;
+
+      if (filteredLicenses.length === 0) {
+        toast.warning('No licenses found for this state. Create a license first or use Auto-Discover.');
+        return;
+      }
+
+      const popover = document.createElement('div');
+      popover.id = 'link-doc-popover';
+      popover.className = 'fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-4 w-80';
+      popover.style.top = `${anchorEl.getBoundingClientRect().bottom + 4}px`;
+      popover.style.right = `${window.innerWidth - anchorEl.getBoundingClientRect().right}px`;
+
+      popover.innerHTML = `
+        <div class="text-xs text-gray-500 mb-2">Link <strong>${escapeHtml(fileName)}</strong> to:</div>
+        <select id="link-license-select" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 mb-2 focus:ring-blue-500 focus:border-blue-500">
+          ${filteredLicenses.map(l => {
+            const label = l.is_city_license ? `${l.city} (City)` : 'State License';
+            return `<option value="${l.id}">${escapeHtml(l.state)} — ${escapeHtml(label)} — ${escapeHtml(l.license_type)}</option>`;
+          }).join('')}
+        </select>
+        <select id="link-doc-type" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 mb-3 focus:ring-blue-500 focus:border-blue-500">
+          ${DOC_TYPES.map(t => `<option value="${t}" ${t === inferredType ? 'selected' : ''}>${t.charAt(0).toUpperCase() + t.slice(1).replace('_', ' ')}</option>`).join('')}
+        </select>
+        <div class="flex justify-end gap-2">
+          <button id="link-cancel" class="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-800 rounded-md hover:bg-gray-100">Cancel</button>
+          <button id="link-confirm" class="px-3 py-1.5 text-xs text-white bg-green-600 hover:bg-green-700 rounded-md font-medium">Link Document</button>
+        </div>
+      `;
+
+      document.body.appendChild(popover);
+
+      // Close on cancel or outside click
+      const close = () => popover.remove();
+      popover.querySelector('#link-cancel')!.addEventListener('click', close);
+
+      popover.querySelector('#link-confirm')!.addEventListener('click', async () => {
+        const licenseId = (popover.querySelector('#link-license-select') as HTMLSelectElement).value;
+        const docType = (popover.querySelector('#link-doc-type') as HTMLSelectElement).value;
+
+        try {
+          const res = await fetch(`${API_URL}/licenses/${licenseId}/documents`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              document_name: fileName,
+              document_url: fileUrl,
+              document_type: docType,
+              sharepoint_item_id: itemId,
+              folder_path: spCurrentPath,
+            })
+          });
+          if (!res.ok) throw new Error('Failed to link document');
+          toast.success('Document linked');
+          close();
+          loadLicenses(); // Refresh to update doc counts
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to link document');
+        }
+      });
+
+      // Close on outside click
+      setTimeout(() => {
+        document.addEventListener('click', function handler(e) {
+          if (!popover.contains(e.target as Node) && e.target !== anchorEl && !anchorEl.contains(e.target as Node)) {
+            close();
+            document.removeEventListener('click', handler);
+          }
+        });
+      }, 10);
+    }
+
+    // Toggle document list in the state panel for a license
+    (window as any).toggleLicenseDocs = async function(licenseId: number) {
+      const container = document.getElementById(`license-docs-${licenseId}`);
+      if (!container) return;
+
+      if (!container.classList.contains('hidden')) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      container.innerHTML = '<div class="text-xs text-gray-400 py-1">Loading...</div>';
+      container.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${API_URL}/licenses/${licenseId}/documents`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to load documents');
+        const docs = await res.json();
+
+        if (docs.length === 0) {
+          container.innerHTML = '<div class="text-xs text-gray-400 py-1">No documents linked</div>';
+          return;
+        }
+
+        container.innerHTML = docs.map((doc: any) => `
+          <div class="flex items-center gap-2 py-1.5 group/doc">
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 capitalize">${escapeHtml(doc.document_type || 'other')}</span>
+            <a href="${escapeHtml(doc.document_url)}" target="_blank" rel="noopener noreferrer"
+               class="text-xs text-blue-600 hover:text-blue-800 hover:underline truncate flex-1" title="${escapeHtml(doc.document_name)}">
+              ${escapeHtml(doc.document_name)}
+            </a>
+            <button onclick="window.unlinkDocument(${licenseId}, ${doc.id})"
+                    class="text-xs text-red-400 hover:text-red-600 opacity-0 group-hover/doc:opacity-100 transition-opacity flex-shrink-0"
+                    title="Unlink document">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        `).join('');
+      } catch {
+        container.innerHTML = '<div class="text-xs text-red-400 py-1">Failed to load documents</div>';
+      }
+    };
+
+    // Unlink a document from a license
+    (window as any).unlinkDocument = async function(licenseId: number, docId: number) {
+      if (!confirm('Remove this document link?')) return;
+      try {
+        const res = await fetch(`${API_URL}/licenses/${licenseId}/documents/${docId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to unlink');
+        toast.success('Document unlinked');
+        // Refresh the doc list for this license
+        (window as any).toggleLicenseDocs(licenseId);
+        (window as any).toggleLicenseDocs(licenseId);
+        loadLicenses(); // Refresh doc counts
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to unlink document');
+      }
+    };
 
     // Check status on page load
     checkSharePointStatus();

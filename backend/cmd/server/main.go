@@ -148,9 +148,20 @@ func main() {
 		// License routes
 		api.GET("/licenses", middleware.RequireRole("executive", "hr_admin", "construction_admin", "project_manager", "support"), handlers.ListLicenses)
 		api.GET("/licenses/state-summary", middleware.RequireRole("executive", "hr_admin", "construction_admin", "project_manager", "support"), handlers.GetStateSummary)
+
+		// SharePoint auto-discover routes (must be before /licenses/:id)
+		api.GET("/licenses/scan/states", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.ListSharePointStates)
+		api.POST("/licenses/scan", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.ScanSharePointState)
+		api.POST("/licenses/approve-suggestions", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.ApproveSuggestions)
+
 		api.POST("/licenses", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.CreateLicense)
 		api.PUT("/licenses/:id", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.UpdateLicense)
 		api.DELETE("/licenses/:id", middleware.RequireRole("executive", "support"), handlers.DeleteLicense)
+
+		// License document linking routes
+		api.GET("/licenses/:id/documents", middleware.RequireRole("executive", "hr_admin", "construction_admin", "project_manager", "support"), handlers.ListDocuments)
+		api.POST("/licenses/:id/documents", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.LinkDocument)
+		api.DELETE("/licenses/:id/documents/:docId", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.UnlinkDocument)
 
 		// SharePoint folder browser routes (executive, hr_admin, construction_admin, support)
 		api.GET("/sharepoint/status", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.GetSharePointStatus)

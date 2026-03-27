@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -48,6 +49,19 @@ type SharePointItem struct {
 	ModifiedAt time.Time `json:"modified_at"`
 	ModifiedBy string    `json:"modified_by,omitempty"`
 }
+
+// FolderSuggestion represents a license discovered from SharePoint folder structure
+type FolderSuggestion struct {
+	State         string `json:"state"`           // 2-letter code e.g. "AL"
+	StateName     string `json:"state_name"`      // Full name e.g. "Alabama"
+	City          string `json:"city"`            // Empty for state-level
+	FolderPath    string `json:"folder_path"`     // e.g. "Licensing/Alabama (AL)/Birmingham"
+	WebURL        string `json:"web_url"`         // SharePoint URL to the folder
+	IsCityLicense bool   `json:"is_city_license"`
+}
+
+// stateFolderRegex matches folder names like "Alabama (AL)" or "New York (NY)"
+var stateFolderRegex = regexp.MustCompile(`^(.+?)\s*\(([A-Z]{2})\)$`)
 
 // NewGraphClient creates a Graph API client
 func NewGraphClient(clientID, clientSecret, tenantID, redirectURI string) *GraphClient {
@@ -328,6 +342,75 @@ func (g *GraphClient) ListFolder(folderPath string) ([]SharePointItem, error) {
 	}
 
 	return items, nil
+}
+
+// ListStateFolders returns the top-level state folders under Licensing/
+func (g *GraphClient) ListStateFolders() ([]SharePointItem, error) {
+	items, err := g.ListFolder("Licensing")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list Licensing folder: %w", err)
+	}
+
+	// Filter to only folders that match the state pattern
+	folders := make([]SharePointItem, 0)
+	for _, item := range items {
+		if item.IsFolder && stateFolderRegex.MatchString(item.Name) {
+			folders = append(folders, item)
+		}
+	}
+	return folders, nil
+}
+
+// ScanStateFolder scans a single state folder and returns license suggestions.
+// stateFolderName should be the full folder name, e.g. "Alabama (AL)".
+// stateWebURL is the SharePoint URL for the state folder (from ListStateFolders).
+// Returns (suggestions, skippedFolderNames, error).
+func (g *GraphClient) ScanStateFolder(stateFolderName, stateWebURL string) ([]FolderSuggestion, []string, error) {
+	matches := stateFolderRegex.FindStringSubmatch(stateFolderName)
+	if matches == nil {
+		return nil, nil, fmt.Errorf("folder name %q does not match expected pattern 'State Name (XX)'", stateFolderName)
+	}
+	stateName := strings.TrimSpace(matches[1])
+	stateCode := matches[2]
+
+	suggestions := []FolderSuggestion{
+		{
+			State:         stateCode,
+			StateName:     stateName,
+			City:          "",
+			FolderPath:    "Licensing/" + stateFolderName,
+			WebURL:        stateWebURL,
+			IsCityLicense: false,
+		},
+	}
+
+	// List children of the state folder to find city subfolders
+	children, err := g.ListFolder("Licensing/" + stateFolderName)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to list folder %q: %w", stateFolderName, err)
+	}
+
+	var skipped []string
+	for _, child := range children {
+		if !child.IsFolder {
+			continue // skip files — those are documents, not license indicators
+		}
+		if strings.HasPrefix(child.Name, ".") {
+			skipped = append(skipped, child.Name)
+			continue // skip dot-prefixed folders (.Application/, .Renewal-2025/)
+		}
+
+		suggestions = append(suggestions, FolderSuggestion{
+			State:         stateCode,
+			StateName:     stateName,
+			City:          child.Name,
+			FolderPath:    "Licensing/" + stateFolderName + "/" + child.Name,
+			WebURL:        child.WebURL,
+			IsCityLicense: true,
+		})
+	}
+
+	return suggestions, skipped, nil
 }
 
 // Disconnect clears the stored token
