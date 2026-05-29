@@ -1,5 +1,7 @@
+import { getApiUrl } from '../utils/api';
+
 // API client configuration
-const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = getApiUrl();
 
 export interface LoginResponse {
   token: string;
