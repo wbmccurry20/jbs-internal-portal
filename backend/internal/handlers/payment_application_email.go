@@ -8,7 +8,17 @@ import (
 	"net/smtp"
 	"net/textproto"
 	"os"
+	"strings"
 )
+
+// sanitizeHeaderValue removes CR and LF characters from a string before it is
+// placed into an email header. Without this, user-supplied data (e.g. company
+// names stored in the database) could inject extra headers (header injection).
+func sanitizeHeaderValue(s string) string {
+	s = strings.ReplaceAll(s, "\r", " ")
+	s = strings.ReplaceAll(s, "\n", " ")
+	return strings.TrimSpace(s)
+}
 
 // sendPDFEmail sends an email with a PDF file attached.
 //
@@ -35,6 +45,12 @@ func sendPDFEmail(toEmail, subject, htmlBody, attachmentName string, attachmentD
 		fromEmail = smtpUser
 	}
 
+	// Sanitize header values to prevent email header injection.
+	// CompanyName (and therefore subject) is user-supplied data from the DB.
+	safeSubject := sanitizeHeaderValue(subject)
+	safeTo := sanitizeHeaderValue(toEmail)
+	safeAttachment := sanitizeHeaderValue(attachmentName)
+
 	// Build a MIME multipart/mixed message with an HTML part and a PDF attachment.
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
@@ -42,8 +58,8 @@ func sendPDFEmail(toEmail, subject, htmlBody, attachmentName string, attachmentD
 
 	// Top-level headers
 	fmt.Fprintf(&buf, "From: %s\r\n", fromEmail)
-	fmt.Fprintf(&buf, "To: %s\r\n", toEmail)
-	fmt.Fprintf(&buf, "Subject: %s\r\n", subject)
+	fmt.Fprintf(&buf, "To: %s\r\n", safeTo)
+	fmt.Fprintf(&buf, "Subject: %s\r\n", safeSubject)
 	fmt.Fprintf(&buf, "MIME-Version: 1.0\r\n")
 	fmt.Fprintf(&buf, "Content-Type: multipart/mixed; boundary=%q\r\n", boundary)
 	fmt.Fprintf(&buf, "\r\n")
@@ -64,7 +80,7 @@ func sendPDFEmail(toEmail, subject, htmlBody, attachmentName string, attachmentD
 	pdfHeader := make(textproto.MIMEHeader)
 	pdfHeader.Set("Content-Type", "application/pdf")
 	pdfHeader.Set("Content-Transfer-Encoding", "base64")
-	pdfHeader.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, attachmentName))
+	pdfHeader.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, safeAttachment))
 	pdfPart, err := writer.CreatePart(pdfHeader)
 	if err != nil {
 		return fmt.Errorf("create pdf part: %w", err)
@@ -92,7 +108,7 @@ func sendPDFEmail(toEmail, subject, htmlBody, attachmentName string, attachmentD
 		smtpHost+":"+smtpPort,
 		auth,
 		fromEmail,
-		[]string{toEmail},
+		[]string{safeTo},
 		buf.Bytes(),
 	)
 }

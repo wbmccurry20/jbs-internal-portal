@@ -256,6 +256,11 @@ func AcceptInvite(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 10 characters"})
 		return
 	}
+	// bcrypt truncates at 72 bytes — reject longer passwords to prevent auth bypass.
+	if len(req.Password) > 72 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be 72 characters or fewer"})
+		return
+	}
 	if !hasUppercase(req.Password) || !hasLowercase(req.Password) || !hasDigit(req.Password) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Password must contain uppercase, lowercase, and a number"})
 		return
@@ -440,6 +445,10 @@ func sendInviteEmail(toEmail, name, token string) error {
 	inviteLink := fmt.Sprintf("%s/accept-invite?token=%s", frontendURL, token)
 
 	subject := "You're invited to the JBS Construction Portal"
+
+	// Sanitize any user-supplied values used in email headers.
+	safeTo := sanitizeHeaderValue(toEmail)
+	safeName := sanitizeHeaderValue(name)
 	body := fmt.Sprintf(`<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
@@ -460,10 +469,10 @@ func sendInviteEmail(toEmail, name, token string) error {
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">If you didn't expect this invitation, you can safely ignore this email.</p>
   </div>
 </body>
-</html>`, name, inviteLink, inviteLink)
+</html>`, safeName, inviteLink, inviteLink)
 
 	headers := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n",
-		fromEmail, toEmail, subject)
+		fromEmail, safeTo, subject)
 
 	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
 
@@ -471,7 +480,7 @@ func sendInviteEmail(toEmail, name, token string) error {
 		smtpHost+":"+smtpPort,
 		auth,
 		fromEmail,
-		[]string{toEmail},
+		[]string{safeTo},
 		[]byte(headers+body),
 	)
 

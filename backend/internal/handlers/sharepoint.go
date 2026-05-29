@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wbmccurry20/jbs-internal-portal/internal/services"
@@ -100,6 +101,14 @@ func BrowseSharePoint(c *gin.Context) {
 
 	// path param is relative to Licensing folder, e.g. "" or "Alabama (AL)" or "Alabama (AL)/Birmingham"
 	subPath := c.Query("path")
+
+	// Guard against path traversal: reject any path that navigates up with ".."
+	// or that has a leading slash. All browsing must be relative to the Licensing root.
+	if strings.Contains(subPath, "..") || strings.HasPrefix(subPath, "/") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid path"})
+		return
+	}
+
 	folderPath := "Licensing"
 	if subPath != "" {
 		folderPath = "Licensing/" + subPath

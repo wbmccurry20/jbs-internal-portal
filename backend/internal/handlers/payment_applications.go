@@ -20,8 +20,8 @@ import (
 
 // ChangeOrderInput represents one change order row sent by the frontend form (Step 4).
 type ChangeOrderInput struct {
-	CONumber     string  `json:"co_number"`
-	Description  string  `json:"description"`
+	CONumber     string  `json:"co_number"    binding:"max=50"`
+	Description  string  `json:"description"  binding:"max=500"`
 	Amount       float64 `json:"amount"`
 	DateApproved string  `json:"date_approved"` // ISO date "YYYY-MM-DD"; empty = no date
 	SortOrder    int     `json:"sort_order"`
@@ -29,12 +29,12 @@ type ChangeOrderInput struct {
 
 // LineItemInput represents one Schedule of Values row sent by the frontend form (Step 5).
 type LineItemInput struct {
-	ItemNo          string  `json:"item_no"`
+	ItemNo          string  `json:"item_no"          binding:"max=50"`
 	Description     string  `json:"description"`
-	ScheduledValue  float64 `json:"scheduled_value"`
-	PrevCompleted   float64 `json:"prev_completed"`
-	ThisPeriod      float64 `json:"this_period"`
-	MaterialsStored float64 `json:"materials_stored"`
+	ScheduledValue  float64 `json:"scheduled_value"  binding:"min=0"`
+	PrevCompleted   float64 `json:"prev_completed"   binding:"min=0"`
+	ThisPeriod      float64 `json:"this_period"      binding:"min=0"`
+	MaterialsStored float64 `json:"materials_stored" binding:"min=0"`
 	SortOrder       int     `json:"sort_order"`
 }
 
@@ -44,30 +44,30 @@ type CreatePaymentApplicationRequest struct {
 	TenantSlug string `json:"tenant_slug"`
 
 	// Step 1 — Subcontractor contact
-	CompanyName  string `json:"company_name"  binding:"required"`
-	ContactName  string `json:"contact_name"  binding:"required"`
-	Email        string `json:"email"         binding:"required,email"`
-	Phone        string `json:"phone"`
-	AddressLine1 string `json:"address_line1"`
-	AddressLine2 string `json:"address_line2"`
-	City         string `json:"city"`
-	State        string `json:"state"`
-	Zip          string `json:"zip"`
+	CompanyName  string `json:"company_name"  binding:"required,max=200"`
+	ContactName  string `json:"contact_name"  binding:"required,max=200"`
+	Email        string `json:"email"         binding:"required,email,max=254"`
+	Phone        string `json:"phone"         binding:"max=30"`
+	AddressLine1 string `json:"address_line1" binding:"max=200"`
+	AddressLine2 string `json:"address_line2" binding:"max=200"`
+	City         string `json:"city"          binding:"max=100"`
+	State        string `json:"state"         binding:"max=2"`
+	Zip          string `json:"zip"           binding:"max=10"`
 
 	// Step 2 — Project info
-	ProjectName       string `json:"project_name"        binding:"required"`
-	ProjectNumber     string `json:"project_number"`
-	Owner             string `json:"owner"`
-	Contractor        string `json:"contractor"`
-	ContractDate      string `json:"contract_date"` // YYYY-MM-DD
+	ProjectName       string `json:"project_name"        binding:"required,max=200"`
+	ProjectNumber     string `json:"project_number"      binding:"max=50"`
+	Owner             string `json:"owner"               binding:"max=200"`
+	Contractor        string `json:"contractor"          binding:"max=200"`
+	ContractDate      string `json:"contract_date"`                               // YYYY-MM-DD
 	ApplicationNumber int    `json:"application_number"  binding:"required,min=1"`
-	PeriodTo          string `json:"period_to"` // YYYY-MM-DD
+	PeriodTo          string `json:"period_to"`                                   // YYYY-MM-DD
 
 	// Step 3 — Contract summary
 	OriginalContractSum  float64 `json:"original_contract_sum"  binding:"required,gt=0"`
 	RetainagePercent     float64 `json:"retainage_percent"      binding:"min=0,max=50"`
 	PreviousCertificates float64 `json:"previous_certificates"`
-	AdditionalNotes      string  `json:"additional_notes"`
+	AdditionalNotes      string  `json:"additional_notes"       binding:"max=2000"`
 
 	// Step 4 — Change orders (optional; may be empty)
 	ChangeOrders []ChangeOrderInput `json:"change_orders"`
