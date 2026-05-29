@@ -355,6 +355,190 @@ func GetPaymentApplicationByToken(token string) (*PAFullResponse, error) {
 
 // ─── Stripe helpers ────────────────────────────────────────────────────────────
 
+// ─── PDF data types ────────────────────────────────────────────────────────────
+
+// PDFChangeOrder holds the change-order fields required to render the PDF.
+type PDFChangeOrder struct {
+	CONumber     string
+	Description  string
+	Amount       float64
+	DateApproved *time.Time
+	SortOrder    int
+}
+
+// PDFLineItem holds the line-item fields required to render the PDF schedule of values.
+type PDFLineItem struct {
+	ItemNo              string
+	Description         string
+	ScheduledValue      float64
+	PrevCompleted       float64
+	ThisPeriod          float64
+	MaterialsStored     float64
+	CalcTotalCompleted  float64
+	CalcPercentComplete float64
+	CalcBalanceToFinish float64
+	SortOrder           int
+}
+
+// PaymentApplicationPDFData aggregates all fields needed to generate the payment
+// application PDF in a single flat struct. Loaded by GetPaymentApplicationForPDF.
+type PaymentApplicationPDFData struct {
+	// Identity
+	ID                int
+	SubmissionToken   string
+	ApplicationNumber int
+	PeriodTo          *time.Time
+	CreatedAt         time.Time
+
+	// Tenant
+	TenantName string
+	APEmail    string
+
+	// Subcontractor contact (Step 1)
+	CompanyName  string
+	ContactName  string
+	Email        string
+	Phone        string
+	AddressLine1 string
+	AddressLine2 string
+	City         string
+	State        string
+	Zip          string
+
+	// Project (Step 2)
+	ProjectName   string
+	ProjectNumber string
+	Owner         string
+	Contractor    string
+	ContractDate  *time.Time
+
+	// Contract inputs (Step 3)
+	OriginalContractSum  float64
+	RetainagePercent     float64
+	PreviousCertificates float64
+	AdditionalNotes      string
+
+	// Calculated totals (stored at submission time)
+	CalcNetChangeOrders     float64
+	CalcContractSumToDate   float64
+	CalcTotalCompleted      float64
+	CalcRetainageAmount     float64
+	CalcEarnedLessRetainage float64
+	CalcCurrentPaymentDue   float64
+	CalcBalanceToFinish     float64
+
+	// Children
+	ChangeOrders []PDFChangeOrder
+	LineItems    []PDFLineItem
+}
+
+// GetPaymentApplicationForPDF loads everything needed to generate a PDF for the
+// given payment_applications.id. It performs a JOIN to pa_tenants for the AP email,
+// then two follow-up queries for change orders and line items.
+// Returns sql.ErrNoRows if the id does not exist.
+func GetPaymentApplicationForPDF(id int) (*PaymentApplicationPDFData, error) {
+	var pa PaymentApplicationPDFData
+
+	err := DB.QueryRow(`
+		SELECT
+			pa.id, pa.submission_token, pa.application_number,
+			pa.period_to, pa.created_at,
+			t.name, COALESCE(t.ap_email, ''),
+			pa.company_name, pa.contact_name, pa.email, COALESCE(pa.phone, ''),
+			COALESCE(pa.address_line1, ''), COALESCE(pa.address_line2, ''),
+			COALESCE(pa.city, ''), COALESCE(pa.state, ''), COALESCE(pa.zip, ''),
+			pa.project_name, COALESCE(pa.project_number, ''),
+			COALESCE(pa.owner, ''), COALESCE(pa.contractor, ''),
+			pa.contract_date,
+			pa.original_contract_sum, pa.retainage_percent, pa.previous_certificates,
+			COALESCE(pa.additional_notes, ''),
+			pa.calc_net_change_orders, pa.calc_contract_sum_to_date,
+			pa.calc_total_completed_stored, pa.calc_retainage_amount,
+			pa.calc_earned_less_retainage, pa.calc_current_payment_due, pa.calc_balance_to_finish
+		FROM payment_applications pa
+		JOIN pa_tenants t ON t.id = pa.tenant_id
+		WHERE pa.id = $1`,
+		id,
+	).Scan(
+		&pa.ID, &pa.SubmissionToken, &pa.ApplicationNumber,
+		&pa.PeriodTo, &pa.CreatedAt,
+		&pa.TenantName, &pa.APEmail,
+		&pa.CompanyName, &pa.ContactName, &pa.Email, &pa.Phone,
+		&pa.AddressLine1, &pa.AddressLine2,
+		&pa.City, &pa.State, &pa.Zip,
+		&pa.ProjectName, &pa.ProjectNumber,
+		&pa.Owner, &pa.Contractor,
+		&pa.ContractDate,
+		&pa.OriginalContractSum, &pa.RetainagePercent, &pa.PreviousCertificates,
+		&pa.AdditionalNotes,
+		&pa.CalcNetChangeOrders, &pa.CalcContractSumToDate,
+		&pa.CalcTotalCompleted, &pa.CalcRetainageAmount,
+		&pa.CalcEarnedLessRetainage, &pa.CalcCurrentPaymentDue, &pa.CalcBalanceToFinish,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Change orders
+	coRows, err := DB.Query(`
+		SELECT COALESCE(co_number,''), COALESCE(description,''), amount,
+		       date_approved, sort_order
+		FROM payment_application_change_orders
+		WHERE payment_application_id = $1
+		ORDER BY sort_order, id`,
+		id,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("fetch change orders for pdf: %w", err)
+	}
+	defer coRows.Close()
+	for coRows.Next() {
+		var co PDFChangeOrder
+		if err := coRows.Scan(&co.CONumber, &co.Description, &co.Amount, &co.DateApproved, &co.SortOrder); err != nil {
+			return nil, fmt.Errorf("scan change order for pdf: %w", err)
+		}
+		pa.ChangeOrders = append(pa.ChangeOrders, co)
+	}
+	if err := coRows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate change orders for pdf: %w", err)
+	}
+
+	// Line items
+	liRows, err := DB.Query(`
+		SELECT COALESCE(item_no,''), COALESCE(description,''),
+		       scheduled_value, prev_completed, this_period, materials_stored,
+		       calc_total_completed, calc_percent_complete, calc_balance_to_finish,
+		       sort_order
+		FROM payment_application_line_items
+		WHERE payment_application_id = $1
+		ORDER BY sort_order, id`,
+		id,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("fetch line items for pdf: %w", err)
+	}
+	defer liRows.Close()
+	for liRows.Next() {
+		var li PDFLineItem
+		if err := liRows.Scan(
+			&li.ItemNo, &li.Description,
+			&li.ScheduledValue, &li.PrevCompleted, &li.ThisPeriod, &li.MaterialsStored,
+			&li.CalcTotalCompleted, &li.CalcPercentComplete, &li.CalcBalanceToFinish,
+			&li.SortOrder,
+		); err != nil {
+			return nil, fmt.Errorf("scan line item for pdf: %w", err)
+		}
+		pa.LineItems = append(pa.LineItems, li)
+	}
+	if err := liRows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate line items for pdf: %w", err)
+	}
+
+	return &pa, nil
+}
+
+
+
 // PAStripeInfo holds the minimum fields fetched for a Stripe webhook lookup.
 type PAStripeInfo struct {
 	ID            int
