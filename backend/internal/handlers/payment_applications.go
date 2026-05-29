@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	stripe "github.com/stripe/stripe-go/v82"
+	stripesession "github.com/stripe/stripe-go/v82/checkout/session"
 	"github.com/wbmccurry20/jbs-internal-portal/internal/database"
 )
 
@@ -92,6 +95,8 @@ type CreatePaymentApplicationResponse struct {
 	SubmissionToken string           `json:"submission_token"`
 	Message         string           `json:"message"`
 	Totals          CalculatedTotals `json:"totals"`
+	// CheckoutURL is the Stripe Checkout Session URL. Empty when STRIPE_SECRET_KEY is not set.
+	CheckoutURL string `json:"checkout_url,omitempty"`
 }
 
 // ─── Calculation helpers ───────────────────────────────────────────────────────
@@ -314,11 +319,47 @@ func CreatePaymentApplication(c *gin.Context) {
 		return
 	}
 
+	// Optionally create a Stripe Checkout Session (skipped when STRIPE_SECRET_KEY is unset)
+	checkoutURL := ""
+	if stripeKey := os.Getenv("STRIPE_SECRET_KEY"); stripeKey != "" {
+		stripe.Key = stripeKey
+		params := &stripe.CheckoutSessionParams{
+			Mode: stripe.String(string(stripe.CheckoutSessionModePayment)),
+			LineItems: []*stripe.CheckoutSessionLineItemParams{
+				{
+					PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+						Currency: stripe.String("usd"),
+						ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+							Name: stripe.String("JBS Application for Payment"),
+						},
+						UnitAmount: stripe.Int64(999),
+					},
+					Quantity: stripe.Int64(1),
+				},
+			},
+			SuccessURL: stripe.String("https://buildwithjbs.com/client-portal/payment-application/success?session_id={CHECKOUT_SESSION_ID}"),
+			CancelURL:  stripe.String("https://buildwithjbs.com/client-portal/payment-application?cancelled=true"),
+			Metadata: map[string]string{
+				"submission_token": token,
+			},
+		}
+		sess, stripeErr := stripesession.New(params)
+		if stripeErr != nil {
+			log.Printf("WARN: stripe checkout session creation failed for pa id=%d: %v", paID, stripeErr)
+		} else {
+			checkoutURL = sess.URL
+			if dbErr := database.UpdateStripeSessionID(paID, sess.ID); dbErr != nil {
+				log.Printf("WARN: failed to store stripe session ID for pa id=%d: %v", paID, dbErr)
+			}
+		}
+	}
+
 	c.JSON(http.StatusCreated, CreatePaymentApplicationResponse{
 		ID:              paID,
 		SubmissionToken: token,
 		Message:         "Payment application submitted successfully.",
 		Totals:          totals,
+		CheckoutURL:     checkoutURL,
 	})
 }
 

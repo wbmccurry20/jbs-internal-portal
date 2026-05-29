@@ -96,6 +96,10 @@ func main() {
 	v1.POST("/payment-applications", middleware.RateLimitSubmission(), handlers.CreatePaymentApplication)
 	v1.GET("/payment-applications/:submissionToken", middleware.RateLimitGeneral(), handlers.GetPaymentApplication)
 
+	// Stripe webhook — raw route, no auth middleware, no JSON body parsing.
+	// Stripe-Signature header is verified inside the handler using STRIPE_WEBHOOK_SIGNING_SECRET.
+	router.POST("/api/v1/stripe/webhook", handlers.StripeWebhook)
+
 	// Protected routes
 	api := router.Group("/api")
 	api.Use(middleware.AuthMiddleware())

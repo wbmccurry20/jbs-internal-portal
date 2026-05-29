@@ -353,5 +353,49 @@ func GetPaymentApplicationByToken(token string) (*PAFullResponse, error) {
 	return &pa, nil
 }
 
+// ─── Stripe helpers ────────────────────────────────────────────────────────────
+
+// PAStripeInfo holds the minimum fields fetched for a Stripe webhook lookup.
+type PAStripeInfo struct {
+	ID            int
+	PaymentStatus string
+}
+
+// GetPaymentApplicationByStripeSession fetches a PAStripeInfo by Stripe checkout session ID.
+// Returns sql.ErrNoRows if no matching row is found.
+func GetPaymentApplicationByStripeSession(sessionID string) (*PAStripeInfo, error) {
+	var info PAStripeInfo
+	err := DB.QueryRow(
+		`SELECT id, payment_status FROM payment_applications
+		 WHERE stripe_checkout_session_id = $1`,
+		sessionID,
+	).Scan(&info.ID, &info.PaymentStatus)
+	if err != nil {
+		return nil, err
+	}
+	return &info, nil
+}
+
+// UpdatePaymentStatus sets payment_status, paid_at, and stripe_payment_intent_id
+// on the payment_applications row with the given id.
+func UpdatePaymentStatus(id int, status string, paidAt *time.Time, paymentIntentID string) error {
+	_, err := DB.Exec(
+		`UPDATE payment_applications
+		 SET payment_status = $1, paid_at = $2, stripe_payment_intent_id = $3
+		 WHERE id = $4`,
+		status, paidAt, paymentIntentID, id,
+	)
+	return err
+}
+
+// UpdateStripeSessionID stores the Stripe checkout session ID on a payment_applications row.
+func UpdateStripeSessionID(id int, sessionID string) error {
+	_, err := DB.Exec(
+		`UPDATE payment_applications SET stripe_checkout_session_id = $1 WHERE id = $2`,
+		sessionID, id,
+	)
+	return err
+}
+
 // ─── Ensure sql.ErrNoRows is accessible to callers that import only this package ──
 var _ = sql.ErrNoRows
