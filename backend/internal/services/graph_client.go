@@ -2,6 +2,7 @@ package services
 
 import (
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -23,6 +24,13 @@ type GraphClient struct {
 	RedirectURI  string
 	SiteHost     string // netorg4205680.sharepoint.com
 	SitePath     string // /sites/JBS
+
+	// DB is optional; when set, mail OAuth tokens are persisted to email_automation_config.
+	DB *sql.DB
+
+	// RefreshScopes is the space-separated OAuth scope string used when refreshing the
+	// access token. Defaults to the SharePoint scopes for backward compatibility.
+	RefreshScopes string
 
 	token       *OAuthToken
 	oauthStates map[string]time.Time // state → expiry (supports concurrent auth flows)
@@ -65,7 +73,7 @@ var stateFolderRegex = regexp.MustCompile(`^(.+?)\s*\(([A-Z]{2})\)$`)
 
 // NewGraphClient creates a Graph API client
 func NewGraphClient(clientID, clientSecret, tenantID, redirectURI string) *GraphClient {
-	return &GraphClient{
+	c := &GraphClient{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		TenantID:     tenantID,
@@ -74,6 +82,18 @@ func NewGraphClient(clientID, clientSecret, tenantID, redirectURI string) *Graph
 		SitePath:     "/sites/JBS",
 		oauthStates:  make(map[string]time.Time),
 	}
+	c.RefreshScopes = "https://graph.microsoft.com/Sites.Read.All https://graph.microsoft.com/Files.Read.All offline_access"
+	return c
+}
+
+// NewMailGraphClient creates a GraphClient configured for the shared-mailbox mail flow:
+// its own token, the Mail.ReadWrite.Shared refresh scope, and a DB handle so tokens
+// persist across restarts. It is independent of the SharePoint client.
+func NewMailGraphClient(clientID, clientSecret, tenantID, redirectURI string, db *sql.DB) *GraphClient {
+	c := NewGraphClient(clientID, clientSecret, tenantID, redirectURI)
+	c.DB = db
+	c.RefreshScopes = "https://graph.microsoft.com/Mail.ReadWrite.Shared offline_access"
+	return c
 }
 
 // IsConfigured returns true if Azure credentials are set
@@ -186,7 +206,7 @@ func (g *GraphClient) refreshToken() error {
 		"client_id":     {g.ClientID},
 		"refresh_token": {refresh},
 		"grant_type":    {"refresh_token"},
-		"scope":         {"https://graph.microsoft.com/Sites.Read.All https://graph.microsoft.com/Files.Read.All offline_access"},
+		"scope":         {g.RefreshScopes},
 	}
 	if g.ClientSecret != "" {
 		data.Set("client_secret", g.ClientSecret)
@@ -214,6 +234,91 @@ func (g *GraphClient) refreshToken() error {
 	g.mu.Unlock()
 
 	log.Printf("✅ SharePoint token refreshed (expires: %s)", token.ExpiresAt.Format(time.Kitchen))
+
+	// Persist refreshed token so it survives process restarts
+	if g.DB != nil {
+		if err := g.SaveMailTokenToDB(&token); err != nil {
+			log.Printf("⚠️  Failed to persist refreshed mail token: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// LoadMailTokenFromDB loads mail OAuth tokens from email_automation_config.
+// If all three keys are non-empty the in-memory token is restored.
+func (g *GraphClient) LoadMailTokenFromDB() error {
+	if g.DB == nil {
+		return fmt.Errorf("LoadMailTokenFromDB: DB not set on GraphClient")
+	}
+
+	keys := []string{"oauth_access_token", "oauth_refresh_token", "oauth_expires_at"}
+	values := make(map[string]string, 3)
+
+	for _, k := range keys {
+		var v string
+		err := g.DB.QueryRow(
+			"SELECT value FROM email_automation_config WHERE key = $1", k,
+		).Scan(&v)
+		if err == sql.ErrNoRows {
+			return nil // table not seeded yet — no token to load
+		}
+		if err != nil {
+			return fmt.Errorf("LoadMailTokenFromDB: query %q: %w", k, err)
+		}
+		values[k] = v
+	}
+
+	// Only restore if all three values are present
+	if values["oauth_access_token"] == "" ||
+		values["oauth_refresh_token"] == "" ||
+		values["oauth_expires_at"] == "" {
+		return nil
+	}
+
+	expiresAt, err := time.Parse(time.RFC3339, values["oauth_expires_at"])
+	if err != nil {
+		return fmt.Errorf("LoadMailTokenFromDB: parse expires_at %q: %w", values["oauth_expires_at"], err)
+	}
+
+	token := &OAuthToken{
+		AccessToken:  values["oauth_access_token"],
+		RefreshToken: values["oauth_refresh_token"],
+		ExpiresAt:    expiresAt,
+	}
+
+	g.mu.Lock()
+	g.token = token
+	g.mu.Unlock()
+
+	log.Printf("✅ Mail token loaded from DB (expires: %s)", expiresAt.Format(time.Kitchen))
+	return nil
+}
+
+// SaveMailTokenToDB persists mail OAuth tokens to email_automation_config.
+func (g *GraphClient) SaveMailTokenToDB(token *OAuthToken) error {
+	if g.DB == nil {
+		return fmt.Errorf("SaveMailTokenToDB: DB not set on GraphClient")
+	}
+
+	upsert := `
+		INSERT INTO email_automation_config (key, value, updated_at)
+		VALUES ($1, $2, NOW())
+		ON CONFLICT (key) DO UPDATE
+		  SET value = EXCLUDED.value, updated_at = NOW()`
+
+	entries := []struct{ key, value string }{
+		{"oauth_access_token", token.AccessToken},
+		{"oauth_refresh_token", token.RefreshToken},
+		{"oauth_expires_at", token.ExpiresAt.UTC().Format(time.RFC3339)},
+	}
+
+	for _, e := range entries {
+		if _, err := g.DB.Exec(upsert, e.key, e.value); err != nil {
+			return fmt.Errorf("SaveMailTokenToDB: upsert %q: %w", e.key, err)
+		}
+	}
+
 	return nil
 }
 

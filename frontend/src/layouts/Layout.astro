@@ -35,6 +35,7 @@ const { title = 'JBS Internal Portal' } = Astro.props;
               <a href="/dashboard" class="nav-link hidden" id="nav-dashboard">Dashboard</a>
               <a href="/jobs" class="nav-link hidden" id="nav-jobs">Jobs</a>
               <a href="/bids" class="nav-link hidden" id="nav-bids">Bids</a>
+              <a href="/email-automation" class="nav-link hidden" id="nav-email">Email</a>
               <a href="/superintendents" class="nav-link hidden" id="nav-supers">Supers</a>
               <a href="/licensing" class="nav-link hidden" id="nav-licensing">Licensing</a>
               <a href="/training" class="nav-link hidden" id="nav-training">Training</a>
@@ -106,6 +107,7 @@ const { title = 'JBS Internal Portal' } = Astro.props;
           <a href="/dashboard" class="mobile-nav-link hidden" id="mobile-nav-dashboard">Dashboard</a>
           <a href="/jobs" class="mobile-nav-link hidden" id="mobile-nav-jobs">Jobs</a>
           <a href="/bids" class="mobile-nav-link hidden" id="mobile-nav-bids">Bids</a>
+          <a href="/email-automation" class="mobile-nav-link hidden" id="mobile-nav-email">Email</a>
           <a href="/superintendents" class="mobile-nav-link hidden" id="mobile-nav-supers">Superintendents</a>
           <a href="/licensing" class="mobile-nav-link hidden" id="mobile-nav-licensing">Licensing</a>
           <a href="/training" class="mobile-nav-link hidden" id="mobile-nav-training">Training</a>
@@ -245,8 +247,8 @@ const { title = 'JBS Internal Portal' } = Astro.props;
           if (role === 'executive' || role === 'support') {
             // Execs get Dashboard nav + everything
             show(['nav-dashboard', 'mobile-nav-dashboard',
-                  'nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training', 'nav-users', 'nav-finance',
-                  'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training', 'mobile-nav-users',
+                  'nav-jobs', 'nav-bids', 'nav-email', 'nav-supers', 'nav-licensing', 'nav-training', 'nav-users', 'nav-finance',
+                  'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-email', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training', 'mobile-nav-users',
                   'mobile-nav-finance-divider', 'mobile-nav-concur', 'mobile-nav-reconciliation']);
           } else if (role === 'hr_admin') {
             show(['nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training', 'nav-users',
@@ -269,8 +271,8 @@ const { title = 'JBS Internal Portal' } = Astro.props;
               mobileTrainingNav.textContent = 'My Training';
             }
           } else if (role === 'construction_admin') {
-            show(['nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training',
-                  'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training']);
+            show(['nav-jobs', 'nav-bids', 'nav-email', 'nav-supers', 'nav-licensing', 'nav-training',
+                  'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-email', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training']);
             const trainingNav = document.getElementById('nav-training');
             const mobileTrainingNav = document.getElementById('mobile-nav-training');
             if (trainingNav) {

@@ -38,6 +38,20 @@ func main() {
 	// Initialize SharePoint / Graph API client
 	handlers.InitGraphClient()
 
+	// Initialize dedicated mail Graph client (separate token + Mail scopes, DB attached)
+	handlers.InitMailGraphClient(database.DB)
+
+	// Initialize email OAuth handler (public routes — Microsoft redirects here without JWT)
+	emailAuthHandler := &handlers.EmailAuthHandler{
+		GraphClient: handlers.GetMailGraphClient(),
+		DB:          database.DB,
+	}
+
+	// Initialize email automation handler (JWT-protected API)
+	emailAutomationHandler := &handlers.EmailAutomationHandler{
+		DB: database.DB,
+	}
+
 	// Initialize Gin router
 	router := gin.Default()
 
@@ -89,6 +103,10 @@ func main() {
 
 	// Public SharePoint OAuth callback (Microsoft redirects here after login)
 	router.GET("/api/sharepoint/callback", handlers.HandleSharePointCallback)
+
+	// Public Email OAuth routes (Microsoft redirects here — no JWT required)
+	router.GET("/api/email/auth", emailAuthHandler.GetAuthURL)
+	router.GET("/api/email/callback", emailAuthHandler.HandleCallback)
 
 	// Public payment application endpoints (no auth required — called from buildwithjbs.com)
 	// RateLimitSubmission: 10 submissions per hour per IP (stricter than general)
@@ -178,6 +196,13 @@ func main() {
 		api.GET("/sharepoint/auth", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.InitSharePointAuth)
 		api.GET("/sharepoint/browse", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.BrowseSharePoint)
 		api.POST("/sharepoint/disconnect", middleware.RequireRole("executive", "hr_admin", "construction_admin", "support"), handlers.DisconnectSharePoint)
+
+		// Email automation routes (executive, construction_admin, support)
+		api.GET("/email-automation/status", middleware.RequireRole("executive", "construction_admin", "support"), emailAutomationHandler.GetStatus)
+		api.GET("/email-automation/folder-mappings", middleware.RequireRole("executive", "construction_admin", "support"), emailAutomationHandler.ListFolderMappings)
+		api.PUT("/email-automation/folder-mappings/:id", middleware.RequireRole("executive", "construction_admin", "support"), emailAutomationHandler.UpdateFolderMapping)
+		api.GET("/email-automation/logs", middleware.RequireRole("executive", "construction_admin", "support"), emailAutomationHandler.ListLogs)
+		api.POST("/email-automation/sync-folders", middleware.RequireRole("executive", "construction_admin", "support"), emailAutomationHandler.SyncFolders)
 
 		// Training portal routes
 		// Trainee view (any authenticated user)

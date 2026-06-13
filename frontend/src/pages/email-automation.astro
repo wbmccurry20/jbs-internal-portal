@@ -1,0 +1,427 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Email Automation">
+  <div class="space-y-6">
+
+    <!-- Page header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Email Automation</h1>
+        <p class="mt-2 text-sm text-gray-600">Automatic sorting for the JBS Bids shared mailbox</p>
+      </div>
+    </div>
+
+    <!-- Status card -->
+    <div id="status-card" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h2 class="text-base font-semibold text-gray-900 mb-4">Mailbox Status</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Connection</p>
+          <span id="status-connected" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            Loading…
+          </span>
+        </div>
+
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Automation</p>
+          <span id="status-enabled" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            —
+          </span>
+        </div>
+
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Emails sorted today</p>
+          <span id="status-today" class="text-2xl font-bold text-gray-900">—</span>
+        </div>
+
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Mailbox</p>
+          <span id="status-mailbox" class="text-sm text-gray-700">—</span>
+        </div>
+
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Last run</p>
+          <span id="status-last-run" class="text-sm text-gray-700">—</span>
+        </div>
+
+      </div>
+
+      <!-- Connect button — shown only when not connected -->
+      <div id="connect-section" class="hidden mt-5 pt-4 border-t border-gray-100">
+        <p class="text-sm text-gray-600 mb-3">
+          Connect the JBS Bids shared mailbox to enable email automation.
+        </p>
+        <button
+          id="connect-btn"
+          class="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm transition-colors"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+          </svg>
+          Connect Email
+        </button>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="flex items-center gap-3">
+      <button
+        id="sync-btn"
+        disabled
+        class="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <svg id="sync-icon" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Sync Folders
+      </button>
+    </div>
+
+    <!-- Folder Mappings -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-gray-900">Folder Mappings</h2>
+        <span class="text-xs text-gray-400">Click Edit to rename a project</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Name</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Folder Path</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bid #</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="mappings-table" class="bg-white divide-y divide-gray-200">
+            <tr>
+              <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-400">Loading…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-base font-semibold text-gray-900">Recent Activity</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sender</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rule</th>
+            </tr>
+          </thead>
+          <tbody id="logs-table" class="bg-white divide-y divide-gray-200">
+            <tr>
+              <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400">Loading…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    import { escapeHtml } from '../utils/html';
+    import { getApiUrl } from '../utils/api';
+    import { toast } from '../utils/toast';
+
+    const API_URL = getApiUrl();
+    const token = localStorage.getItem('jbs_token');
+
+    // -------------------------------------------------------------------------
+    // Status
+    // -------------------------------------------------------------------------
+    async function loadStatus() {
+      try {
+        const res = await fetch(`${API_URL}/email-automation/status`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401) { window.location.href = '/'; return; }
+        if (!res.ok) throw new Error('Failed to load status');
+
+        const data = await res.json();
+
+        const connectedBadge = document.getElementById('status-connected')!;
+        if (data.connected) {
+          connectedBadge.textContent = 'Connected';
+          connectedBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700';
+          document.getElementById('connect-section')!.classList.add('hidden');
+          (document.getElementById('sync-btn') as HTMLButtonElement).disabled = false;
+        } else {
+          connectedBadge.textContent = 'Not connected';
+          connectedBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
+          document.getElementById('connect-section')!.classList.remove('hidden');
+        }
+
+        const enabledBadge = document.getElementById('status-enabled')!;
+        if (data.enabled) {
+          enabledBadge.textContent = 'On';
+          enabledBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700';
+        } else {
+          enabledBadge.textContent = 'Off';
+          enabledBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
+        }
+
+        document.getElementById('status-today')!.textContent = String(data.processed_today ?? 0);
+        document.getElementById('status-mailbox')!.textContent = data.mailbox_address || '—';
+        document.getElementById('status-last-run')!.textContent =
+          data.last_processed_at ? formatDateTime(data.last_processed_at) : '—';
+
+      } catch (err) {
+        console.error('loadStatus error:', err);
+        toast.error('Failed to load email automation status');
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Connect button
+    // -------------------------------------------------------------------------
+    document.getElementById('connect-btn')?.addEventListener('click', async () => {
+      try {
+        const res = await fetch(`${API_URL}/email/auth`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to start auth');
+        const { auth_url } = await res.json();
+        window.location.href = auth_url;
+      } catch {
+        toast.error('Failed to start email connection');
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // Sync Folders
+    // -------------------------------------------------------------------------
+    document.getElementById('sync-btn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('sync-btn') as HTMLButtonElement;
+      btn.disabled = true;
+      const icon = document.getElementById('sync-icon')!;
+      icon.classList.add('animate-spin');
+
+      try {
+        const res = await fetch(`${API_URL}/email-automation/sync-folders`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 401) { window.location.href = '/'; return; }
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          toast.error(data.error || 'Sync failed');
+          return;
+        }
+
+        toast.success(`Synced ${data.synced} folder${data.synced !== 1 ? 's' : ''}`);
+        await loadMappings();
+      } catch (err) {
+        console.error('sync-folders error:', err);
+        toast.error('Failed to sync folders');
+      } finally {
+        btn.disabled = false;
+        icon.classList.remove('animate-spin');
+        // Re-check connection state (in case we just connected)
+        const statusRes = await fetch(`${API_URL}/email-automation/status`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).catch(() => null);
+        if (statusRes?.ok) {
+          const s = await statusRes.json();
+          btn.disabled = !s.connected;
+        }
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // Folder Mappings
+    // -------------------------------------------------------------------------
+    async function loadMappings() {
+      try {
+        const res = await fetch(`${API_URL}/email-automation/folder-mappings`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401) { window.location.href = '/'; return; }
+        if (!res.ok) throw new Error('Failed to load folder mappings');
+
+        const mappings: any[] = await res.json();
+        renderMappings(mappings);
+      } catch (err) {
+        console.error('loadMappings error:', err);
+        toast.error('Failed to load folder mappings');
+        document.getElementById('mappings-table')!.innerHTML =
+          `<tr><td colspan="5" class="px-6 py-8 text-center text-sm text-red-400">Failed to load folder mappings</td></tr>`;
+      }
+    }
+
+    function renderMappings(mappings: any[]) {
+      const tbody = document.getElementById('mappings-table')!;
+      if (!mappings || mappings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-sm text-gray-400">No folders synced yet — connect the mailbox and click Sync Folders</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = mappings.map(m => `
+        <tr data-id="${m.id}">
+          <td class="px-6 py-3 text-sm text-gray-900">
+            <span class="project-name-display">${escapeHtml(m.project_name)}</span>
+            <span class="project-name-edit hidden">
+              <input
+                type="text"
+                value="${escapeHtml(m.project_name)}"
+                class="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-full max-w-xs"
+              />
+              <button class="save-name-btn ml-2 text-xs text-primary-600 hover:text-primary-800 font-medium">Save</button>
+              <button class="cancel-name-btn ml-1 text-xs text-gray-500 hover:text-gray-700 font-medium">Cancel</button>
+            </span>
+          </td>
+          <td class="px-6 py-3 text-sm text-gray-600">${escapeHtml(m.folder_path)}</td>
+          <td class="px-6 py-3 text-sm text-gray-500">${escapeHtml(m.parent_folder_name || '')}</td>
+          <td class="px-6 py-3 text-sm text-gray-500">${m.bid_id != null ? escapeHtml(String(m.bid_id)) : '—'}</td>
+          <td class="px-6 py-3 text-sm">
+            <button class="edit-name-btn text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
+          </td>
+        </tr>
+      `).join('');
+
+      // Attach inline-edit handlers
+      tbody.querySelectorAll('tr[data-id]').forEach(row => {
+        const id = Number((row as HTMLElement).dataset.id);
+        const display = row.querySelector('.project-name-display') as HTMLElement;
+        const editWrap = row.querySelector('.project-name-edit') as HTMLElement;
+        const input = row.querySelector('input') as HTMLInputElement;
+        const editBtn = row.querySelector('.edit-name-btn') as HTMLButtonElement;
+        const saveBtn = row.querySelector('.save-name-btn') as HTMLButtonElement;
+        const cancelBtn = row.querySelector('.cancel-name-btn') as HTMLButtonElement;
+
+        editBtn.addEventListener('click', () => {
+          display.classList.add('hidden');
+          editWrap.classList.remove('hidden');
+          input.focus();
+        });
+
+        cancelBtn.addEventListener('click', () => {
+          display.classList.remove('hidden');
+          editWrap.classList.add('hidden');
+          input.value = display.textContent?.trim() ?? '';
+        });
+
+        saveBtn.addEventListener('click', async () => {
+          const newName = input.value.trim();
+          if (!newName) { toast.error('Project name cannot be empty'); return; }
+          try {
+            const res = await fetch(`${API_URL}/email-automation/folder-mappings/${id}`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ project_name: newName })
+            });
+            if (res.status === 401) { window.location.href = '/'; return; }
+            if (res.status === 404) { toast.error('Folder mapping not found'); return; }
+            if (!res.ok) throw new Error('Failed to save');
+
+            display.textContent = newName;
+            display.classList.remove('hidden');
+            editWrap.classList.add('hidden');
+            toast.success('Saved');
+          } catch (err) {
+            console.error('save project name error:', err);
+            toast.error('Failed to save project name');
+          }
+        });
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // Logs
+    // -------------------------------------------------------------------------
+    async function loadLogs() {
+      try {
+        const res = await fetch(`${API_URL}/email-automation/logs?limit=50`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401) { window.location.href = '/'; return; }
+        if (!res.ok) throw new Error('Failed to load logs');
+
+        const logs: any[] = await res.json();
+        renderLogs(logs);
+      } catch (err) {
+        console.error('loadLogs error:', err);
+        toast.error('Failed to load activity log');
+        document.getElementById('logs-table')!.innerHTML =
+          `<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-red-400">Failed to load activity log</td></tr>`;
+      }
+    }
+
+    function renderLogs(logs: any[]) {
+      const tbody = document.getElementById('logs-table')!;
+      if (!logs || logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400">No activity yet</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = logs.map(l => `
+        <tr>
+          <td class="px-6 py-3 text-sm text-gray-500 whitespace-nowrap">${l.processed_at ? formatDateTime(l.processed_at) : '—'}</td>
+          <td class="px-6 py-3 text-sm text-gray-900 max-w-xs truncate">${escapeHtml(l.subject || '')}</td>
+          <td class="px-6 py-3 text-sm text-gray-600 whitespace-nowrap">${escapeHtml(l.sender || '')}</td>
+          <td class="px-6 py-3 text-sm">
+            ${l.action_taken
+              ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">${escapeHtml(l.action_taken)}</span>`
+              : '—'}
+          </td>
+          <td class="px-6 py-3 text-sm text-gray-600 max-w-xs truncate">${escapeHtml(l.destination_folder || '')}</td>
+          <td class="px-6 py-3 text-sm text-gray-500">${escapeHtml(l.rule_matched || '')}</td>
+        </tr>
+      `).join('');
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+    function formatDateTime(iso: string): string {
+      try {
+        return new Date(iso).toLocaleString('en-US', {
+          month: 'short', day: 'numeric', year: 'numeric',
+          hour: 'numeric', minute: '2-digit', hour12: true
+        });
+      } catch {
+        return iso;
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Initial load — each section is independent; one failure won't block others
+    // -------------------------------------------------------------------------
+    loadStatus();
+    loadMappings();
+    loadLogs();
+
+    // Handle ?connected=true redirect back from Microsoft OAuth
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('connected') === 'true') {
+      toast.success('Mailbox connected successfully');
+      history.replaceState({}, '', window.location.pathname);
+    } else if (params.get('connected') === 'error') {
+      toast.error('Failed to connect mailbox — please try again');
+      history.replaceState({}, '', window.location.pathname);
+    }
+  </script>
+</Layout>

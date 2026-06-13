@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,6 +14,31 @@ import (
 
 // Graph client singleton — initialized on startup
 var graphClient *services.GraphClient
+
+// mailGraphClient is the dedicated Graph client for the shared-mailbox email automation.
+var mailGraphClient *services.GraphClient
+
+// InitMailGraphClient sets up the mail Graph client from env vars + DB.
+// Uses MAIL_REDIRECT_URI (not SHAREPOINT_REDIRECT_URI).
+func InitMailGraphClient(db *sql.DB) {
+	mailGraphClient = services.NewMailGraphClient(
+		os.Getenv("AZURE_CLIENT_ID"),
+		os.Getenv("AZURE_CLIENT_SECRET"),
+		os.Getenv("AZURE_TENANT_ID"),
+		os.Getenv("MAIL_REDIRECT_URI"),
+		db,
+	)
+	if mailGraphClient.IsConfigured() {
+		log.Println("✅ Mail Graph client configured")
+	} else {
+		log.Println("⚠️  Mail Graph client not configured (set AZURE_CLIENT_ID, AZURE_TENANT_ID, MAIL_REDIRECT_URI)")
+	}
+}
+
+// GetMailGraphClient returns the dedicated mail Graph client.
+func GetMailGraphClient() *services.GraphClient {
+	return mailGraphClient
+}
 
 // InitGraphClient sets up the Graph client from env vars
 func InitGraphClient() {
