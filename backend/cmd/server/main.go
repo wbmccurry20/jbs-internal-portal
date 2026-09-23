@@ -93,6 +93,16 @@ func main() {
 	// Public SharePoint OAuth callback (Microsoft redirects here after login)
 	router.GET("/api/sharepoint/callback", handlers.HandleSharePointCallback)
 
+	// Public payment application endpoints (no auth required — called from buildwithjbs.com)
+	// RateLimitSubmission: 10 submissions per hour per IP (stricter than general)
+	v1 := router.Group("/api/v1")
+	v1.POST("/payment-applications", middleware.RateLimitSubmission(), handlers.CreatePaymentApplication)
+	v1.GET("/payment-applications/:submissionToken", middleware.RateLimitGeneral(), handlers.GetPaymentApplication)
+
+	// Stripe webhook — raw route, no auth middleware, no JSON body parsing.
+	// Stripe-Signature header is verified inside the handler using STRIPE_WEBHOOK_SIGNING_SECRET.
+	router.POST("/api/v1/stripe/webhook", handlers.StripeWebhook)
+
 	// Protected routes
 	api := router.Group("/api")
 	api.Use(middleware.AuthMiddleware())

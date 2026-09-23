@@ -51,7 +51,7 @@ func UploadConcurFile(c *gin.Context) {
 		uploadDir = "/tmp/uploads"
 	}
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		c.JSON(500, gin.H{"error": "Failed to create upload directory"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
 		return
 	}
 

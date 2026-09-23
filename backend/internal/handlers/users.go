@@ -325,6 +325,12 @@ func validatePasswordStrength(password string) error {
 	if len(password) < 10 {
 		return fmt.Errorf("password must be at least 10 characters")
 	}
+	// bcrypt silently truncates input at 72 bytes. Reject longer passwords so
+	// an attacker cannot bypass authentication by supplying a very long password
+	// whose first 72 bytes match the stored hash.
+	if len(password) > 72 {
+		return fmt.Errorf("password must be 72 characters or fewer")
+	}
 	hasUpper, hasLower, hasDigit := false, false, false
 	for _, c := range password {
 		if c >= 'A' && c <= 'Z' {

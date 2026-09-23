@@ -219,7 +219,6 @@
 }
 
 /* Blue top accent line on the nav */
-nav.bg-\[\#1A1A1A\],
 nav.bg-jbs-dark {
   border-top: 3px solid var(--color-jbs-blue);
 }
