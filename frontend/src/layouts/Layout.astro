@@ -17,21 +17,19 @@ const { title = 'JBS Internal Portal' } = Astro.props;
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   </head>
-  <body class="bg-gray-50 min-h-screen font-sans">
-    <nav class="bg-jbs-dark border-b border-white/10">
-      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-14">
+  <body class="min-h-screen bg-jbs-canvas font-sans text-jbs-dark">
+    <nav class="bg-jbs-dark border-b border-white/10" style="border-top: 3px solid #00A0E0;">
+      <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 items-center justify-between">
           <!-- Logo and primary navigation -->
           <div class="flex items-center">
-            <!-- Logo -->
-            <div class="flex-shrink-0 flex items-center mr-6">
+            <div class="mr-6 flex items-center">
               <a href="/dashboard" id="logo-link" class="flex items-center">
-                <img src="/jbs_new_logo.png" alt="JBS" class="h-7 w-auto" style="mix-blend-mode:screen;filter:brightness(1.1);">
+                <img src="/jbs_new_logo.png" alt="JBS" class="logo-dark-bg h-7 w-auto sm:h-8" />
               </a>
             </div>
 
-            <!-- Desktop navigation -->
-            <div class="hidden lg:flex lg:items-center lg:space-x-1">
+            <div class="hidden items-center gap-1 lg:flex">
               <a href="/dashboard" class="nav-link hidden" id="nav-dashboard">Dashboard</a>
               <a href="/jobs" class="nav-link hidden" id="nav-jobs">Jobs</a>
               <a href="/bids" class="nav-link hidden" id="nav-bids">Bids</a>
@@ -40,58 +38,53 @@ const { title = 'JBS Internal Portal' } = Astro.props;
               <a href="/training" class="nav-link hidden" id="nav-training">Training</a>
               <a href="/users" class="nav-link hidden" id="nav-users">Users</a>
 
-              <!-- Finance Tools dropdown -->
-              <div class="relative group hidden" id="nav-finance">
-                <button class="nav-link inline-flex items-center">
+              <div class="group relative hidden" id="nav-finance">
+                <button class="nav-link inline-flex items-center gap-1.5">
                   Finance
-                  <svg class="w-3.5 h-3.5 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="h-3.5 w-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                   </svg>
                 </button>
-                <div class="absolute left-0 mt-0 pt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                  <div class="bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 py-1">
-                    <a href="/concur" class="dropdown-item">Concur Converter</a>
-                    <a href="/reconciliation" class="dropdown-item">Reconciliation</a>
+                <div class="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                  <div class="w-52 rounded-lg bg-jbs-dark p-1.5 shadow-2xl ring-1 ring-white/10">
+                    <a href="/concur" class="dropdown-item text-white/80 hover:bg-white/5 hover:text-white">Concur Converter</a>
+                    <a href="/reconciliation" class="dropdown-item text-white/80 hover:bg-white/5 hover:text-white">Reconciliation</a>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Right side: User profile dropdown -->
-          <div class="flex items-center space-x-3">
-            <!-- User dropdown -->
+          <div class="flex items-center gap-3">
             <div class="relative hidden sm:block" id="user-menu-wrapper">
-              <button id="user-menu-btn" class="flex items-center space-x-2 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
-                <div class="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-semibold">
+              <button id="user-menu-btn" class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/10">
+                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-jbs-blue text-xs font-semibold text-white">
                   <span id="user-initials"></span>
                 </div>
-                <div class="text-left">
-                  <p id="user-name" class="text-sm font-medium text-white leading-tight"></p>
-                  <p id="user-role" class="text-xs text-white/50 leading-tight"></p>
+                <div>
+                  <p id="user-name" class="text-sm font-medium leading-tight text-white"></p>
+                  <p id="user-role" class="text-[11px] uppercase tracking-[0.12em] text-white/50"></p>
                 </div>
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-4 w-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               </button>
-              <div id="user-dropdown" class="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 py-1 hidden z-50">
-                <a href="/dashboard" class="dropdown-item" id="home-link">Home</a>
-                <hr class="my-1 border-gray-100">
-                <button id="logout-btn" class="dropdown-item w-full text-left text-red-600 hover:text-red-700 hover:bg-red-50">
+              <div id="user-dropdown" class="absolute right-0 z-50 mt-2 hidden w-52 rounded-lg bg-jbs-dark p-1.5 shadow-2xl ring-1 ring-white/10">
+                <a href="/dashboard" class="dropdown-item text-white/80 hover:bg-white/5 hover:text-white" id="home-link">Home</a>
+                <div class="my-1 h-px bg-white/10"></div>
+                <button id="logout-btn" class="dropdown-item w-full text-left text-red-400 hover:bg-red-500/10 hover:text-red-300">
                   Sign Out
                 </button>
               </div>
             </div>
 
-            <!-- Mobile: just avatar + hamburger -->
-            <div class="sm:hidden flex items-center space-x-2">
-              <div class="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-semibold">
+            <div class="flex items-center sm:hidden">
+              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-jbs-blue text-xs font-semibold text-white">
                 <span id="user-initials-mobile"></span>
               </div>
             </div>
 
-            <!-- Mobile menu button -->
-            <button id="mobile-menu-btn" class="lg:hidden inline-flex items-center justify-center p-1.5 rounded-md text-white/60 hover:text-white hover:bg-white/10 focus:outline-none">
+            <button id="mobile-menu-btn" class="inline-flex items-center justify-center rounded-md p-2 text-white/70 hover:bg-white/10 hover:text-white lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jbs-blue focus-visible:ring-offset-2 focus-visible:ring-offset-jbs-dark">
               <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
               </svg>
@@ -100,9 +93,8 @@ const { title = 'JBS Internal Portal' } = Astro.props;
         </div>
       </div>
 
-      <!-- Mobile menu -->
-      <div id="mobile-menu" class="hidden lg:hidden border-t border-white/10 bg-jbs-dark">
-        <div class="py-2 space-y-0.5">
+      <div id="mobile-menu" class="hidden border-t border-white/10 bg-jbs-dark lg:hidden">
+        <div class="space-y-0.5 py-2">
           <a href="/dashboard" class="mobile-nav-link hidden" id="mobile-nav-dashboard">Dashboard</a>
           <a href="/jobs" class="mobile-nav-link hidden" id="mobile-nav-jobs">Jobs</a>
           <a href="/bids" class="mobile-nav-link hidden" id="mobile-nav-bids">Bids</a>
@@ -110,52 +102,37 @@ const { title = 'JBS Internal Portal' } = Astro.props;
           <a href="/licensing" class="mobile-nav-link hidden" id="mobile-nav-licensing">Licensing</a>
           <a href="/training" class="mobile-nav-link hidden" id="mobile-nav-training">Training</a>
           <a href="/users" class="mobile-nav-link hidden" id="mobile-nav-users">Manage Users</a>
-          <div class="border-t border-gray-100 my-1 hidden" id="mobile-nav-finance-divider"></div>
+          <div class="my-1 hidden h-px bg-white/10" id="mobile-nav-finance-divider"></div>
           <a href="/concur" class="mobile-nav-link hidden" id="mobile-nav-concur">Concur Converter</a>
           <a href="/reconciliation" class="mobile-nav-link hidden" id="mobile-nav-reconciliation">Reconciliation</a>
         </div>
-        <div class="border-t border-gray-200 py-3 px-4">
-          <div class="flex items-center space-x-3 mb-3">
-            <div class="h-9 w-9 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-semibold">
+        <div class="border-t border-white/10 px-4 py-3">
+          <div class="mb-3 flex items-center gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-jbs-blue text-sm font-semibold text-white">
               <span id="mobile-user-initials"></span>
             </div>
             <div>
               <p id="mobile-user-name" class="text-sm font-medium text-white"></p>
-              <p id="mobile-user-role" class="text-xs text-white/50"></p>
+              <p id="mobile-user-role" class="text-[11px] uppercase tracking-[0.12em] text-white/50"></p>
             </div>
           </div>
-          <button id="mobile-logout-btn" class="w-full text-left text-sm font-medium text-red-600 hover:text-red-700 py-2">
+          <button id="mobile-logout-btn" class="w-full py-2 text-left text-sm font-medium text-red-400 hover:text-red-300">
             Sign Out
           </button>
         </div>
       </div>
     </nav>
 
-    <style>
-      .nav-link {
-        @apply inline-flex items-center px-3 py-1.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 rounded-md transition-colors;
-      }
-      
-      .nav-link.active {
-        @apply text-white bg-primary-500/20;
-      }
-      
-      .dropdown-item {
-        @apply block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors;
-      }
-      
-      .mobile-nav-link {
-        @apply block px-4 py-2.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10;
-      }
-
-      .mobile-nav-link.active {
-        @apply text-white bg-primary-500/20;
-      }
-    </style>
-
-    <main class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="mx-auto max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-8">
       <slot />
     </main>
+
+    <footer class="border-t border-black/5 bg-white/60">
+      <div class="mx-auto flex max-w-screen-2xl items-center justify-between px-4 py-3 text-xs text-slate-500 sm:px-6 lg:px-8">
+        <span>© JBS · Built Different</span>
+        <span class="hidden sm:inline">Internal operations portal</span>
+      </div>
+    </footer>
 
     <script>
       // Check authentication

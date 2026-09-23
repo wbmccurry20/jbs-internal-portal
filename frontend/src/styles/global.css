@@ -4,31 +4,245 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+:root {
+  --color-jbs-blue: #00A0E0;
+  --color-jbs-blue-hover: #0088CC;
+  --color-jbs-dark: #1A1A1A;
+  --color-jbs-black: #000000;
+  --color-jbs-charcoal: #3E3832;
+  --color-jbs-gray: #B8B8B8;
+  --color-jbs-cream: #F0E8E0;
+  --color-jbs-beige: #D8D0C8;
+  --color-jbs-brown: #885830;
+  --color-jbs-sage: #788078;
+  --color-jbs-gold: #C0A870;
+  --color-jbs-light-blue: #C0D8F0;
+  --color-jbs-white: #FFFFFF;
+  --color-jbs-canvas: #F7F6F4;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-jbs-canvas text-jbs-dark antialiased;
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Barlow Condensed', sans-serif;
+    @apply font-bold tracking-[0.02em] text-jbs-dark;
+  }
+
+  p {
+    @apply text-slate-600;
+  }
+
+  a {
+    @apply transition-colors duration-150;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .logo-dark-bg {
+    mix-blend-mode: screen;
+    filter: brightness(1.1);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md bg-jbs-blue px-5 py-2.5 text-sm font-medium uppercase tracking-[0.12em] text-white shadow-sm transition-colors duration-150 hover:bg-jbs-blue-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jbs-blue focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md border border-jbs-charcoal/15 bg-white px-5 py-2.5 text-sm font-medium text-jbs-dark shadow-card transition-colors duration-150 hover:border-jbs-dark/20 hover:bg-jbs-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jbs-blue focus-visible:ring-offset-2;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium text-jbs-dark transition-colors duration-150 hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jbs-blue focus-visible:ring-offset-2;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition-colors duration-150 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .nav-link {
+    @apply inline-flex items-center rounded-md px-3 py-2 text-sm font-medium uppercase tracking-[0.18em] text-white/75 transition-colors duration-150 hover:text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jbs-blue focus-visible:ring-offset-2 focus-visible:ring-offset-jbs-dark;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .nav-link.active {
+    @apply text-white bg-white/10 ring-1 ring-white/10;
+  }
+
+  .dropdown-item {
+    @apply block px-4 py-2.5 text-sm text-slate-700 transition-colors duration-150 hover:bg-jbs-blue/5 hover:text-jbs-dark;
+  }
+
+  .mobile-nav-link {
+    @apply block px-4 py-3 text-sm font-medium uppercase tracking-[0.1em] text-white/70 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jbs-blue focus-visible:ring-inset;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .mobile-nav-link.active {
+    @apply text-white bg-white/10;
+  }
+
+  .page-header {
+    @apply mb-8 flex flex-col gap-4 border-b border-black/5 pb-6 sm:flex-row sm:items-end sm:justify-between;
+  }
+
+  .page-header__eyebrow {
+    @apply text-[11px] font-medium uppercase tracking-[0.2em] text-jbs-blue;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .page-header h1,
+  .page-header .page-title,
+  .page-title {
+    @apply text-3xl font-bold uppercase tracking-[0.04em] text-jbs-dark sm:text-4xl;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .page-header p {
+    @apply max-w-2xl text-sm text-slate-600;
+  }
+
+  .page-header__actions {
+    @apply flex flex-wrap items-center gap-3;
+  }
+
+  .card {
+    @apply rounded-xl border border-black/5 bg-white shadow-card;
+  }
+
+  .kpi-card {
+    @apply card p-5 transition-colors duration-150 hover:border-black/10;
+  }
+
+  .kpi-label {
+    @apply text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .kpi-value {
+    @apply text-3xl font-bold leading-none tracking-tight text-jbs-dark;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.12em];
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .chip-success {
+    @apply border-[#dfeae2] bg-[#edf7ef] text-[#2f6f4d];
+  }
+
+  .chip-warning {
+    @apply border-[#f0e4c8] bg-[#faf2d9] text-[#7a6331];
+  }
+
+  .chip-error {
+    @apply border-red-200 bg-red-50 text-red-700;
+  }
+
+  .chip-neutral {
+    @apply border-black/10 bg-slate-100 text-slate-600;
+  }
+
+  .table-shell {
+    @apply card overflow-hidden;
+  }
+
+  .table-shell table {
+    @apply min-w-full divide-y divide-black/5;
+  }
+
+  .table-shell thead th {
+    @apply bg-jbs-cream px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.14em] text-jbs-dark;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .table-shell tbody td {
+    @apply border-t border-black/5 px-4 py-3 align-middle text-sm text-slate-700;
+  }
+
+  .table-shell tbody tr {
+    @apply transition-colors duration-150 hover:bg-jbs-blue/5;
+  }
+
+  .empty-state {
+    @apply flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-black/10 bg-white px-6 py-10 text-center;
+  }
+
+  .empty-state h3 {
+    @apply mb-2 text-2xl uppercase tracking-[0.04em] text-jbs-dark;
+  }
+
+  .empty-state p {
+    @apply mb-4 max-w-md text-sm text-slate-600;
+  }
+
+  .toast-error {
+    @apply flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-[12px] font-medium uppercase tracking-[0.12em] text-slate-600;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .form-input {
+    @apply block min-h-[44px] w-full rounded-md border border-black/10 bg-white px-3.5 py-2.5 text-sm text-jbs-dark placeholder:text-slate-400 transition-colors focus:border-jbs-blue focus:outline-none focus:ring-2 focus:ring-jbs-blue/30;
+  }
+
+  .form-textarea {
+    @apply form-input min-h-[120px] resize-y;
+  }
 }
 
 /* Blue top accent line on the nav */
 nav.bg-jbs-dark {
-  border-top: 3px solid #00A0E0;
+  border-top: 3px solid var(--color-jbs-blue);
 }
 
-/* Page-level heading style */
-.page-header h1,
-h1.page-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-/* Focus ring brand color */
 *:focus-visible {
-  outline: 2px solid #00A0E0;
+  outline: 2px solid var(--color-jbs-blue);
   outline-offset: 2px;
 }
 
-/* Selection brand color */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00A0E0;
+  border-radius: 9999px;
+}
+
 ::selection {
   background-color: #00A0E0;
   color: white;

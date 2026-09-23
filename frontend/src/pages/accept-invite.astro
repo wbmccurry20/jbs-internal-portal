@@ -7,45 +7,46 @@ import '../styles/global.css';
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accept Invite - JBS Portal</title>
+    <title>Accept Invite · JBS Portal</title>
   </head>
-  <body class="bg-gray-100">
+  <body class="bg-jbs-canvas">
     <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-md w-full space-y-6 bg-white p-8 rounded-lg shadow-lg">
+      <div class="max-w-md w-full space-y-6 bg-white p-8 rounded-2xl border border-black/5 shadow-card">
         <div>
-          <div class="mx-auto w-56 mb-4">
-            <img src="/jbs-logo.svg" alt="JBS Construction" class="w-full h-auto" />
+          <div class="mx-auto mb-4 w-56">
+            <img src="/jbs_new_logo.png" alt="JBS" class="h-auto w-full" />
           </div>
-          <h2 class="text-center text-2xl font-bold text-gray-900" id="page-title">
+          <p class="page-header__eyebrow text-center">Account setup</p>
+          <h2 class="text-center text-3xl uppercase tracking-[0.04em] text-jbs-dark" id="page-title">
             Set Up Your Account
           </h2>
-          <p class="mt-1 text-center text-sm text-gray-600" id="page-subtitle">
+          <p class="mt-1 text-center text-sm text-slate-600" id="page-subtitle">
             Loading...
           </p>
         </div>
 
         <!-- Loading state -->
-        <div id="loading-state" class="text-center py-8">
-          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <p class="mt-2 text-sm text-gray-500">Verifying your invite...</p>
+        <div id="loading-state" class="py-8 text-center">
+          <div class="mx-auto inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-jbs-blue"></div>
+          <p class="mt-2 text-sm text-slate-500">Verifying your invite...</p>
         </div>
 
         <!-- Invalid/expired token state -->
-        <div id="invalid-state" class="hidden text-center py-8">
-          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+        <div id="invalid-state" class="hidden py-8 text-center">
+          <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
             <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-gray-900">Invite Link Invalid</h3>
-          <p class="mt-2 text-sm text-gray-500">This invite link is expired or has already been used. Please ask your administrator to send a new invite.</p>
-          <a href="/" class="mt-4 inline-block text-primary hover:text-blue-700 text-sm font-medium">← Go to Login</a>
+          <h3 class="text-lg font-medium text-jbs-dark">Invite Link Invalid</h3>
+          <p class="mt-2 text-sm text-slate-500">This invite link is expired or has already been used. Please ask your administrator to send a new invite.</p>
+          <a href="/" class="mt-4 inline-block text-sm font-medium text-jbs-blue hover:text-jbs-blue-hover">← Go to Login</a>
         </div>
 
         <!-- Set password form -->
         <form id="accept-form" class="hidden space-y-5">
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Create Your Password</label>
+            <label for="password" class="field-label">Create your password</label>
             <input
               id="password"
               name="password"
@@ -53,12 +54,12 @@ import '../styles/global.css';
               required
               minlength="10"
               autocomplete="new-password"
-              class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+              class="form-input"
               placeholder="Minimum 10 characters"
             />
           </div>
           <div>
-            <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <label for="confirm-password" class="field-label">Confirm password</label>
             <input
               id="confirm-password"
               name="confirm-password"
@@ -66,57 +67,41 @@ import '../styles/global.css';
               required
               minlength="10"
               autocomplete="new-password"
-              class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+              class="form-input"
               placeholder="Re-enter your password"
             />
           </div>
 
-          <!-- Password requirements -->
-          <div class="bg-gray-50 rounded-md p-3">
-            <p class="text-xs font-medium text-gray-700 mb-2">Password requirements:</p>
-            <ul class="text-xs text-gray-500 space-y-1">
-              <li id="req-length" class="flex items-center gap-1.5">
-                <span class="req-icon">○</span> At least 10 characters
-              </li>
-              <li id="req-upper" class="flex items-center gap-1.5">
-                <span class="req-icon">○</span> One uppercase letter
-              </li>
-              <li id="req-lower" class="flex items-center gap-1.5">
-                <span class="req-icon">○</span> One lowercase letter
-              </li>
-              <li id="req-number" class="flex items-center gap-1.5">
-                <span class="req-icon">○</span> One number
-              </li>
-              <li id="req-match" class="flex items-center gap-1.5">
-                <span class="req-icon">○</span> Passwords match
-              </li>
+          <div class="rounded-lg border border-black/5 bg-slate-50 p-3">
+            <p class="mb-2 text-xs font-medium uppercase tracking-[0.12em] text-slate-700">Password requirements:</p>
+            <ul class="space-y-1 text-xs text-slate-600">
+              <li id="req-length" class="flex items-center gap-1.5"><span class="req-icon">○</span> At least 10 characters</li>
+              <li id="req-upper" class="flex items-center gap-1.5"><span class="req-icon">○</span> One uppercase letter</li>
+              <li id="req-lower" class="flex items-center gap-1.5"><span class="req-icon">○</span> One lowercase letter</li>
+              <li id="req-number" class="flex items-center gap-1.5"><span class="req-icon">○</span> One number</li>
+              <li id="req-match" class="flex items-center gap-1.5"><span class="req-icon">○</span> Passwords match</li>
             </ul>
           </div>
 
-          <div id="error-message" class="hidden">
-            <p class="text-sm text-red-600 text-center font-medium"></p>
+          <div id="error-message" class="hidden rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center">
+            <p class="text-sm font-medium text-red-700"></p>
           </div>
 
-          <button
-            type="submit"
-            id="submit-btn"
-            disabled
-            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
+          <button type="submit" id="submit-btn" disabled class="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50">
             Activate My Account
           </button>
         </form>
 
         <!-- Success state -->
-        <div id="success-state" class="hidden text-center py-8">
-          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div id="success-state" class="hidden py-8 text-center">
+          <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#edf7ef]">
+            <svg class="h-6 w-6 text-[#2f6f4d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-gray-900">Account Activated!</h3>
-          <p class="mt-2 text-sm text-gray-500">Your password has been set. You can now log in.</p>
-          <a href="/" class="mt-4 inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-700 text-sm font-medium transition-colors">
+          <h3 class="text-lg font-medium text-jbs-dark">Account Activated!</h3>
+          <p class="mt-2 text-sm text-slate-500">Your password has been set. You can now log in.</p>
+          <a href="/" class="btn-primary mt-4 px-6">
             Go to Login →
           </a>
         </div>
