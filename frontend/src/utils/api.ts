@@ -5,7 +5,16 @@
 
 function normalizeApiBase(rawUrl?: string): string {
   if (!rawUrl) return '';
-  return rawUrl.trim().replace(/\/+$/, '').replace(/\/api\/?$/, '/api');
+
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return '';
+
+  const withoutTrailingSlash = trimmed.replace(/\/+$/, '');
+  if (/\/api$/i.test(withoutTrailingSlash)) {
+    return withoutTrailingSlash;
+  }
+
+  return `${withoutTrailingSlash}/api`;
 }
 
 /**

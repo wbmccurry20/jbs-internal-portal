@@ -43,3 +43,5 @@ These are defined in the shared styles layer and intended for reuse across authe
 - The login experience uses the dark JBS brand treatment and condensed heading language.
 - Authenticated pages keep the tool layout on a warm off-white canvas with light cards and dark navigation chrome.
 - The active licensing map uses blue for active / licensed, gold for expiring, red for expired, and a dark slate background with dark strokes.
+- Backend CORS is intentionally fail-closed in release mode: `ALLOWED_ORIGINS` must be set explicitly in production and empty values no longer fall back to local development origins.
+- Frontend API configuration normalizes `PUBLIC_API_URL` to include the `/api` suffix when needed so backend calls resolve consistently across local and production environments.

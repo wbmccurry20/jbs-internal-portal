@@ -247,8 +247,8 @@ func getAllowedOrigins() []string {
 			"http://127.0.0.1:4173",
 		}
 
-		if os.Getenv("GIN_MODE") == "release" {
-			log.Println("ALLOWED_ORIGINS is empty in release mode; using local development defaults only")
+		if gin.Mode() == gin.ReleaseMode {
+			log.Fatal("ALLOWED_ORIGINS is required in release mode; set it to the deployed frontend origin(s)")
 		}
 		return defaultOrigins
 	}

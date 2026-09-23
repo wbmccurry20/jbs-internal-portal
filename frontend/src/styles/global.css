@@ -115,7 +115,8 @@
   }
 
   .page-header h1,
-  .page-header .page-title {
+  .page-header .page-title,
+  .page-title {
     @apply text-3xl font-bold uppercase tracking-[0.04em] text-jbs-dark sm:text-4xl;
     font-family: 'Barlow Condensed', sans-serif;
   }
