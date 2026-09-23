@@ -7,99 +7,93 @@ import '../styles/global.css';
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - JBS Portal</title>
+    <title>Login · JBS Portal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   </head>
-  <body class="bg-gray-50 font-sans">
-    <div class="min-h-screen flex">
+  <body class="bg-jbs-canvas font-sans">
+    <div class="flex min-h-screen">
+      <div class="relative hidden w-full flex-col justify-between overflow-hidden bg-jbs-dark p-12 lg:flex lg:w-1/2 xl:w-2/5">
+        <div class="absolute -right-12 top-0 h-72 w-72 rotate-45 bg-white/5"></div>
+        <div class="absolute -bottom-16 left-0 h-64 w-64 rotate-45 bg-jbs-blue/10"></div>
 
-      <!-- LEFT: Brand panel (desktop only) -->
-      <div class="hidden lg:flex lg:w-1/2 xl:w-2/5 bg-[#1A1A1A] flex-col justify-between p-12 relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-[400px] h-[400px] bg-white/[0.02] rotate-45 -translate-y-1/4 translate-x-1/4 pointer-events-none"></div>
-        <div class="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#00A0E0]/[0.07] rotate-45 translate-y-1/4 -translate-x-1/4 pointer-events-none"></div>
-
-        <!-- Logo -->
-        <div>
-          <img src="/jbs_new_logo.png" alt="JBS" class="h-12 w-auto" style="mix-blend-mode:screen;filter:brightness(1.1);" />
+        <div class="relative z-10">
+          <img src="/jbs_new_logo.png" alt="JBS" class="logo-dark-bg h-12 w-auto" />
         </div>
 
-        <!-- Center copy -->
-        <div class="relative z-10">
-          <div class="w-12 h-1 bg-[#00A0E0] mb-8"></div>
-          <h1 style="font-family:'Barlow Condensed',sans-serif;" class="text-5xl font-bold text-white uppercase leading-tight tracking-wide mb-4">
-            Built<br/>Different.
+        <div class="relative z-10 max-w-sm">
+          <div class="mb-8 h-1 w-12 bg-jbs-blue"></div>
+          <h1 class="mb-4 text-5xl font-bold uppercase leading-[0.9] tracking-[0.04em] text-white sm:text-6xl">
+            WE'RE JBS
+            <span class="mt-2 block text-jbs-blue">BUILT DIFFERENT.</span>
           </h1>
-          <p class="text-white/40 text-sm leading-relaxed max-w-xs">
-            Internal operations platform for JBS Construction. Manage jobs, track bids, and run your projects from anywhere.
+          <p class="max-w-xs text-sm leading-relaxed text-white/60">
+            The internal operating system for jobs, bids, licensing, training, and financial workflows across JBS.
           </p>
         </div>
 
-        <!-- Footer -->
-        <div>
-          <p class="text-white/20 text-xs">JBS Construction Group &copy; 2026</p>
+        <div class="relative z-10">
+          <p class="text-xs uppercase tracking-[0.2em] text-white/30">JBS Construction Group © 2026</p>
         </div>
       </div>
 
-      <!-- RIGHT: Login form -->
-      <div class="flex-1 flex flex-col items-center justify-center px-6 py-12 lg:px-16">
-
-        <!-- Mobile-only logo -->
-        <div class="lg:hidden mb-8 w-36">
-          <img src="/jbs_new_logo.png" alt="JBS" class="w-full h-auto" />
-        </div>
-
+      <div class="flex flex-1 items-center justify-center px-6 py-12 lg:px-16">
         <div class="w-full max-w-sm">
+          <div class="mb-8 lg:hidden">
+            <img src="/jbs_new_logo.png" alt="JBS" class="mx-auto h-10 w-auto" />
+          </div>
+
           <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Sign in to your account</h2>
-            <p class="mt-1 text-sm text-gray-500">JBS Internal Portal &mdash; authorized users only</p>
+            <p class="page-header__eyebrow mb-2 text-center lg:text-left">Portal access</p>
+            <h2 class="text-3xl uppercase tracking-[0.04em] text-jbs-dark">Sign in</h2>
+            <p class="mt-1 text-sm text-slate-600">Authorized users only.</p>
           </div>
 
           <form id="login-form" class="space-y-5">
             <div>
-              <label for="email" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Email Address</label>
+              <label for="email" class="field-label">Email address</label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 autocomplete="email"
                 required
-                class="block w-full px-4 py-3 border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00A0E0] focus:border-transparent focus:bg-white transition-all text-sm"
+                class="form-input"
                 placeholder="you@jbsconstructiongroup.com"
               />
             </div>
             <div>
-              <label for="password" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Password</label>
+              <label for="password" class="field-label">Password</label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 autocomplete="current-password"
                 required
-                class="block w-full px-4 py-3 border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00A0E0] focus:border-transparent focus:bg-white transition-all text-sm"
+                class="form-input"
                 placeholder="••••••••"
               />
             </div>
 
-            <div id="error-message" class="hidden bg-red-50 border border-red-200 px-4 py-3">
-              <p class="text-sm text-red-600 font-medium"></p>
+            <div id="error-message" class="toast-error hidden" aria-live="polite">
+              <svg class="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p class="font-medium"></p>
             </div>
 
-            <button
-              type="submit"
-              id="submit-btn"
-              class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#00A0E0] hover:bg-[#0088CC] text-white text-sm font-semibold tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00A0E0] disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+<<<<<<< HEAD
+            <button type="submit" id="submit-btn" class="btn-primary w-full gap-2">
               <span id="btn-text">Sign In</span>
-              <svg id="btn-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <svg id="btn-spinner" class="hidden h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
               </svg>
             </button>
           </form>
 
-          <p class="mt-8 text-center text-xs text-gray-400">
-            Access issues? Contact <a href="mailto:hello@itwill.dev" class="text-[#00A0E0] hover:underline">IT Support</a>
+          <p class="mt-8 text-center text-xs text-slate-500">
+            Access issues? Contact <a href="mailto:hello@itwill.dev" class="text-jbs-blue hover:text-jbs-blue-hover">IT Support</a>
           </p>
         </div>
       </div>
@@ -166,8 +160,16 @@ import '../styles/global.css';
           });
 
           if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Login failed');
+            let errorMessage = 'Login failed';
+            try {
+              const data = await response.json();
+              errorMessage = data.error || errorMessage;
+            } catch {
+              errorMessage = response.status === 401
+                ? 'Invalid email or password.'
+                : 'The login service is unavailable right now.';
+            }
+            throw new Error(errorMessage);
           }
 
           const data = await response.json();
@@ -177,7 +179,9 @@ import '../styles/global.css';
         } catch (error) {
           if (errorDiv && errorText) {
             errorDiv.classList.remove('hidden');
-            errorText.textContent = error instanceof Error ? error.message : 'An error occurred';
+            errorText.textContent = error instanceof Error
+              ? error.message
+              : 'Login request failed. Please check that the backend is running and the portal configuration is correct.';
           }
           if (submitBtn) submitBtn.disabled = false;
           if (btnText) btnText.textContent = 'Sign In';

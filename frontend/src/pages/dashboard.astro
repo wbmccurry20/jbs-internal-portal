@@ -2,91 +2,88 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Executive Dashboard - JBS Portal">
+<Layout title="Dashboard · JBS Portal">
   <div id="dashboard-content" class="hidden">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <header class="page-header">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900" id="greeting">Dashboard</h1>
-        <p class="mt-1 text-sm text-gray-500" id="date-display"></p>
+        <div class="page-header__eyebrow">Operations</div>
+        <h1 id="greeting" class="page-title">Dashboard</h1>
+        <p id="date-display"></p>
       </div>
-      <div class="flex items-center gap-3">
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
+      <div class="page-header__actions">
+        <span class="chip chip-success">
+          <span class="mr-2 h-2 w-2 rounded-full bg-[#2f6f4d]"></span>
           Live
         </span>
-        <button id="refresh-btn" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        <button id="refresh-btn" class="btn-secondary">
+          <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
           Refresh
         </button>
       </div>
-    </div>
+    </header>
 
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-      <!-- Active Jobs -->
-      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-medium text-gray-500">Active Jobs</span>
-          <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-blue-50">
-            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+    <div class="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="kpi-card">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="kpi-label">Active Jobs</span>
+          <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 text-jbs-blue">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
           </span>
         </div>
         <div class="flex items-baseline gap-2">
-          <span class="text-3xl font-bold text-gray-900" id="kpi-active-jobs">&mdash;</span>
-          <span class="text-sm text-gray-400" id="kpi-total-jobs"></span>
+          <span class="kpi-value" id="kpi-active-jobs">&mdash;</span>
+          <span class="text-sm text-slate-400" id="kpi-total-jobs"></span>
         </div>
-        <a href="/jobs" class="mt-3 inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-700">
-          View all jobs <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        <a href="/jobs" class="mt-3 inline-flex items-center text-xs font-medium text-jbs-blue hover:text-jbs-blue-hover">
+          View all jobs <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
         </a>
       </div>
 
-      <!-- Pipeline Value -->
-      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-medium text-gray-500">Bid Pipeline</span>
-          <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-amber-50">
-            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div class="kpi-card">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="kpi-label">Bid Pipeline</span>
+          <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-jbs-gold/15 text-jbs-gold">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           </span>
         </div>
         <div class="flex items-baseline gap-2">
-          <span class="text-3xl font-bold text-gray-900" id="kpi-pipeline">&mdash;</span>
+          <span class="kpi-value" id="kpi-pipeline">&mdash;</span>
         </div>
-        <div class="text-xs text-gray-400 mt-1" id="kpi-pipeline-detail"></div>
-        <a href="/bids" class="mt-3 inline-flex items-center text-xs font-medium text-amber-600 hover:text-amber-700">
-          View pipeline <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        <div class="mt-1 text-xs text-slate-400" id="kpi-pipeline-detail"></div>
+        <a href="/bids" class="mt-3 inline-flex items-center text-xs font-medium text-jbs-brown hover:text-jbs-charcoal">
+          View pipeline <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
         </a>
       </div>
 
-      <!-- Win Rate -->
-      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-medium text-gray-500">Bid Win Rate</span>
-          <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-green-50">
-            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <div class="kpi-card">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="kpi-label">Bid Win Rate</span>
+          <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-jbs-sage/15 text-jbs-sage">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           </span>
         </div>
         <div class="flex items-baseline gap-2">
-          <span class="text-3xl font-bold text-gray-900" id="kpi-win-rate">&mdash;</span>
+          <span class="kpi-value" id="kpi-win-rate">&mdash;</span>
         </div>
-        <div class="text-xs text-gray-400 mt-1" id="kpi-win-detail"></div>
+        <div class="mt-1 text-xs text-slate-400" id="kpi-win-detail"></div>
       </div>
 
-      <!-- Active Lodging -->
-      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-medium text-gray-500">Active Lodging</span>
-          <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-purple-50">
-            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+      <div class="kpi-card">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="kpi-label">Active Lodging</span>
+          <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-jbs-light-blue/60 text-jbs-dark">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
           </span>
         </div>
         <div class="flex items-baseline gap-2">
-          <span class="text-3xl font-bold text-gray-900" id="kpi-lodging-count">&mdash;</span>
-          <span class="text-sm text-gray-400">bookings</span>
+          <span class="kpi-value" id="kpi-lodging-count">&mdash;</span>
+          <span class="text-sm text-slate-400">bookings</span>
         </div>
-        <div class="text-xs text-gray-400 mt-1" id="kpi-lodging-detail"></div>
-        <a href="/superintendents" class="mt-3 inline-flex items-center text-xs font-medium text-purple-600 hover:text-purple-700">
-          View lodging <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        <div class="mt-1 text-xs text-slate-400" id="kpi-lodging-detail"></div>
+        <a href="/superintendents" class="mt-3 inline-flex items-center text-xs font-medium text-jbs-charcoal hover:text-jbs-dark">
+          View lodging <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
         </a>
       </div>
     </div>

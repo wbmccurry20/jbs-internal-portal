@@ -60,10 +60,13 @@ func main() {
 		origin := c.GetHeader("Origin")
 		allowedOrigins := getAllowedOrigins()
 
-		for _, allowed := range allowedOrigins {
-			if origin == allowed {
-				c.Header("Access-Control-Allow-Origin", origin)
-				break
+		if origin != "" {
+			for _, allowed := range allowedOrigins {
+				if strings.TrimSpace(allowed) != "" && origin == strings.TrimSpace(allowed) {
+					c.Header("Access-Control-Allow-Origin", origin)
+					c.Header("Vary", "Origin")
+					break
+				}
 			}
 		}
 
@@ -223,12 +226,32 @@ func main() {
 func getAllowedOrigins() []string {
 	origins := os.Getenv("ALLOWED_ORIGINS")
 	if origins == "" {
-		// In production, ALLOWED_ORIGINS must be explicitly set
-		if os.Getenv("GIN_MODE") == "release" {
-			log.Fatal("ALLOWED_ORIGINS environment variable is required in production mode")
+		defaultOrigins := []string{
+			"http://localhost:4321",
+			"http://localhost:3000",
+			"http://localhost:5173",
+			"http://localhost:4173",
+			"http://127.0.0.1:4321",
+			"http://127.0.0.1:3000",
+			"http://127.0.0.1:5173",
+			"http://127.0.0.1:4173",
 		}
-		// Development fallback
-		return []string{"http://localhost:4321"}
+
+		if os.Getenv("GIN_MODE") == "release" {
+			log.Println("ALLOWED_ORIGINS is empty in release mode; using local development defaults only")
+		}
+		return defaultOrigins
 	}
-	return strings.Split(origins, ",")
+
+	parsed := strings.FieldsFunc(origins, func(r rune) bool {
+		return r == ',' || r == ' ' || r == '\n' || r == '\r' || r == '\t'
+	})
+	filtered := make([]string, 0, len(parsed))
+	for _, origin := range parsed {
+		trimmed := strings.TrimSpace(origin)
+		if trimmed != "" {
+			filtered = append(filtered, trimmed)
+		}
+	}
+	return filtered
 }

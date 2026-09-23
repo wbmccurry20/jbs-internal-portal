@@ -6,7 +6,7 @@ export default {
       colors: {
         primary: {
           DEFAULT: '#00A0E0',
-          50:  '#E6F6FD',
+          50: '#E6F6FD',
           100: '#CCEDFA',
           200: '#99DBF6',
           300: '#66CAF1',
@@ -19,13 +19,27 @@ export default {
         },
         secondary: '#28a745',
         accent: '#6B7280',
-        // JBS brand slate for nav/sidebar backgrounds
+        'jbs-blue': '#00A0E0',
+        'jbs-blue-hover': '#0088CC',
         'jbs-dark': '#1A1A1A',
+        'jbs-black': '#000000',
         'jbs-charcoal': '#3E3832',
+        'jbs-gray': '#B8B8B8',
+        'jbs-cream': '#F0E8E0',
+        'jbs-beige': '#D8D0C8',
+        'jbs-brown': '#885830',
+        'jbs-sage': '#788078',
+        'jbs-gold': '#C0A870',
+        'jbs-light-blue': '#C0D8F0',
+        'jbs-white': '#FFFFFF',
+        'jbs-canvas': '#F7F6F4',
       },
       fontFamily: {
         sans: ['Roboto', 'system-ui', 'sans-serif'],
         heading: ['"Barlow Condensed"', 'sans-serif'],
+      },
+      boxShadow: {
+        card: '0 1px 2px rgba(0, 0, 0, 0.04)',
       },
     },
   },
