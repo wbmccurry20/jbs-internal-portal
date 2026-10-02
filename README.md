@@ -31,14 +31,20 @@ docker compose up -d postgres
 cp backend/.env.example backend/.env
 ```
 
-3. Start the backend:
+3. Install the root XLS helper used by reconciliation and its tests:
+
+```bash
+npm ci
+```
+
+4. Start the backend:
 
 ```bash
 cd backend
 go run ./cmd/server
 ```
 
-4. Start the frontend in a second terminal:
+5. Start the frontend in a second terminal:
 
 ```bash
 cd frontend
@@ -88,8 +94,9 @@ The app exposes a small set of authenticated and public API groups:
 See [docs/TESTING.md](docs/TESTING.md) for the supported local workflow. The short version is:
 
 ```bash
+npm ci
 cd backend && go test ./...
-cd frontend && npm test -- --run
+cd ../frontend && npm ci && npm test -- --run
 ```
 
 ## Deployment
@@ -97,34 +104,5 @@ cd frontend && npm test -- --run
 Use the production guidance in [DEPLOYMENT.md](DEPLOYMENT.md). Keep Railway secrets in the deployment platform, not in git.
 
 ## License
-
-Internal JBS use only.
-
-```bash
-DATABASE_URL=postgresql://jbs_user:jbs_password@localhost:5432/jbs_portal?sslmode=disable
-JWT_SECRET=your-secret-key-change-in-production
-GIN_MODE=debug
-PORT=8080
-ALLOWED_ORIGINS=http://localhost:4321
-UPLOAD_MAX_SIZE=10485760
-UPLOAD_DIR=./uploads
-```
-
-## 📝 Notes
-
-- The desktop `jbs-concur-converter` remains available for users who prefer it
-- Both applications produce identical Foundation CSV output
-- Web version adds user tracking, history, and collaboration features
-- Migration can be gradual - no need to force immediate switch
-
-## 🆘 Support
-
-For issues or questions, check:
-1. Database is running: `docker ps`
-2. Backend logs for errors
-3. Browser console for frontend errors
-4. JWT_SECRET is set in .env
-
-## 📜 License
 
 Internal JBS use only.
