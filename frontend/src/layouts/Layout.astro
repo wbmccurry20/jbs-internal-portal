@@ -48,6 +48,7 @@ const { title = 'JBS Internal Portal' } = Astro.props;
                 <div class="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
                   <div class="w-52 rounded-lg bg-jbs-dark p-1.5 shadow-2xl ring-1 ring-white/10">
                     <a href="/concur" class="dropdown-item text-white/80 hover:bg-white/5 hover:text-white">Concur Converter</a>
+                    <a href="/reimbursements" class="dropdown-item text-white/80 hover:bg-white/5 hover:text-white">Reimbursements</a>
                     <a href="/reconciliation" class="dropdown-item text-white/80 hover:bg-white/5 hover:text-white">Reconciliation</a>
                   </div>
                 </div>
@@ -104,6 +105,7 @@ const { title = 'JBS Internal Portal' } = Astro.props;
           <a href="/users" class="mobile-nav-link hidden" id="mobile-nav-users">Manage Users</a>
           <div class="my-1 hidden h-px bg-white/10" id="mobile-nav-finance-divider"></div>
           <a href="/concur" class="mobile-nav-link hidden" id="mobile-nav-concur">Concur Converter</a>
+          <a href="/reimbursements" class="mobile-nav-link hidden" id="mobile-nav-reimbursements">Reimbursements</a>
           <a href="/reconciliation" class="mobile-nav-link hidden" id="mobile-nav-reconciliation">Reconciliation</a>
         </div>
         <div class="border-t border-white/10 px-4 py-3">
@@ -224,13 +226,13 @@ const { title = 'JBS Internal Portal' } = Astro.props;
             show(['nav-dashboard', 'mobile-nav-dashboard',
                   'nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training', 'nav-users', 'nav-finance',
                   'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training', 'mobile-nav-users',
-                  'mobile-nav-finance-divider', 'mobile-nav-concur', 'mobile-nav-reconciliation']);
+                  'mobile-nav-finance-divider', 'mobile-nav-concur', 'mobile-nav-reimbursements', 'mobile-nav-reconciliation']);
           } else if (role === 'hr_admin') {
             show(['nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training', 'nav-users',
                   'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training', 'mobile-nav-users']);
           } else if (role === 'finance') {
             show(['nav-jobs', 'nav-bids', 'nav-finance',
-                  'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-finance-divider', 'mobile-nav-concur', 'mobile-nav-reconciliation']);
+              'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-finance-divider', 'mobile-nav-concur', 'mobile-nav-reimbursements', 'mobile-nav-reconciliation']);
           } else if (role === 'project_manager') {
             show(['nav-jobs', 'nav-bids', 'nav-supers', 'nav-licensing', 'nav-training',
                   'mobile-nav-jobs', 'mobile-nav-bids', 'mobile-nav-supers', 'mobile-nav-licensing', 'mobile-nav-training']);

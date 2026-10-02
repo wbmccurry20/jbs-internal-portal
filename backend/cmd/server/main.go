@@ -126,6 +126,9 @@ func main() {
 		api.GET("/download/:id", middleware.RequireRole("finance", "executive", "support"), handlers.DownloadConversionResult)
 		api.DELETE("/concur/:id", middleware.RequireRole("finance", "executive", "support"), handlers.DeleteConversionJob)
 
+		// Reimbursement conversion does not persist uploads or conversion history.
+		api.POST("/reimbursements/convert", middleware.RequireRole("finance", "executive", "support"), middleware.RateLimitUpload(), handlers.ConvertReimbursementFile)
+
 		// Reconciliation routes (finance, executive, and support only)
 		api.POST("/reconciliation/upload", middleware.RequireRole("finance", "executive", "support"), middleware.RateLimitUpload(), handlers.UploadReconciliationFiles)
 		api.GET("/reconciliation/history", middleware.RequireRole("finance", "executive", "support"), handlers.GetReconciliationHistory)

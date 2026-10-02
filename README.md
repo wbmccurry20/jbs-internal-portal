@@ -76,6 +76,7 @@ Do not document or reuse production credentials in this repo.
 - Training
 - Users
 - Concur
+- Reimbursements
 - Reconciliation
 - Invite flow
 - Change password
@@ -86,6 +87,7 @@ The app exposes a small set of authenticated and public API groups:
 
 - Auth: login, logout-style session validation, current user, change-password
 - Concur: upload and history for expense conversion jobs
+- Reimbursements: convert Foundation-formatted employee reimbursement workbooks to grouped import CSVs
 - Health: backend health checks
 - Additional operational routes exist for jobs, bids, users, training, licensing, and support tooling, but the core local-dev flow is centered on auth + Concur + health
 

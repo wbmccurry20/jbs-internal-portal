@@ -1,0 +1,38 @@
+﻿TRUE,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,HEADER,,,,,,,,,,,,,,,,,,,,,,,DETAIL,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Field Name     * Indicates Required,* Single or Multiple Distribution Detail lines,Voucher Reference ID,* Vendor No,* Invoice Date,* Transaction Date,$  Header Amount,Invoice Description,Invoice No,Due Date,Retainage Amount,PO/Sub No,Voucher type,Payment Type,Check No,"Check Amount /
+Payment Amount","Check Date / 
+Payment Date",Terms No,Discount Date,Discount Amount,Scanned Invoice Link,*  G/L Expense,Div 1,Div 2,Div 3,Div 4,Job No,Phase No,Cost Code No,Cost Class No,$  Distribution Amount,Description,Equipment No,Service Code,Units
+Field Type,REQUIRED,Character,Character,Date,Date,Numeric,Character,Character,Date,Numeric,Character, Character, Character,Numeric,Numeric,Date,Character,Date,Numeric,Character,Numeric,Numeric,Numeric,Numeric,Numeric,Character,Character,Character,Character,Numeric,Character,Character,Character,Numeric
+Max Length, Y OR N,20,10,1/13/2021,1/13/2021,12/2 decimals,30,30,1/13/2021,12/2 decimals,10,1,10,10,18/2 decimals,1/13/2021,5,1/13/2021,12/2 decimals,1000,10,8,8,8,8,10,10,10,5,12/2 decimals,30,10,10,11/3 decimals
+Special Instructions DO NOT Enter in this column., 'Y' FOR MULTI-LINE,Enter Voucher # If Multiple Line,,Use date format of 1/1/2021,Use date format of 1/1/2021,For Multiple Distribution add up the Amounts from column AD per Voucher Ref ID and insert the Header Total into the Header Amount,,,Use date format of 1/1/2021,,,"Enter 
+'R' for Regular
+'C' for Credit or 
+'P' for Prepaid","Only if a Voucher Type of 'P' is selected enter a 
+'CHK' for Check or 
+'CRC' for Credit Card
+'EFT' for Other/EFT",These fields are required for Prepaid Check,,,Term code will need to be defined in Foundation prior to use. Discounts may not be used with credit invoices.,* If a date is entered a Discount Amount will be required.,*  If a Discount Date entered this field is required.,"Can be used to enter in the image address link. 
+Note: Images themselves are not attached. This just establishes a link to where the image is stored.",,Used only for Divisionalized companies.  Divisions must be predefined in system prior to import,,,,,,,,Used only for Multiple Distribution Invoices,,Must be predefined in system prior to import,,
+, 'N' FOR SINGLE LINE,,,,,,,,,,,,,,"These fields are required for 
+Prepaid Credit Card / 
+Prepaid Other/EFT",,,,,,,,,,,,,,,,,,,
+,N,,138,9/22/2026,9/22/2026,66.55,MAVERIK,,,,,P,EFT,,66.55,9/22/2026,,,,,5060,,,,,2026-502,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,73.13,QuikTrip,,,,,P,EFT,,73.13,9/22/2026,,,,,5060,,,,,2026-502,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,49.79,Circle K,,,,,P,EFT,,49.79,9/22/2026,,,,,5060,,,,,2026-502,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,63.53,QuikTrip,,,,,P,EFT,,63.53,9/22/2026,,,,,5060,,,,,2026-502,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,74.2,QuikTrip,,,,,P,EFT,,74.2,9/22/2026,,,,,5060,,,,,2026-502,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,68.78,MAVERIK,,,,,P,EFT,,68.78,9/22/2026,,,,,5060,,,,,2026-502,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,77.18,QuikTrip,,,,,P,EFT,,77.18,9/22/2026,,,,,5060,,,,,2026-1103,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,59.08,Loves#253,,,,,P,EFT,,59.08,9/22/2026,,,,,5060,,,,,2026-1103,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,37.51,ACE Hardware,,,,,P,EFT,,37.51,9/22/2026,,,,,5160,,,,,2026-502,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,62.02,KROGER FUEL,,,,,P,EFT,,62.02,9/22/2026,,,,,5060,,,,,2026-1103,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,46.11,QuikTrip,,,,,P,EFT,,46.11,9/22/2026,,,,,5060,,,,,2026-1103,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,62.11,Flying J,,,,,P,EFT,,62.11,9/22/2026,,,,,5060,,,,,2026-1103,,1,7,,,,,
+,N,,138,9/22/2026,9/22/2026,118.35,The Home Depot,,,,,P,EFT,,118.35,9/22/2026,,,,,5160,,,,,2026-502,,90000,2,,,,,

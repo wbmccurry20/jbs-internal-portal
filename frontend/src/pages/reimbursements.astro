@@ -1,0 +1,117 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout>
+  <div class="mx-auto max-w-3xl space-y-6">
+    <header>
+      <p class="text-sm font-medium text-primary-700">Finance</p>
+      <h1 class="mt-1 text-3xl font-bold text-gray-900">Reimbursements</h1>
+    </header>
+
+    <form id="reimbursement-form" class="space-y-5 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <div>
+        <label for="reimbursement-file" class="block text-sm font-medium text-gray-800">Reimbursement workbook</label>
+        <input
+          id="reimbursement-file"
+          name="file"
+          type="file"
+          accept=".xlsx,.xlsm"
+          required
+          class="mt-2 block w-full rounded-md border border-gray-300 p-2 text-sm text-gray-700 file:mr-4 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200"
+        />
+        <p id="selected-file" class="mt-1 text-xs text-gray-500">Excel workbooks only, up to 10 MB.</p>
+      </div>
+
+      <div>
+        <label for="invoice-description" class="block text-sm font-medium text-gray-800">Common invoice description</label>
+        <input
+          id="invoice-description"
+          name="invoice_description"
+          type="text"
+          maxlength="30"
+          required
+          value="Employee Reimbursement"
+          class="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
+        />
+      </div>
+
+      <div id="conversion-status" class="hidden rounded-md px-4 py-3 text-sm" role="status" aria-live="polite"></div>
+
+      <button
+        id="convert-button"
+        type="submit"
+        class="inline-flex items-center justify-center rounded-md bg-primary-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        Convert and download CSV
+      </button>
+    </form>
+  </div>
+
+  <script>
+    import { getApiUrl } from '../utils/api';
+
+    const apiUrl = getApiUrl();
+    const token = localStorage.getItem('jbs_token');
+
+    if (!token) {
+      window.location.href = '/';
+    }
+
+    const form = document.getElementById('reimbursement-form') as HTMLFormElement;
+    const fileInput = document.getElementById('reimbursement-file') as HTMLInputElement;
+    const selectedFile = document.getElementById('selected-file')!;
+    const status = document.getElementById('conversion-status')!;
+    const button = document.getElementById('convert-button') as HTMLButtonElement;
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files?.[0];
+      selectedFile.textContent = file ? `Selected: ${file.name}` : 'Excel workbooks only, up to 10 MB.';
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const file = fileInput.files?.[0];
+      const description = (document.getElementById('invoice-description') as HTMLInputElement).value.trim();
+      if (!file) return;
+
+      status.className = 'rounded-md bg-blue-50 px-4 py-3 text-sm text-blue-800';
+      status.textContent = 'Converting workbook…';
+      button.disabled = true;
+
+      try {
+        const body = new FormData();
+        body.append('file', file);
+        body.append('invoice_description', description);
+
+        const response = await fetch(`${apiUrl}/reimbursements/convert`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body,
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.error || 'Conversion failed. Check the workbook and try again.');
+        }
+
+        const downloadUrl = URL.createObjectURL(await response.blob());
+        const download = document.createElement('a');
+        download.href = downloadUrl;
+        download.download = 'foundation_reimbursements.csv';
+        document.body.appendChild(download);
+        download.click();
+        download.remove();
+        window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+
+        status.className = 'rounded-md bg-green-50 px-4 py-3 text-sm text-green-800';
+        status.textContent = 'Foundation reimbursement CSV downloaded.';
+      } catch (error) {
+        status.className = 'rounded-md bg-red-50 px-4 py-3 text-sm text-red-800';
+        status.textContent = error instanceof Error ? error.message : 'Conversion failed.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</Layout>
