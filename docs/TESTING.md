@@ -1,223 +1,51 @@
-# Testing Guide - JBS Internal Portal
+# Testing guide
 
-## Overview
-This document explains how to run and maintain the test suite for the JBS Internal Portal. The test suite covers authentication, reconciliation logic, file handling, and API endpoints.
+This project keeps tests local-first. The backend must run in a clean dev environment without production credentials, and any DB-backed test must opt in explicitly.
 
-## Quick Start
+## Backend
 
-### Backend Tests
+Run the default suite:
+
 ```bash
 cd backend
 go test ./...
 ```
 
-**Test Coverage Goals**:
-- Auth module: 95%+ ✅
-- Handlers: 80%+
-- Services (reconciliation): 90%+
-- Middleware: 80%+
-- Utils: 80%+ ✅
+This must pass on a clean machine without Railway secrets or a production `DATABASE_URL`.
 
-### Run Specific Test Package
+For a database-backed run, start local Postgres and opt in with a test variable:
+
 ```bash
-# Auth tests
-go test -v ./internal/auth/...
-
-# Handler tests
-go test -v ./internal/handlers/...
-
-# Service tests
-go test -v ./internal/services/...
-
-# Utils tests
-go test -v ./internal/utils/...
-
-# Middleware tests
-go test -v ./internal/middleware/...
+docker compose up -d postgres
+export TEST_DATABASE_URL="postgresql://jbs_user:jbs_password@localhost:5433/jbs_portal?sslmode=disable"
+cd backend && go test ./...
 ```
 
-### Run with Coverage
+Rules:
+- Unit tests must not require the production `DATABASE_URL`.
+- Integration tests that need Postgres should skip when `TEST_DATABASE_URL` is unset.
+- No test may write to production data.
+- Coverage reports are optional and not a release gate.
+
+## Frontend
+
+If the frontend test script is present, run it from the repo root:
+
 ```bash
-# All tests with coverage
-go test -cover ./...
-
-# Generate coverage report
-go test -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out
-
-# View coverage by package
-go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
+cd frontend
+npm test -- --run
 ```
 
----
+The project should not ship a broken test script that only works in a watch terminal.
 
-## Test Structure
+## A short checklist for contributors
 
-```
-backend/
-├── internal/
-│   ├── auth/
-│   │   ├── jwt.go
-│   │   └── jwt_test.go              # ✅ JWT & password hashing tests
-│   ├── handlers/
-│   │   ├── auth_handler.go
-│   │   ├── auth_handler_test.go     # ✅ Authentication endpoint tests
-│   │   ├── reconciliation_handler.go
-│   │   └── health_test.go           # ✅ Health endpoint tests
-│   ├── middleware/
-│   │   ├── middleware.go
-│   │   └── middleware_test.go       # ✅ Auth middleware tests
-│   ├── services/
-│   │   ├── reconciliation.go
-│   │   └── reconciliation_test.go   # ✅ Reconciliation logic tests
-│   └── utils/
-│       ├── file_validation.go
-│       └── file_validation_test.go  # ✅ File validation tests
-```
+- Do not hardcode developer paths or machine-specific env files.
+- Do not depend on production secrets in unit tests.
+- Prefer skip logic in tests that require Postgres.
+- Keep test commands simple enough for a fresh clone to run.
+- If a test expects a local DB, require `TEST_DATABASE_URL` or Docker instead of a hidden laptop setup.
 
----
-
-## Test Categories
-
-### 1. Unit Tests
-
-**Authentication & Security**
-- ✅ Password hashing and verification
-- ✅ JWT token generation
-- ✅ JWT token validation
-- ✅ Token expiration handling
-- ✅ 'None' algorithm attack prevention
-- ✅ Different user tokens
-- ✅ Special characters in email
-
-**File Validation**
-- ✅ Excel file validation (.xlsx, .xls)
-- ✅ File size limits (10MB)
-- ✅ Invalid file extensions
-- ✅ Path traversal prevention
-- ✅ Filename sanitization
-
-**Reconciliation Engine**
-- ✅ Exact amount/date matching
-- ✅ Date tolerance (±N days)
-- ✅ Amount tolerance (±%)
-- ✅ Void transaction detection
-- ✅ Match rate calculation
-- ✅ Empty input handling
-- ✅ Multiple matches
-
-### 2. Integration Tests
-
-**Authentication Endpoints**
-- Login with valid credentials
-- Login with invalid password
-- Login with invalid JSON
-- User not found
-- Get current user
-- Unauthorized access
-
-**Reconciliation Endpoints**
-- File upload
-- Processing jobs
-- Job history
-- Download results
-- Error handling
-
-### 3. Security Tests
-
-**Input Validation**
-- SQL injection prevention
-- Path traversal prevention
-- File type validation
-- Size limit enforcement
-
-**Authentication**
-- Token expiration
-- Invalid token handling
-- Missing JWT secret
-- Algorithm validation
-
----
-
-## Running Tests
-
-### All Tests
-```bash
-cd backend
-go test ./...
-```
-
-### Verbose Output
-```bash
-go test -v ./...
-```
-
-### Specific Test
-```bash
-go test -v -run TestGenerateToken ./internal/auth/...
-go test -v -run TestReconciliationEngine_ExactMatch ./internal/services/...
-```
-
-### With Race Detection
-```bash
-go test -race ./...
-```
-
-### Benchmark Tests
-```bash
-go test -bench=. ./...
-```
-
----
-
-## Test Database
-
-For integration tests that require a database:
-
-**Option 1: In-Memory SQLite (Fast)**
-```go
-database.DB, _ = sql.Open("sqlite3", ":memory:")
-```
-
-**Option 2: Test PostgreSQL Container**
-```bash
-# Using Docker
-docker run -d \
-  --name jbs-test-db \
-  -e POSTGRES_PASSWORD=test \
-  -e POSTGRES_DB=jbs_test \
-  -p 5433:5432 \
-  postgres:15-alpine
-
-# Run tests with test database
-export DATABASE_URL="postgresql://postgres:test@localhost:5433/jbs_test?sslmode=disable"
-go test ./...
-
-# Cleanup
-docker stop jbs-test-db && docker rm jbs-test-db
-```
-
-**Option 3: Mocking**
-For unit tests, we mock database calls to avoid external dependencies.
-
----
-
-## Writing New Tests
-
-### Test Template
-```go
-package yourpackage
-
-import "testing"
-
-func TestYourFunction(t *testing.T) {
-	// Arrange
-	input := "test data"
-	expected := "expected result"
-	
-	// Act
-	result := YourFunction(input)
-	
 	// Assert
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)

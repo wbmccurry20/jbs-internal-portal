@@ -1,66 +1,18 @@
-# JBS Internal Portal - Security Review
+# Security notes
 
-## ✅ Current Security Measures
+This project keeps auth and file handling focused on the basics that matter for internal operations:
 
-### Authentication & Authorization
-- ✓ JWT token-based authentication
-- ✓ Bcrypt password hashing (cost 10)
-- ✓ HTTP-only token storage (localStorage - needs improvement)
-- ✓ Protected routes with middleware
-- ✓ Support backdoor account for emergency access
+- JWT-based authentication with role checks on protected routes
+- Bcrypt password hashing for stored user credentials
+- Request/response validation and upload size limits on the API layer
+- CORS restricted to explicit origins in release mode
+- Secrets kept in environment variables, not committed to git
 
-### Database Security
-- ✓ Parameterized SQL queries (prevents SQL injection)
-- ✓ Connection string in environment variables
-- ✓ PostgreSQL with SSL support
+Operational guidance:
 
-### Network Security
-- ✓ CORS protection with allowed origins
-- ✓ HTTPS enforced by Railway
-- ✓ Environment-based configuration
+- Keep `JWT_SECRET`, `DATABASE_URL`, and other production credentials in Railway or the local env used for deployment.
+- Do not commit `.env` files or generated upload directories.
+- Treat uploaded files as operational data and keep them out of source control.
+- For production, configure `ALLOWED_ORIGINS` explicitly and avoid permissive wildcard CORS values.
 
-### Data Protection
-- ✓ Sensitive files in .gitignore
-- ✓ No hardcoded secrets in code
-- ✓ File upload size limits (10MB)
-
-## ⚠️ Security Improvements Needed
-
-### Critical
-1. **Rate Limiting** - Prevent brute force attacks on login
-2. **Input Validation** - Sanitize all user inputs
-3. **File Type Validation** - Restrict uploads to Excel/CSV only
-4. **CSRF Protection** - Add tokens for state-changing operations
-5. **Security Headers** - Add Helmet-style headers (CSP, X-Frame-Options, etc.)
-6. **HTTP-only Cookies** - Move JWT from localStorage to secure cookies
-
-### Important
-7. **Request Logging** - Audit trail for all operations
-8. **Failed Login Tracking** - Lock accounts after N failed attempts
-9. **Session Timeouts** - Auto-logout after inactivity
-10. **Content Security Policy** - Restrict script sources
-
-### Recommended
-11. **Two-Factor Authentication** - For sensitive accounts
-12. **File Scanning** - Antivirus scanning for uploads
-13. **Encryption at Rest** - For sensitive uploaded files
-14. **Regular Security Audits** - Automated dependency scanning
-
-## Implementation Priority
-
-### Phase 1 (Immediate)
-- Rate limiting on login endpoint
-- File type validation
-- Security headers
-- Input validation
-
-### Phase 2 (This Week)
-- HTTP-only cookies for JWT
-- CSRF tokens
-- Request logging
-- Failed login tracking
-
-### Phase 3 (Future)
-- 2FA support
-- File encryption
-- Advanced monitoring
+This repo is for internal JBS operations, not public internet exposure. The goal is secure, explicit configuration and sane defaults rather than a large security rewrite.

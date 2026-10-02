@@ -1,51 +1,44 @@
 # JBS Internal Portal
 
-Web-based financial tools for JBS including Concur expense conversion and bank reconciliation.
+Internal operations and finance portal for JBS Construction Group. The app centralizes authenticated tools for jobs, bids, superintendent lookup, licensing, training, reimbursement support, and the Concur/reconciliation workflows used by the finance team.
 
-## 🎯 Overview
+## Stack
 
-This replaces the desktop `jbs-concur-converter` with a modern web application that supports:
-- Multi-user access with authentication
-- Concur to Foundation expense conversion
-- Bank reconciliation with intelligent matching
-- Processing history and audit trails
-- Scalable architecture for future growth
+- Frontend: Astro 5 + Tailwind CSS
+- Backend: Go + Gin
+- Database: PostgreSQL
+- Local tooling: Docker Compose for Postgres, Node for frontend, Go for backend
 
-## 🛠 Tech Stack
+## Prerequisites
 
-- **Frontend**: Astro 5 + React + TailwindCSS
-- **Backend**: Go (Gin framework)
-- **Database**: PostgreSQL
-- **File Processing**: Pure Go (excelize for Excel)
+- Docker Desktop or Docker Engine
+- Go 1.24+
+- Node.js 20+
+- Git
 
-## 🚀 Quick Start
+## Local run
 
-### Prerequisites
-- Docker Desktop
-- Go 1.21+
-- Node.js 18+
-
-### 1. Initial Setup
+1. Start Postgres:
 
 ```bash
-# Clone and navigate to the project
-cd jbs-internal-portal
-
-# Run setup script (starts PostgreSQL, creates .env)
-chmod +x setup.sh
-./setup.sh
+cd /path/to/jbs-internal-portal
+docker compose up -d postgres
 ```
 
-### 2. Start the Backend
+2. Create the backend local env if it does not exist:
 
 ```bash
-cd backend/cmd/server
-go run main.go
+cp backend/.env.example backend/.env
 ```
 
-Backend runs at `http://localhost:8080`
+3. Start the backend:
 
-### 3. Start the Frontend
+```bash
+cd backend
+go run ./cmd/server
+```
+
+4. Start the frontend in a second terminal:
 
 ```bash
 cd frontend
@@ -53,170 +46,59 @@ npm install
 npm run dev
 ```
 
-Frontend runs at `http://localhost:4321`
+The app is available at:
+- Frontend: http://localhost:4321
+- Backend API: http://localhost:8080
 
-### 4. Login
+## Local-only login note
 
-- **Email**: `admin@jbs.com`
-- **Password**: `password123`
+For local development, the bootstrap admin is a seed account only and should not be used in production. Example local-only access:
 
-## 📁 Project Structure
+- Email: admin@jbs.com
+- Password: password123
 
-```
-jbs-internal-portal/
-├── backend/
-│   ├── cmd/server/          # Application entry point
-│   ├── internal/
-│   │   ├── handlers/        # HTTP request handlers
-│   │   ├── services/        # Business logic
-│   │   │   └── concur_converter.go  # Pure Go conversion
-│   │   ├── models/          # Data structures
-│   │   ├── database/        # DB connection & migrations
-│   │   ├── auth/            # JWT authentication
-│   │   └── middleware/      # Auth & security
-│   ├── uploads/             # Temporary file storage
-│   └── go.mod
-│
-├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── index.astro         # Login page
-│   │   │   ├── dashboard.astro     # Main dashboard
-│   │   │   ├── concur/
-│   │   │   │   └── index.astro     # Concur converter
-│   │   │   └── reconciliation/
-│   │   │       └── index.astro     # Reconciliation tool
-│   │   ├── layouts/
-│   │   │   └── Layout.astro        # Main layout with nav
-│   │   └── styles/
-│   │       └── global.css
-│   └── package.json
-│
-└── docker-compose.yml       # PostgreSQL setup
-```
+Do not document or reuse production credentials in this repo.
 
-## 🔐 API Endpoints
+## Primary pages
 
-### Authentication
-- `POST /api/login` - User login
-- `GET /api/user` - Get current user (authenticated)
+- Login
+- Dashboard
+- Jobs
+- Bids
+- Superintendents
+- Licensing
+- Training
+- Users
+- Concur
+- Reconciliation
+- Invite flow
+- Change password
 
-### Concur Conversion
-- `POST /api/concur/upload` - Upload and convert Concur file
-- `GET /api/concur/history` - Get conversion history
-- `GET /api/download/:id` - Download converted CSV
+## API at a glance
 
-### Reconciliation (Coming Soon)
-- `POST /api/reconciliation/upload` - Upload bank & Foundation files
-- `GET /api/reconciliation/history` - Get reconciliation history
+The app exposes a small set of authenticated and public API groups:
 
-## 📊 Database Schema
+- Auth: login, logout-style session validation, current user, change-password
+- Concur: upload and history for expense conversion jobs
+- Health: backend health checks
+- Additional operational routes exist for jobs, bids, users, training, licensing, and support tooling, but the core local-dev flow is centered on auth + Concur + health
 
-```sql
-users (
-  id, email, password, name, role, created_at, updated_at
-)
+## Tests
 
-conversion_jobs (
-  id, user_id, filename, status, vendor_id, 
-  rows_processed, rows_skipped, output_file_path, 
-  error_log, created_at, completed_at
-)
-
-reconciliation_jobs (
-  id, user_id, bank_filename, foundation_filename, 
-  status, tolerance_days, matched_count, void_count,
-  ambiguous_void_count, output_file_path, 
-  created_at, completed_at
-)
-
-vendor_configs (
-  id, vendor_name, vendor_id, is_default, created_at
-)
-```
-
-## 🔄 Migration from Python Desktop App
-
-### What's Different
-
-**Old (Python Desktop)**:
-- Tkinter GUI
-- Local file processing
-- Windows .exe distribution
-- Single user
-
-**New (Go Web App)**:
-- Web browser interface
-- Server-side processing
-- Access from anywhere
-- Multi-user with auth
-- Processing history
-- Role-based permissions
-
-### Conversion Logic
-
-The Concur-to-Foundation conversion has been **completely rewritten in pure Go**:
-- Uses `excelize/v2` for Excel reading
-- CSV generation with Go's `encoding/csv`
-- Same validation rules as Python version
-- Same 48-column Foundation template
-- Multi-format date parsing
-- Cross-platform compatibility
-
-## 🧪 Testing
-
-### Test Concur Conversion
-
-1. Login to portal
-2. Navigate to "Concur Converter"
-3. Upload a Concur export (.xlsx)
-4. Set vendor ID (default: 138)
-5. Click "Convert to Foundation Format"
-6. Download the resulting CSV
-
-### Verify Output
-
-The output CSV should:
-- Have 12 header rows (Foundation template)
-- One data row per expense
-- Dates formatted as M/D/YYYY
-- Vendor ID in column 3
-- Amount in columns 6, 15, and 30
-
-## 🚧 Next Steps
-
-1. **Reconciliation Engine** (Priority)
-   - Port reconciliation logic to Go
-   - Excel report generation
-   - Void detection
-   - Ambiguous void handling
-
-2. **Enhanced Features**
-   - Batch file processing
-   - Scheduled imports
-   - Email notifications
-   - Advanced reporting dashboard
-
-3. **Deployment**
-   - Railway.app setup
-   - Custom domain
-   - Production environment
-   - Backup strategy
-
-## 💻 Development
-
-### Add a New User
+See [docs/TESTING.md](docs/TESTING.md) for the supported local workflow. The short version is:
 
 ```bash
-# Connect to database
-docker exec -it jbs-postgres psql -U jbs_user -d jbs_portal
-
-# Create user (password will be hashed)
-INSERT INTO users (email, password, name, role)
-VALUES ('user@jbs.com', '$2a$14$...', 'User Name', 'employee');
+cd backend && go test ./...
+cd frontend && npm test -- --run
 ```
 
-### Environment Variables
+## Deployment
+
+Use the production guidance in [DEPLOYMENT.md](DEPLOYMENT.md). Keep Railway secrets in the deployment platform, not in git.
+
+## License
+
+Internal JBS use only.
 
 ```bash
 DATABASE_URL=postgresql://jbs_user:jbs_password@localhost:5432/jbs_portal?sslmode=disable

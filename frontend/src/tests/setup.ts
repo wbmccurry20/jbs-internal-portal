@@ -1,27 +1,26 @@
 import { afterEach } from 'vitest';
 
-// Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
   value: (query: string) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: () => {}, // deprecated
-    removeListener: () => {}, // deprecated
+    addListener: () => {},
+    removeListener: () => {},
     addEventListener: () => {},
     removeEventListener: () => {},
-    dispatchEvent: () => {},
+    dispatchEvent: () => false,
   }),
 });
 
-// Mock localStorage
 const localStorageMock = {
   getItem: (key: string) => null,
   setItem: (key: string, value: string) => {},
   removeItem: (key: string) => {},
   clear: () => {},
   length: 0,
-  key: (index: number) => null,
+  key: (_index: number) => null,
 };
+
 globalThis.localStorage = localStorageMock as Storage;
