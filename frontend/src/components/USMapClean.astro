@@ -52,6 +52,7 @@
 
     .dot-active { background: #22C55E; }
     .dot-expiring { background: #EAB308; }
+    .dot-pending { background: #3B82F6; }
     .dot-expired { background: #EF4444; }
     .dot-none { background: #D1D5DB; }
 
@@ -93,6 +94,7 @@
 
     .status-active { background: #22C55E; }
     .status-expiring { background: #EAB308; }
+    .status-pending { background: #3B82F6; }
     .status-expired { background: #EF4444; }
     .status-none { background: #D1D5DB; }
 
@@ -158,6 +160,10 @@
         <span><span id="expiring-count-clean">0</span> Expiring</span>
       </div>
       <div class="legend-item">
+        <div class="legend-dot dot-pending"></div>
+        <span><span id="pending-count-clean">0</span> Pending</span>
+      </div>
+      <div class="legend-item">
         <div class="legend-dot dot-expired"></div>
         <span><span id="expired-count-clean">0</span> Expired</span>
       </div>
@@ -205,6 +211,8 @@
     if (!licenses || licenses.length === 0) return 'none';
     if (licenses.some(l => l.status === 'expired')) return 'expired';
     if (licenses.some(l => l.status === 'expiring')) return 'expiring';
+    if (licenses.some(l => l.status === 'active')) return 'active';
+    if (licenses.some(l => l.status === 'pending')) return 'pending';
     return 'active';
   }
 
@@ -279,7 +287,7 @@
     });
 
     // Count states in each status bucket
-    let activeStates = 0, expiringStates = 0, expiredStates = 0, noneCount = 0;
+    let activeStates = 0, expiringStates = 0, pendingStates = 0, expiredStates = 0, noneCount = 0;
 
     container.innerHTML = '';
 
@@ -296,6 +304,9 @@
         } else if (aggregated === 'expiring') {
           statusClass = 'status-expiring';
           expiringStates++;
+        } else if (aggregated === 'pending') {
+          statusClass = 'status-pending';
+          pendingStates++;
         } else {
           statusClass = 'status-active';
           activeStates++;
@@ -331,6 +342,7 @@
     document.getElementById('licensed-count-clean')!.textContent = String(licensedCount);
     document.getElementById('active-count-clean')!.textContent = String(activeStates);
     document.getElementById('expiring-count-clean')!.textContent = String(expiringStates);
+    document.getElementById('pending-count-clean')!.textContent = String(pendingStates);
     document.getElementById('expired-count-clean')!.textContent = String(expiredStates);
     document.getElementById('none-count-clean')!.textContent = String(noneCount);
 

@@ -32,7 +32,7 @@ func ListLicenses(c *gin.Context) {
 		LEFT JOIN (
 			SELECT license_id, COUNT(*) AS doc_count FROM license_documents GROUP BY license_id
 		) dc ON dc.license_id = sl.id
-		WHERE 1=1
+		WHERE sl.is_active IS DISTINCT FROM FALSE
 	`
 	args := []interface{}{}
 	argPos := 1
@@ -143,6 +143,7 @@ func GetStateSummary(c *gin.Context) {
 			COUNT(CASE WHEN is_city_license = true THEN 1 END) as city_licenses,
 			COUNT(CASE WHEN is_city_license = false OR is_city_license IS NULL THEN 1 END) as state_licenses
 		FROM state_licenses
+		WHERE is_active IS DISTINCT FROM FALSE
 		GROUP BY state
 		ORDER BY state
 	`
