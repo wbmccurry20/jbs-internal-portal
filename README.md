@@ -87,7 +87,7 @@ The app exposes a small set of authenticated and public API groups:
 
 - Auth: login, logout-style session validation, current user, change-password
 - Concur: upload and history for expense conversion jobs
-- Reimbursements: convert accounting extract CSVs or Foundation-formatted reimbursement workbooks to grouped Foundation CSVs. CSV invoice dates use Report Processing Payment Date, transaction dates use Report Entry Transaction Date, and EFT dates use Estimated Payment Date. Vendor 138, prepaid voucher P, and EFT remain fixed. Reports and employees are grouped separately; non-USD, personal, non-CASH, non-employee, and credit rows are rejected rather than skipped. Long merchant names are shortened to 30 characters with a download warning.
+- Reimbursements: convert accounting extract CSVs or Foundation-formatted reimbursement workbooks to Foundation CSVs. Each expense is a single-line distribution (`N`) with a blank Voucher Reference ID and its own header, payment, and distribution amounts. CSV invoice dates use Report Processing Payment Date, transaction dates use Report Entry Transaction Date, and EFT dates use Estimated Payment Date. Vendor 138, prepaid voucher P, and EFT remain fixed. Non-USD, personal, non-CASH, non-employee, and credit rows are rejected rather than skipped. Long merchant names are shortened to 30 characters with a download warning.
 - Health: backend health checks
 - Additional operational routes exist for jobs, bids, users, training, licensing, and support tooling, but the core local-dev flow is centered on auth + Concur + health
 

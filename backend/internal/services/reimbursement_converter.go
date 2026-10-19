@@ -2,9 +2,7 @@ package services
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/csv"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"math"
@@ -32,11 +30,6 @@ type reimbursementLine struct {
 	amountCents int64
 }
 
-type reimbursementGroup struct {
-	lines      []reimbursementLine
-	totalCents int64
-}
-
 // ConvertReimbursementWorkbook creates a Foundation CSV from the Basic Invoice sheet.
 func ConvertReimbursementWorkbook(input io.Reader, invoiceDescription string) (ReimbursementConversion, error) {
 	var result ReimbursementConversion
@@ -62,12 +55,11 @@ func ConvertReimbursementWorkbook(input io.Reader, invoiceDescription string) (R
 	if len(rows) == 0 {
 		return result, fmt.Errorf("%q sheet is empty", reimbursementSheet)
 	}
-	return convertReimbursementRows(rows, invoiceDescription, nil)
+	return convertReimbursementRows(rows, invoiceDescription)
 }
 
-func convertReimbursementRows(rows [][]string, invoiceDescription string, identities []string) (ReimbursementConversion, error) {
+func convertReimbursementRows(rows [][]string, invoiceDescription string) (ReimbursementConversion, error) {
 	var result ReimbursementConversion
-	var err error
 	invoiceDescription = strings.TrimSpace(invoiceDescription)
 	if invoiceDescription == "" {
 		invoiceDescription = "Employee Reimbursement"
@@ -147,15 +139,7 @@ func convertReimbursementRows(rows [][]string, invoiceDescription string, identi
 		return result, fmt.Errorf("Foundation template has no reimbursement rows")
 	}
 
-	ignoredHeaderFields := map[int]bool{
-		indices["multiple"]:            true,
-		indices["voucher_reference"]:   true,
-		indices["header_amount"]:       true,
-		indices["invoice_description"]: true,
-		indices["payment_amount"]:      true,
-	}
-	groups := make([]reimbursementGroup, 0)
-	groupByKey := make(map[string]int)
+	lines := make([]reimbursementLine, 0)
 	for rowIndex := dataStart; rowIndex < len(rows); rowIndex++ {
 		row := padReimbursementRow(rows[rowIndex])
 		if isEmptyReimbursementRow(row) {
@@ -194,32 +178,13 @@ func convertReimbursementRows(rows [][]string, invoiceDescription string, identi
 		row[indices["voucher_type"]] = "P"
 		row[indices["payment_type"]] = "EFT"
 
-		var groupKey strings.Builder
-		if identities != nil {
-			fmt.Fprintf(&groupKey, "%d:%s;", len(identities[rowIndex-dataStart]), identities[rowIndex-dataStart])
-		}
-		for index := 0; index < detailStart; index++ {
-			if ignoredHeaderFields[index] {
-				continue
-			}
-			value := strings.ReplaceAll(strings.ReplaceAll(row[index], "\r\n", "\n"), "\r", "\n")
-			fmt.Fprintf(&groupKey, "%d:%s;", len(value), value)
-		}
-		key := groupKey.String()
-		groupIndex, exists := groupByKey[key]
-		if !exists {
-			groupIndex = len(groups)
-			groupByKey[key] = groupIndex
-			groups = append(groups, reimbursementGroup{})
-		}
-		groups[groupIndex].lines = append(groups[groupIndex].lines, reimbursementLine{
+		lines = append(lines, reimbursementLine{
 			row:         row,
 			amountCents: amountCents,
 		})
-		groups[groupIndex].totalCents += amountCents
 		result.LineCount++
 	}
-	if len(groups) == 0 {
+	if len(lines) == 0 {
 		return result, fmt.Errorf("no reimbursement line items found")
 	}
 
@@ -243,29 +208,17 @@ func convertReimbursementRows(rows [][]string, invoiceDescription string, identi
 		}
 	}
 
-	for _, group := range groups {
-		voucherReference := ""
-		if len(group.lines) > 1 {
-			voucherReference, err = newReimbursementVoucherReference()
-			if err != nil {
-				return result, fmt.Errorf("failed to generate voucher reference: %w", err)
-			}
-		}
-		for _, line := range group.lines {
-			row := append([]string(nil), line.row...)
-			row[indices["multiple"]] = "N"
-			if len(group.lines) > 1 {
-				row[indices["multiple"]] = "Y"
-			}
-			row[indices["voucher_reference"]] = voucherReference
-			row[indices["header_amount"]] = formatReimbursementCents(group.totalCents)
-			row[indices["invoice_description"]] = invoiceDescription
-			row[indices["payment_amount"]] = formatReimbursementCents(group.totalCents)
-			row[indices["distribution_amount"]] = formatReimbursementCents(line.amountCents)
-			row[indices["detail_description"]] = strings.TrimSpace(line.row[indices["invoice_description"]])
-			if err := writer.Write(row); err != nil {
-				return result, fmt.Errorf("failed to write reimbursement row: %w", err)
-			}
+	for _, line := range lines {
+		row := append([]string(nil), line.row...)
+		row[indices["multiple"]] = "N"
+		row[indices["voucher_reference"]] = ""
+		row[indices["header_amount"]] = formatReimbursementCents(line.amountCents)
+		row[indices["invoice_description"]] = invoiceDescription
+		row[indices["payment_amount"]] = formatReimbursementCents(line.amountCents)
+		row[indices["distribution_amount"]] = formatReimbursementCents(line.amountCents)
+		row[indices["detail_description"]] = strings.TrimSpace(line.row[indices["invoice_description"]])
+		if err := writer.Write(row); err != nil {
+			return result, fmt.Errorf("failed to write reimbursement row: %w", err)
 		}
 	}
 	writer.Flush()
@@ -274,7 +227,7 @@ func convertReimbursementRows(rows [][]string, invoiceDescription string, identi
 	}
 
 	result.CSV = output.Bytes()
-	result.VoucherCount = len(groups)
+	result.VoucherCount = len(lines)
 	return result, nil
 }
 
@@ -346,12 +299,4 @@ func columnNamesForError(key string) string {
 
 func utf8Length(value string) int {
 	return len([]rune(value))
-}
-
-func newReimbursementVoucherReference() (string, error) {
-	randomBytes := make([]byte, 4)
-	if _, err := rand.Read(randomBytes); err != nil {
-		return "", err
-	}
-	return "RB" + time.Now().UTC().Format("0601021504") + hex.EncodeToString(randomBytes), nil
 }

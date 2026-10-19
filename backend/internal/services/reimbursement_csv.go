@@ -43,7 +43,6 @@ func ConvertReimbursementCSV(input io.Reader, invoiceDescription string) (Reimbu
 	if err != nil {
 		return result, fmt.Errorf("unable to read Foundation template: %w", err)
 	}
-	identities := make([]string, 0)
 	shortened := 0
 	for lineNumber := 2; ; lineNumber++ {
 		record, readErr := reader.Read()
@@ -87,9 +86,8 @@ func ConvertReimbursementCSV(input io.Reader, invoiceDescription string) (Reimbu
 		row[6], row[15], row[7] = formatReimbursementCents(amount), formatReimbursementCents(amount), merchant
 		row[21], row[26], row[28], row[29] = get("Journal Account Code"), get("Job"), get("Cost Code"), get("Cost Class")
 		rows = append(rows, row)
-		identities = append(identities, fmt.Sprintf("%d:%s%d:%s", len(get("Employee ID")), get("Employee ID"), len(get("Report ID")), get("Report ID")))
 	}
-	result, err = convertReimbursementRows(rows, invoiceDescription, identities)
+	result, err = convertReimbursementRows(rows, invoiceDescription)
 	result.ShortenedDescriptions = shortened
 	return result, err
 }

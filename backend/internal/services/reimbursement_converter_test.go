@@ -28,6 +28,9 @@ func TestConvertReimbursementCSVAccountingExtract(t *testing.T) {
 	if conversion.LineCount != len(source)-1 || len(output) != len(source)-1+14 {
 		t.Fatalf("source rows=%d output=%d lines=%d", len(source)-1, len(output), conversion.LineCount)
 	}
+	if conversion.VoucherCount != conversion.LineCount {
+		t.Errorf("voucher count=%d, want one per line (%d)", conversion.VoucherCount, conversion.LineCount)
+	}
 	golden, err := os.ReadFile("../../../docs/data/9.22 Wyatt Bell Reimb.csv")
 	if err != nil {
 		t.Fatal(err)
@@ -75,6 +78,12 @@ func TestConvertReimbursementCSVAccountingExtract(t *testing.T) {
 		expectedLines[strings.Join([]string{date, formatReimbursementCents(amount), record[23], record[32], record[30], record[29], merchant}, "|")]++
 	}
 	for _, record := range output[14:] {
+		if record[1] != "N" || record[2] != "" {
+			t.Errorf("distribution flag/reference = %q/%q, want N/empty", record[1], record[2])
+		}
+		if record[6] != record[30] || record[15] != record[30] {
+			t.Errorf("single-line amounts differ: header=%q payment=%q distribution=%q", record[6], record[15], record[30])
+		}
 		amount, err := parseReimbursementCents(record[30])
 		if err != nil {
 			t.Fatal(err)
@@ -114,16 +123,27 @@ func TestReimbursementCSVSeparatesReportsAndRejectsUnsupportedRows(t *testing.T)
 		}
 		return ConvertReimbursementCSV(&input, "")
 	}
-	for _, identityColumn := range []int{1, 4} {
+	for _, identityColumn := range []int{-1, 1, 4} {
 		first := append([]string(nil), source[1]...)
 		second := append([]string(nil), first...)
-		second[identityColumn] = "different identity"
+		if identityColumn >= 0 {
+			second[identityColumn] = "different identity"
+		}
 		result, err := convert([][]string{source[0], first, second})
 		if err != nil {
 			t.Fatal(err)
 		}
 		if result.VoucherCount != 2 {
 			t.Errorf("identity column %d merged unrelated vouchers", identityColumn)
+		}
+		output, err := csv.NewReader(bytes.NewReader(result.CSV)).ReadAll()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, row := range output[14:] {
+			if row[1] != "N" || row[2] != "" {
+				t.Errorf("identity column %d: expected N and blank reference, got %q/%q", identityColumn, row[1], row[2])
+			}
 		}
 	}
 	for _, change := range []struct {
@@ -138,7 +158,7 @@ func TestReimbursementCSVSeparatesReportsAndRejectsUnsupportedRows(t *testing.T)
 	}
 }
 
-func TestConvertReimbursementWorkbookUsesHeaderCompatibleGroups(t *testing.T) {
+func TestConvertReimbursementWorkbookUsesSingleLineDistributions(t *testing.T) {
 	input, err := os.Open("../../../docs/data/9.22 Wyatt Bell Reimb.xlsm")
 	if err != nil {
 		t.Skipf("sample workbook unavailable: %v", err)
@@ -152,8 +172,8 @@ func TestConvertReimbursementWorkbookUsesHeaderCompatibleGroups(t *testing.T) {
 	if conversion.LineCount != 13 {
 		t.Fatalf("LineCount = %d, want 13", conversion.LineCount)
 	}
-	if conversion.VoucherCount != 4 {
-		t.Fatalf("VoucherCount = %d, want 4", conversion.VoucherCount)
+	if conversion.VoucherCount != 13 {
+		t.Fatalf("VoucherCount = %d, want 13", conversion.VoucherCount)
 	}
 
 	records, err := csv.NewReader(strings.NewReader(string(conversion.CSV))).ReadAll()
@@ -170,12 +190,6 @@ func TestConvertReimbursementWorkbookUsesHeaderCompatibleGroups(t *testing.T) {
 		"5160|2026-502|1":     1,
 		"5160|2026-502|90000": 1,
 	}
-	expectedTotals := map[string]string{
-		"5060|2026-502|1":     "395.98",
-		"5060|2026-1103|1":    "306.50",
-		"5160|2026-502|1":     "37.51",
-		"5160|2026-502|90000": "118.35",
-	}
 	expectedMerchants := map[string]int{
 		"MAVERIK":        2,
 		"QuikTrip":       5,
@@ -187,8 +201,6 @@ func TestConvertReimbursementWorkbookUsesHeaderCompatibleGroups(t *testing.T) {
 		"The Home Depot": 1,
 	}
 	groupCounts := make(map[string]int)
-	groupReferences := make(map[string]string)
-	groupReferenceCounts := make(map[string]int)
 	merchantCounts := make(map[string]int)
 	var distributionTotal int64
 
@@ -216,19 +228,10 @@ func TestConvertReimbursementWorkbookUsesHeaderCompatibleGroups(t *testing.T) {
 			t.Fatalf("invalid distribution amount %q: %v", row[30], err)
 		}
 		distributionTotal += cents
-		if row[6] != expectedTotals[key] || row[15] != expectedTotals[key] {
-			t.Errorf("group %s totals = header %q payment %q, want %q", key, row[6], row[15], expectedTotals[key])
+		if row[6] != row[30] || row[15] != row[30] {
+			t.Errorf("single-line amounts differ: header=%q payment=%q distribution=%q", row[6], row[15], row[30])
 		}
-		if expectedCounts[key] > 1 {
-			if row[1] != "Y" || len(row[2]) == 0 || len(row[2]) > 20 {
-				t.Errorf("multi-line row has flag/reference %q/%q", row[1], row[2])
-			}
-			if prior := groupReferences[key]; prior != "" && prior != row[2] {
-				t.Errorf("group %s has inconsistent voucher references", key)
-			}
-			groupReferences[key] = row[2]
-			groupReferenceCounts[row[2]]++
-		} else if row[1] != "N" || row[2] != "" {
+		if row[1] != "N" || row[2] != "" {
 			t.Errorf("single-line row has flag/reference %q/%q", row[1], row[2])
 		}
 	}
@@ -244,20 +247,12 @@ func TestConvertReimbursementWorkbookUsesHeaderCompatibleGroups(t *testing.T) {
 	if distributionTotal != 85834 {
 		t.Errorf("distribution total = %s, want 858.34", formatReimbursementCents(distributionTotal))
 	}
-	if len(groupReferenceCounts) != 2 {
-		t.Errorf("found %d generated multi-line references, want 2", len(groupReferenceCounts))
-	}
 	if len(merchantCounts) != len(expectedMerchants) {
 		t.Errorf("found %d merchant descriptions, want %d: %v", len(merchantCounts), len(expectedMerchants), merchantCounts)
 	}
 	for merchant, expected := range expectedMerchants {
 		if merchantCounts[merchant] != expected {
 			t.Errorf("merchant %q appears %d times, want %d", merchant, merchantCounts[merchant], expected)
-		}
-	}
-	for reference, count := range groupReferenceCounts {
-		if count < 2 {
-			t.Errorf("reference %q appears on only %d rows", reference, count)
 		}
 	}
 }
