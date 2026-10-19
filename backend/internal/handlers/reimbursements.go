@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -13,23 +14,31 @@ import (
 func ConvertReimbursementFile(c *gin.Context) {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No Excel file uploaded"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No reimbursement file uploaded"})
 		return
 	}
 
 	extension := strings.ToLower(filepath.Ext(fileHeader.Filename))
-	if extension != ".xlsx" && extension != ".xlsm" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Upload an .xlsx or .xlsm reimbursement workbook"})
+	if extension != ".csv" && extension != ".xlsx" && extension != ".xlsm" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Upload an accounting .csv or .xlsx/.xlsm reimbursement workbook"})
 		return
 	}
-	if err := utils.ValidateExcelFile(fileHeader); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Excel upload: " + err.Error()})
+	validate := utils.ValidateExcelFile
+	if extension == ".csv" {
+		switch fileHeader.Header.Get("Content-Type") {
+		case "application/vnd.ms-excel", "application/octet-stream", "":
+			fileHeader.Header.Set("Content-Type", "text/csv")
+		}
+		validate = utils.ValidateCSVFile
+	}
+	if err := validate(fileHeader); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid reimbursement upload: " + err.Error()})
 		return
 	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to read uploaded workbook"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to read uploaded file"})
 		return
 	}
 	defer file.Close()
@@ -38,12 +47,18 @@ func ConvertReimbursementFile(c *gin.Context) {
 	if description == "" {
 		description = "Employee Reimbursement"
 	}
-	conversion, err := services.ConvertReimbursementWorkbook(file, description)
+	convert := services.ConvertReimbursementWorkbook
+	if extension == ".csv" {
+		convert = services.ConvertReimbursementCSV
+	}
+	conversion, err := convert(file, description)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.Header("Content-Disposition", `attachment; filename="foundation_reimbursements.csv"`)
+	c.Header("Access-Control-Expose-Headers", "X-Reimbursement-Shortened-Descriptions")
+	c.Header("X-Reimbursement-Shortened-Descriptions", strconv.Itoa(conversion.ShortenedDescriptions))
 	c.Data(http.StatusOK, "text/csv; charset=utf-8", conversion.CSV)
 }

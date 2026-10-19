@@ -21,9 +21,10 @@ const (
 )
 
 type ReimbursementConversion struct {
-	CSV          []byte
-	VoucherCount int
-	LineCount    int
+	CSV                   []byte
+	VoucherCount          int
+	LineCount             int
+	ShortenedDescriptions int
 }
 
 type reimbursementLine struct {
@@ -60,6 +61,19 @@ func ConvertReimbursementWorkbook(input io.Reader, invoiceDescription string) (R
 	}
 	if len(rows) == 0 {
 		return result, fmt.Errorf("%q sheet is empty", reimbursementSheet)
+	}
+	return convertReimbursementRows(rows, invoiceDescription, nil)
+}
+
+func convertReimbursementRows(rows [][]string, invoiceDescription string, identities []string) (ReimbursementConversion, error) {
+	var result ReimbursementConversion
+	var err error
+	invoiceDescription = strings.TrimSpace(invoiceDescription)
+	if invoiceDescription == "" {
+		invoiceDescription = "Employee Reimbursement"
+	}
+	if utf8Length(invoiceDescription) > 30 {
+		return result, fmt.Errorf("invoice description must be 30 characters or fewer")
 	}
 
 	headerRowIndex := -1
@@ -181,6 +195,9 @@ func ConvertReimbursementWorkbook(input io.Reader, invoiceDescription string) (R
 		row[indices["payment_type"]] = "EFT"
 
 		var groupKey strings.Builder
+		if identities != nil {
+			fmt.Fprintf(&groupKey, "%d:%s;", len(identities[rowIndex-dataStart]), identities[rowIndex-dataStart])
+		}
 		for index := 0; index < detailStart; index++ {
 			if ignoredHeaderFields[index] {
 				continue
