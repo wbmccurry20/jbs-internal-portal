@@ -9,6 +9,22 @@ interface SearchableLicense {
   is_city_license: boolean;
 }
 
+export function getExpirationTiming(expirationDate: string | null, now: Date = new Date()): string {
+  if (!expirationDate) return 'Expiration date needed';
+
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(now);
+  const part = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find(item => item.type === type)?.value);
+  const today = Date.UTC(part('year'), part('month') - 1, part('day'));
+  const [year, month, day] = expirationDate.split('-').map(Number);
+  const days = Math.round((Date.UTC(year, month - 1, day) - today) / 86_400_000);
+  if (days === 0) return 'Expires today';
+  const count = Math.abs(days);
+  const unit = count === 1 ? 'day' : 'days';
+  return days < 0 ? `Expired ${count} ${unit} ago` : `Expires in ${count} ${unit}`;
+}
+
 export function filterLicenses<T extends SearchableLicense>(
   licenses: T[],
   filters: { search: string; status: string; jurisdiction: string },

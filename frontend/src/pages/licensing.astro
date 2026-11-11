@@ -18,15 +18,21 @@ import USMapClean from '../components/USMapClean.astro';
       </button>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 id="find-licenses-heading" tabindex="-1" class="text-lg font-semibold text-gray-900">Find licenses</h2>
-      <p class="text-sm text-gray-500 mb-4">Expiration dates are shown in order. Expiring soon means within 60 days.</p>
-      <div class="grid gap-3 md:grid-cols-3">
-        <label class="text-sm text-gray-700">Search
-          <input id="license-search" type="search" placeholder="State, city, number, entity, or type" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="p-5 sm:p-6 border-b border-gray-100">
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+          <div>
+            <h2 id="find-licenses-heading" tabindex="-1" class="text-lg font-semibold text-gray-900">Find licenses</h2>
+            <p class="text-sm text-gray-500 mt-1">Search state and city licenses. Expiring soon means within 60 days.</p>
+          </div>
+          <button type="button" id="clear-license-filters" class="text-sm font-medium text-primary-700 hover:text-primary-900 hover:underline">Clear filters</button>
+        </div>
+        <div class="grid gap-4 md:grid-cols-[2fr_1fr_1fr]">
+        <label class="text-sm font-medium text-gray-700">Search
+          <input id="license-search" type="search" placeholder="State, city, number, entity, or type" class="mt-1.5 h-11 w-full px-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
         </label>
-        <label class="text-sm text-gray-700">Status
-          <select id="license-status-filter" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg">
+        <label class="text-sm font-medium text-gray-700">Status
+          <select id="license-status-filter" class="mt-1.5 h-11 w-full px-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
             <option value="all">All statuses</option>
             <option value="expiring" selected>Expiring within 60 days</option>
             <option value="expired">Expired</option>
@@ -35,15 +41,18 @@ import USMapClean from '../components/USMapClean.astro';
             <option value="active">Active</option>
           </select>
         </label>
-        <label class="text-sm text-gray-700">Jurisdiction
-          <select id="license-jurisdiction-filter" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg">
+        <label class="text-sm font-medium text-gray-700">Jurisdiction
+          <select id="license-jurisdiction-filter" class="mt-1.5 h-11 w-full px-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
             <option value="all">State and city</option>
             <option value="state">State</option>
             <option value="city">City</option>
           </select>
         </label>
+        </div>
       </div>
-      <div id="license-search-results" class="mt-4 space-y-2" aria-live="polite"></div>
+      <div id="license-search-results" aria-live="polite" class="p-5 sm:p-6">
+        <p class="text-sm text-gray-500">Loading licenses...</p>
+      </div>
     </div>
 
     <!-- Stats Cards -->
@@ -269,6 +278,29 @@ import USMapClean from '../components/USMapClean.astro';
   <!-- Panel overlay -->
   <div id="state-panel-overlay" class="fixed inset-0 bg-black bg-opacity-40 hidden z-40"></div>
 
+  <dialog id="license-detail-dialog" aria-labelledby="license-detail-title" class="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] rounded-xl border border-gray-200 p-0 shadow-2xl backdrop:bg-black/50">
+    <div class="flex items-start justify-between gap-4 px-6 py-5 border-b border-gray-200">
+      <div>
+        <p id="license-detail-location" class="text-sm font-medium text-primary-700"></p>
+        <h2 id="license-detail-title" class="text-xl font-bold text-gray-900 mt-1"></h2>
+      </div>
+      <button type="button" id="license-detail-close" autofocus aria-label="Close license details" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-6">
+      <div id="license-detail-content"></div>
+      <section>
+        <h3 class="text-sm font-semibold text-gray-900">Linked documents</h3>
+        <p class="text-xs text-gray-500 mt-1">Documents open in SharePoint and require access.</p>
+        <div id="license-detail-documents" class="mt-3 space-y-2 text-sm" aria-live="polite"></div>
+      </section>
+    </div>
+    <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+      <button type="button" id="license-detail-edit" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600">Edit license</button>
+    </div>
+  </dialog>
+
   <!-- Add/Edit License Modal -->
   <div id="license-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
@@ -417,7 +449,7 @@ import USMapClean from '../components/USMapClean.astro';
     import { escapeHtml } from '../utils/html';
     import { getApiUrl } from '../utils/api';
     import { toast } from '../utils/toast';
-    import { bindLicenseSummaryFilters, filterLicenses } from '../utils/licenses';
+    import { bindLicenseSummaryFilters, filterLicenses, getExpirationTiming } from '../utils/licenses';
 
     const API_URL = getApiUrl();
     const token = localStorage.getItem('jbs_token');
@@ -468,6 +500,8 @@ import USMapClean from '../components/USMapClean.astro';
 
     // Track current licenses globally
     let currentLicenses: License[] = [];
+    let licenseDataLoaded = false;
+    let licenseLoadFailed = false;
     // Track which state panel is open
     let currentPanelState = '';
     let currentPanelStateName = '';
@@ -661,6 +695,8 @@ import USMapClean from '../components/USMapClean.astro';
 
         const licenses: License[] = await response.json();
         currentLicenses = licenses;
+        licenseDataLoaded = true;
+        licenseLoadFailed = false;
         loading.classList.add('hidden');
 
         renderGroupedTable(licenses);
@@ -675,6 +711,7 @@ import USMapClean from '../components/USMapClean.astro';
         }
 
       } catch (error: any) {
+        licenseLoadFailed = true;
         summaryButtons.forEach(button => button.disabled = true);
         loading.classList.add('hidden');
         container.innerHTML = '<div class="text-center py-12 text-red-500">Failed to load licenses</div>';
@@ -687,17 +724,85 @@ import USMapClean from '../components/USMapClean.astro';
       const search = (document.getElementById('license-search') as HTMLInputElement).value;
       const status = (document.getElementById('license-status-filter') as HTMLSelectElement).value;
       const jurisdiction = (document.getElementById('license-jurisdiction-filter') as HTMLSelectElement).value;
-      const matches = filterLicenses(currentLicenses, { search, status, jurisdiction }, STATE_NAMES);
       const results = document.getElementById('license-search-results')!;
-      results.innerHTML = `<p class="text-sm text-gray-500">${matches.length} license${matches.length === 1 ? '' : 's'} found</p>` +
-        matches.map(license => `<div>
-          <div class="text-xs font-medium text-gray-600 mt-3 mb-1">${escapeHtml(STATE_NAMES[license.state] || license.state)}${license.is_city_license ? ` · ${escapeHtml(license.city || 'Unknown city')}` : ' · State'}</div>
-          ${renderLicenseRow(license)}
-        </div>`).join('');
+      if (licenseLoadFailed) {
+        results.textContent = 'Failed to load licenses. Refresh the page to try again.';
+        return;
+      }
+      if (!licenseDataLoaded) {
+        results.textContent = 'Loading licenses...';
+        return;
+      }
+      const matches = filterLicenses(currentLicenses, { search, status, jurisdiction }, STATE_NAMES);
+      if (matches.length === 0) {
+        results.innerHTML = `<div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-5 py-8 text-center">
+          <p class="text-sm font-medium text-gray-700">${currentLicenses.length ? 'No licenses match these filters' : 'No licenses have been added yet'}</p>
+          <p class="mt-1 text-sm text-gray-500">${currentLicenses.length ? 'Try another search or clear the filters.' : 'Use Add License to create the first record.'}</p>
+        </div>`;
+        return;
+      }
+      results.innerHTML = `<div class="flex items-center justify-between mb-3">
+          <p class="text-sm font-medium text-gray-600">${matches.length} license${matches.length === 1 ? '' : 's'} found</p>
+          <p class="text-xs text-gray-500">Sorted by expiration date</p>
+        </div>
+        <table class="w-full block md:table text-left">
+          <thead class="hidden md:table-header-group">
+            <tr class="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500">
+              <th scope="col" class="px-3 py-3 font-semibold">Location</th>
+              <th scope="col" class="px-3 py-3 font-semibold">License</th>
+              <th scope="col" class="px-3 py-3 font-semibold">Expiration</th>
+              <th scope="col" class="px-3 py-3 font-semibold">Status</th>
+              <th scope="col" class="px-3 py-3 font-semibold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="block md:table-row-group space-y-3 md:space-y-0">
+            ${matches.map(license => {
+              const location = license.is_city_license
+                ? `${license.city || 'Unknown city'}, ${STATE_NAMES[license.state] || license.state}`
+                : STATE_NAMES[license.state] || license.state;
+              const timing = getExpirationTiming(license.expiration_date);
+              return `<tr data-result-license-id="${license.id}" tabindex="0" aria-label="View ${escapeHtml(license.license_type)} in ${escapeHtml(location)}" class="block md:table-row rounded-lg border border-gray-200 md:border-0 md:border-b cursor-pointer hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600">
+                <td class="block md:table-cell px-4 md:px-3 pt-4 pb-2 md:py-4">
+                  <div class="text-sm font-semibold text-gray-900">${escapeHtml(location)}</div>
+                  <div class="text-xs text-gray-500 mt-1">${license.is_city_license ? 'City license' : 'State license'}</div>
+                </td>
+                <td class="block md:table-cell px-4 md:px-3 py-2 md:py-4">
+                  <div class="text-sm font-medium text-gray-900">${escapeHtml(license.license_type)}</div>
+                  <div class="text-xs text-gray-500 mt-1">${license.license_number ? `# ${escapeHtml(license.license_number)}` : 'Number not provided'}</div>
+                </td>
+                <td class="block md:table-cell px-4 md:px-3 py-2 md:py-4">
+                  <div class="text-sm font-medium text-gray-900">${license.expiration_date ? escapeHtml(formatDate(license.expiration_date)) : 'No date'}</div>
+                  <div class="text-xs mt-1 ${license.status === 'expired' ? 'text-red-700' : license.status === 'expiring' ? 'text-yellow-700' : 'text-gray-500'}">${escapeHtml(timing)}</div>
+                </td>
+                <td class="block md:table-cell px-4 md:px-3 py-2 md:py-4">
+                  <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize ${statusBadgeClasses(license.status)}">${escapeHtml(statusLabel(license.status))}</span>
+                </td>
+                <td class="block md:table-cell px-4 md:px-3 pb-4 pt-2 md:py-4">
+                  <div class="flex items-center gap-2 md:justify-end">
+                    <button type="button" data-license-action="view" class="rounded-md bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700">View</button>
+                    <button type="button" data-license-action="edit" class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">Edit</button>
+                    <details class="relative">
+                      <summary aria-label="More actions for ${escapeHtml(license.license_type)} in ${escapeHtml(location)}" class="list-none cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-bold text-gray-600 hover:bg-gray-50">⋯</summary>
+                      <div class="absolute bottom-full right-0 z-10 mb-1 rounded-md border border-gray-200 bg-white p-1 shadow-lg">
+                        <button type="button" data-license-action="delete" class="rounded px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50">Delete</button>
+                      </div>
+                    </details>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
     }
     document.getElementById('license-search')!.addEventListener('input', renderSearchResults);
     document.getElementById('license-status-filter')!.addEventListener('change', renderSearchResults);
     document.getElementById('license-jurisdiction-filter')!.addEventListener('change', renderSearchResults);
+    document.getElementById('clear-license-filters')!.addEventListener('click', () => {
+      (document.getElementById('license-search') as HTMLInputElement).value = '';
+      (document.getElementById('license-status-filter') as HTMLSelectElement).value = 'all';
+      (document.getElementById('license-jurisdiction-filter') as HTMLSelectElement).value = 'all';
+      renderSearchResults();
+    });
     bindLicenseSummaryFilters(
       summaryButtons,
       document.getElementById('license-search') as HTMLInputElement,
@@ -706,6 +811,127 @@ import USMapClean from '../components/USMapClean.astro';
       document.getElementById('find-licenses-heading')!,
       renderSearchResults,
     );
+
+    const detailDialog = document.getElementById('license-detail-dialog') as HTMLDialogElement;
+    const detailDocuments = document.getElementById('license-detail-documents')!;
+    let detailLicenseId: number | null = null;
+    let documentRequest = 0;
+
+    interface LicenseDocument {
+      document_name: string;
+      document_url: string;
+      document_type: string;
+    }
+
+    async function loadDetailDocuments(licenseId: number) {
+      const request = ++documentRequest;
+      detailDocuments.textContent = 'Loading linked documents...';
+      try {
+        const response = await fetch(`${API_URL}/licenses/${licenseId}/documents`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to load linked documents');
+        const docs: LicenseDocument[] = await response.json();
+        if (request !== documentRequest || detailLicenseId !== licenseId || !detailDialog.open) return;
+        if (!docs.length) {
+          detailDocuments.innerHTML = '<p class="text-gray-500">No documents linked to this license.</p>';
+          return;
+        }
+        detailDocuments.innerHTML = docs.map(doc => {
+          let link: URL | null = null;
+          try {
+            const parsed = new URL(doc.document_url);
+            if (parsed.protocol === 'https:' || parsed.protocol === 'http:') link = parsed;
+          } catch {
+            // An invalid stored URL is shown as unavailable rather than opened.
+          }
+          const name = escapeHtml(doc.document_name);
+          const type = escapeHtml((doc.document_type || 'other').replace(/_/g, ' '));
+          return `<div class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-4 py-3">
+            <div class="min-w-0">
+              ${link ? `<a href="${escapeHtml(link.href)}" target="_blank" rel="noopener noreferrer" class="break-words font-medium text-primary-700 hover:underline">${name}</a>` : `<span class="break-words font-medium text-gray-700">${name} <span class="text-red-700">(invalid link)</span></span>`}
+              <p class="mt-1 text-xs capitalize text-gray-500">${type}</p>
+            </div>
+            ${link ? '<span class="text-xs text-gray-500 flex-shrink-0">Opens in new tab</span>' : ''}
+          </div>`;
+        }).join('');
+      } catch {
+        if (request !== documentRequest || detailLicenseId !== licenseId || !detailDialog.open) return;
+        detailDocuments.innerHTML = '<p class="text-red-700">Could not load linked documents. <button type="button" id="retry-license-documents" class="font-medium underline">Try again</button></p>';
+      }
+    }
+
+    function openLicenseDetails(licenseId: number) {
+      const license = currentLicenses.find(item => item.id === licenseId);
+      if (!license) {
+        toast.error('License not found. Refresh the page and try again.');
+        return;
+      }
+      detailLicenseId = licenseId;
+      const stateName = STATE_NAMES[license.state] || license.state;
+      document.getElementById('license-detail-location')!.textContent = license.is_city_license
+        ? `${license.city || 'Unknown city'}, ${stateName} · City license`
+        : `${stateName} · State license`;
+      document.getElementById('license-detail-title')!.textContent = license.license_type;
+      const detailField = (label: string, value: string) => `<div><dt class="text-xs font-medium uppercase tracking-wide text-gray-500">${label}</dt><dd class="mt-1 text-sm text-gray-900 break-words">${escapeHtml(value)}</dd></div>`;
+      document.getElementById('license-detail-content')!.innerHTML = `
+        <div class="mb-5"><span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize ${statusBadgeClasses(license.status)}">${escapeHtml(statusLabel(license.status))}</span></div>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          ${detailField('License number', license.license_number || 'Not provided')}
+          ${detailField('Entity', license.entity_name || 'Not provided')}
+          ${detailField('Issued', license.issue_date ? formatDate(license.issue_date) : 'Not provided')}
+          ${detailField('Expiration', license.expiration_date ? `${formatDate(license.expiration_date)} · ${getExpirationTiming(license.expiration_date)}` : 'Expiration date needed')}
+          ${detailField('Renewal fee', new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(license.renewal_fee))}
+        </dl>
+        ${license.notes ? `<div class="mt-5 border-t border-gray-100 pt-4"><h3 class="text-xs font-medium uppercase tracking-wide text-gray-500">Notes</h3><p class="mt-1 whitespace-pre-wrap break-words text-sm text-gray-700">${escapeHtml(license.notes)}</p></div>` : ''}`;
+      if (!detailDialog.open) detailDialog.showModal();
+      loadDetailDocuments(licenseId);
+    }
+
+    detailDialog.addEventListener('close', () => {
+      detailLicenseId = null;
+      documentRequest++;
+    });
+    document.getElementById('license-detail-close')!.addEventListener('click', () => detailDialog.close());
+    document.getElementById('license-detail-edit')!.addEventListener('click', () => {
+      const license = currentLicenses.find(item => item.id === detailLicenseId);
+      if (!license) {
+        toast.error('License not found. Refresh the page and try again.');
+        return;
+      }
+      detailDialog.close();
+      editLicense(license);
+    });
+    detailDocuments.addEventListener('click', event => {
+      if ((event.target as HTMLElement).closest('#retry-license-documents') && detailLicenseId !== null) {
+        loadDetailDocuments(detailLicenseId);
+      }
+    });
+
+    const searchResults = document.getElementById('license-search-results')!;
+    searchResults.addEventListener('click', event => {
+      const target = event.target as HTMLElement;
+      const row = target.closest<HTMLElement>('[data-result-license-id]');
+      if (!row) return;
+      const licenseId = Number(row.dataset.resultLicenseId);
+      const action = target.closest<HTMLElement>('[data-license-action]')?.dataset.licenseAction;
+      if (action === 'edit') {
+        const license = currentLicenses.find(item => item.id === licenseId);
+        if (license) editLicense(license);
+        else toast.error('License not found. Refresh the page and try again.');
+      } else if (action === 'delete') {
+        deleteLicense(licenseId);
+      } else if (action === 'view' || !target.closest('button, a, summary, details')) {
+        openLicenseDetails(licenseId);
+      }
+    });
+    searchResults.addEventListener('keydown', event => {
+      const target = event.target as HTMLElement;
+      if (target.matches('[data-result-license-id]') && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        openLicenseDetails(Number(target.dataset.resultLicenseId));
+      }
+    });
 
     function updateStats(licenses: License[]) {
       const total = licenses.length;
@@ -943,7 +1169,7 @@ import USMapClean from '../components/USMapClean.astro';
     });
 
     // Delete license
-    (window as any).deleteLicense = async (id: number) => {
+    async function deleteLicense(id: number) {
       if (!confirm('Are you sure you want to delete this license?')) return;
 
       try {
@@ -958,7 +1184,8 @@ import USMapClean from '../components/USMapClean.astro';
       } catch (error) {
         toast.error('Failed to delete license');
       }
-    };
+    }
+    (window as any).deleteLicense = deleteLicense;
 
     // Initial load
     loadLicenses();

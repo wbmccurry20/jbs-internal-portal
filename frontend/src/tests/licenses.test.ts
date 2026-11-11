@@ -1,7 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { bindLicenseSummaryFilters, filterLicenses } from '../utils/licenses';
+import { bindLicenseSummaryFilters, filterLicenses, getExpirationTiming } from '../utils/licenses';
+import licensingPage from '../pages/licensing.astro?raw';
 
 const records = [
   { state: 'AL', city: 'Hueytown', license_type: 'Business', license_number: '18396.1', entity_name: 'JBS', expiration_date: '2026-12-31', status: 'expiring', is_city_license: true },
@@ -9,6 +8,17 @@ const records = [
   { state: 'GA', city: null, license_type: 'Business', license_number: null, entity_name: null, expiration_date: null, status: 'unknown', is_city_license: false },
 ];
 const states = { AL: 'Alabama', GA: 'Georgia' };
+
+describe('expiration timing', () => {
+  it('uses the New York calendar date, including across daylight saving time', () => {
+    const now = new Date('2026-03-08T04:30:00Z');
+    expect(getExpirationTiming('2026-03-07', now)).toBe('Expires today');
+    expect(getExpirationTiming('2026-03-08', now)).toBe('Expires in 1 day');
+    expect(getExpirationTiming('2026-03-09', now)).toBe('Expires in 2 days');
+    expect(getExpirationTiming('2026-03-06', now)).toBe('Expired 1 day ago');
+    expect(getExpirationTiming(null, now)).toBe('Expiration date needed');
+  });
+});
 
 describe('license search', () => {
   it('filters by city, status and jurisdiction', () => {
@@ -19,8 +29,7 @@ describe('license search', () => {
 
   describe('license summary shortcuts', () => {
     it('opens the matching results for every card and clears other filters', () => {
-      const source = readFileSync(resolve(process.cwd(), 'src/pages/licensing.astro'), 'utf8');
-      const page = new DOMParser().parseFromString(source, 'text/html');
+      const page = new DOMParser().parseFromString(licensingPage, 'text/html');
       const heading = page.querySelector<HTMLElement>('#find-licenses-heading')!;
       const search = page.querySelector<HTMLInputElement>('#license-search')!;
       const status = page.querySelector<HTMLSelectElement>('#license-status-filter')!;
