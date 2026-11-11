@@ -10,6 +10,8 @@ must have access to the document.
 
 Use **Find licenses** to search by state, city, license type, number, or entity,
 and filter by status or jurisdiction. Results are ordered by expiration date.
+Select a summary card to show all licenses in that category; this clears the
+search and jurisdiction filters.
 The map includes both state and city records; a city's expired or expiring
 license can affect the state's displayed status. A state with no records has
 not necessarily been reviewed or determined to require no license.

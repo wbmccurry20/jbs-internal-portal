@@ -19,7 +19,7 @@ import USMapClean from '../components/USMapClean.astro';
     </div>
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 class="text-lg font-semibold text-gray-900">Find licenses</h2>
+      <h2 id="find-licenses-heading" tabindex="-1" class="text-lg font-semibold text-gray-900">Find licenses</h2>
       <p class="text-sm text-gray-500 mb-4">Expiration dates are shown in order. Expiring soon means within 60 days.</p>
       <div class="grid gap-3 md:grid-cols-3">
         <label class="text-sm text-gray-700">Search
@@ -48,31 +48,31 @@ import USMapClean from '../components/USMapClean.astro';
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
-      <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <button type="button" data-license-status="all" aria-controls="license-search-results" disabled class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 text-left cursor-pointer hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed">
         <div class="text-sm text-gray-600">Total Licenses</div>
         <div id="total-licenses" class="text-2xl font-bold text-gray-900">-</div>
         <div id="total-licenses-sub" class="text-xs text-gray-400 mt-0.5">— states with records</div>
-      </div>
-      <div class="bg-green-50 p-4 rounded-lg shadow-sm border border-green-200">
+      </button>
+      <button type="button" data-license-status="active" aria-controls="license-search-results" disabled class="bg-green-50 p-4 rounded-lg shadow-sm border border-green-200 text-left cursor-pointer hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed">
         <div class="text-sm text-green-700">Active</div>
         <div id="active-count" class="text-2xl font-bold text-green-900">-</div>
-      </div>
-      <div class="bg-yellow-50 p-4 rounded-lg shadow-sm border border-yellow-200">
+      </button>
+      <button type="button" data-license-status="expiring" aria-controls="license-search-results" disabled class="bg-yellow-50 p-4 rounded-lg shadow-sm border border-yellow-200 text-left cursor-pointer hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed">
         <div class="text-sm text-yellow-700">Expiring Soon</div>
         <div id="expiring-count" class="text-2xl font-bold text-yellow-900">-</div>
-      </div>
-      <div class="bg-blue-50 p-4 rounded-lg shadow-sm border border-blue-200">
+      </button>
+      <button type="button" data-license-status="pending" aria-controls="license-search-results" disabled class="bg-blue-50 p-4 rounded-lg shadow-sm border border-blue-200 text-left cursor-pointer hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed">
         <div class="text-sm text-blue-700">Pending</div>
         <div id="pending-count" class="text-2xl font-bold text-blue-900">-</div>
-      </div>
-      <div class="bg-red-50 p-4 rounded-lg shadow-sm border border-red-200">
+      </button>
+      <button type="button" data-license-status="expired" aria-controls="license-search-results" disabled class="bg-red-50 p-4 rounded-lg shadow-sm border border-red-200 text-left cursor-pointer hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed">
         <div class="text-sm text-red-700">Expired</div>
         <div id="expired-count" class="text-2xl font-bold text-red-900">-</div>
-      </div>
-      <div class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
+      </button>
+      <button type="button" data-license-status="unknown" aria-controls="license-search-results" disabled class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200 text-left cursor-pointer hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed">
         <div class="text-sm text-gray-700">Needs Review</div>
         <div id="unknown-count" class="text-2xl font-bold text-gray-900">-</div>
-      </div>
+      </button>
     </div>
 
     <!-- License Dashboard -->
@@ -417,7 +417,7 @@ import USMapClean from '../components/USMapClean.astro';
     import { escapeHtml } from '../utils/html';
     import { getApiUrl } from '../utils/api';
     import { toast } from '../utils/toast';
-    import { filterLicenses } from '../utils/licenses';
+    import { bindLicenseSummaryFilters, filterLicenses } from '../utils/licenses';
 
     const API_URL = getApiUrl();
     const token = localStorage.getItem('jbs_token');
@@ -430,6 +430,7 @@ import USMapClean from '../components/USMapClean.astro';
     const form = document.getElementById('license-form') as HTMLFormElement;
     const container = document.getElementById('licenses-container')!;
     const loading = document.getElementById('loading')!;
+    const summaryButtons = document.querySelectorAll<HTMLButtonElement>('[data-license-status]');
 
     interface License {
       id: number;
@@ -666,6 +667,7 @@ import USMapClean from '../components/USMapClean.astro';
         renderSearchResults();
         updateStats(licenses);
         renderUSMap(licenses);
+        summaryButtons.forEach(button => button.disabled = false);
 
         // Refresh the panel if it's currently open
         if (currentPanelState) {
@@ -673,6 +675,7 @@ import USMapClean from '../components/USMapClean.astro';
         }
 
       } catch (error: any) {
+        summaryButtons.forEach(button => button.disabled = true);
         loading.classList.add('hidden');
         container.innerHTML = '<div class="text-center py-12 text-red-500">Failed to load licenses</div>';
         document.getElementById('license-search-results')!.textContent = 'Failed to load licenses. Refresh the page to try again.';
@@ -695,6 +698,14 @@ import USMapClean from '../components/USMapClean.astro';
     document.getElementById('license-search')!.addEventListener('input', renderSearchResults);
     document.getElementById('license-status-filter')!.addEventListener('change', renderSearchResults);
     document.getElementById('license-jurisdiction-filter')!.addEventListener('change', renderSearchResults);
+    bindLicenseSummaryFilters(
+      summaryButtons,
+      document.getElementById('license-search') as HTMLInputElement,
+      document.getElementById('license-status-filter') as HTMLSelectElement,
+      document.getElementById('license-jurisdiction-filter') as HTMLSelectElement,
+      document.getElementById('find-licenses-heading')!,
+      renderSearchResults,
+    );
 
     function updateStats(licenses: License[]) {
       const total = licenses.length;

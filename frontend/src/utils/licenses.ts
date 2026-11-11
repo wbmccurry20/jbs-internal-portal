@@ -24,3 +24,25 @@ export function filterLicenses<T extends SearchableLicense>(
   }).sort((a, b) => (a.expiration_date || '9999-12-31').localeCompare(b.expiration_date || '9999-12-31')
     || a.state.localeCompare(b.state));
 }
+
+export function bindLicenseSummaryFilters(
+  buttons: NodeListOf<HTMLButtonElement>,
+  search: HTMLInputElement,
+  status: HTMLSelectElement,
+  jurisdiction: HTMLSelectElement,
+  heading: HTMLElement,
+  render: () => void,
+): void {
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      const selectedStatus = button.dataset.licenseStatus;
+      if (!selectedStatus) throw new Error('License summary button is missing its status');
+      status.value = selectedStatus;
+      search.value = '';
+      jurisdiction.value = 'all';
+      render();
+      heading.focus({ preventScroll: true });
+      heading.scrollIntoView({ block: 'start' });
+    });
+  });
+}

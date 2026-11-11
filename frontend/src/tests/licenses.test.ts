@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
-import { filterLicenses } from '../utils/licenses';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
+import { bindLicenseSummaryFilters, filterLicenses } from '../utils/licenses';
 
 const records = [
   { state: 'AL', city: 'Hueytown', license_type: 'Business', license_number: '18396.1', entity_name: 'JBS', expiration_date: '2026-12-31', status: 'expiring', is_city_license: true },
@@ -13,6 +15,51 @@ describe('license search', () => {
     expect(filterLicenses(records, { search: ' HUEYTOWN ', status: 'expiring', jurisdiction: 'city' }, states)).toEqual([records[0]]);
     expect(filterLicenses(records, { search: 'Alabama', status: 'expiring', jurisdiction: 'state' }, states)).toEqual([records[1]]);
     expect(filterLicenses(records, { search: '18396.1', status: 'expired', jurisdiction: 'all' }, states)).toEqual([]);
+  });
+
+  describe('license summary shortcuts', () => {
+    it('opens the matching results for every card and clears other filters', () => {
+      const source = readFileSync(resolve(process.cwd(), 'src/pages/licensing.astro'), 'utf8');
+      const page = new DOMParser().parseFromString(source, 'text/html');
+      const heading = page.querySelector<HTMLElement>('#find-licenses-heading')!;
+      const search = page.querySelector<HTMLInputElement>('#license-search')!;
+      const status = page.querySelector<HTMLSelectElement>('#license-status-filter')!;
+      const jurisdiction = page.querySelector<HTMLSelectElement>('#license-jurisdiction-filter')!;
+      const buttons = page.querySelectorAll<HTMLButtonElement>('[data-license-status]');
+      expect(buttons).toHaveLength(6);
+      expect([...buttons].every(button => button.disabled)).toBe(true);
+
+      document.body.replaceChildren(heading, search, status, jurisdiction, ...buttons);
+      heading.scrollIntoView = vi.fn();
+      const focus = vi.spyOn(heading, 'focus');
+      const examples = [
+        ...records,
+        { ...records[0], status: 'active' },
+        { ...records[0], status: 'pending' },
+        { ...records[0], status: 'expired' },
+      ];
+      let results = examples;
+      const render = vi.fn(() => {
+        results = filterLicenses(examples, { search: search.value, status: status.value, jurisdiction: jurisdiction.value }, states);
+      });
+      bindLicenseSummaryFilters(buttons, search, status, jurisdiction, heading, render);
+      const expected: Record<string, number> = { all: 6, active: 1, expiring: 2, pending: 1, expired: 1, unknown: 1 };
+      for (const button of buttons) {
+        button.disabled = false;
+        search.value = 'unmatched search';
+        jurisdiction.value = 'city';
+        button.click();
+        const selectedStatus = button.dataset.licenseStatus!;
+        expect(status.value).toBe(selectedStatus);
+        expect(search.value).toBe('');
+        expect(jurisdiction.value).toBe('all');
+        expect(results).toHaveLength(expected[selectedStatus]);
+        expect(results.every(record => selectedStatus === 'all' || record.status === selectedStatus)).toBe(true);
+      }
+      expect(render).toHaveBeenCalledTimes(6);
+      expect(focus).toHaveBeenCalledTimes(6);
+      expect(heading.scrollIntoView).toHaveBeenCalledTimes(6);
+    });
   });
 
   it('orders dated licenses first by expiration and leaves missing dates last', () => {
