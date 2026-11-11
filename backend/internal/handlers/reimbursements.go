@@ -57,8 +57,12 @@ func ConvertReimbursementFile(c *gin.Context) {
 		return
 	}
 
-	c.Header("Content-Disposition", `attachment; filename="foundation_reimbursements.csv"`)
-	c.Header("Access-Control-Expose-Headers", "X-Reimbursement-Shortened-Descriptions")
+	filename := conversion.Filename
+	if filename == "" {
+		filename = "foundation_reimbursements.csv"
+	}
+	c.Header("Content-Disposition", `attachment; filename="`+filename+`"`)
+	c.Header("Access-Control-Expose-Headers", "Content-Disposition, X-Reimbursement-Shortened-Descriptions")
 	c.Header("X-Reimbursement-Shortened-Descriptions", strconv.Itoa(conversion.ShortenedDescriptions))
 	c.Data(http.StatusOK, "text/csv; charset=utf-8", conversion.CSV)
 }

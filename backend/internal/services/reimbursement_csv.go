@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	_ "embed"
 	"encoding/csv"
 	"fmt"
@@ -14,7 +15,15 @@ var reimbursementTemplate string
 
 func ConvertReimbursementCSV(input io.Reader, invoiceDescription string) (ReimbursementConversion, error) {
 	var result ReimbursementConversion
-	reader := csv.NewReader(input)
+	content, err := io.ReadAll(input)
+	if err != nil {
+		return result, fmt.Errorf("unable to read accounting CSV: %w", err)
+	}
+	if isConcurPayScreenCSV(content) {
+		return ConvertConcurPayScreenCSV(bytes.NewReader(content))
+	}
+
+	reader := csv.NewReader(bytes.NewReader(content))
 	header, err := reader.Read()
 	if err != nil {
 		return result, fmt.Errorf("unable to read accounting CSV header: %w", err)
@@ -123,4 +132,36 @@ func parseAccountingReimbursementCents(value string) (int64, error) {
 		return 0, err
 	}
 	return whole*100 + cents, nil
+}
+
+func isConcurPayScreenCSV(content []byte) bool {
+	reader := csv.NewReader(bytes.NewReader(content))
+	reader.FieldsPerRecord = -1
+	firstRow, err := reader.Read()
+	if err != nil || (hasReimbursementCSVColumn(firstRow, "Employee ID") &&
+		hasReimbursementCSVColumn(firstRow, "Report Processing Payment Date")) {
+		return false
+	}
+	for range 2 {
+		record, err := reader.Read()
+		if err != nil {
+			return false
+		}
+		if hasReimbursementCSVColumn(record, "DATE") &&
+			hasReimbursementCSVColumn(record, "Report Processing Payment Date") &&
+			hasReimbursementCSVColumn(record, "Journal Account Code") {
+			return true
+		}
+	}
+	return false
+}
+
+func hasReimbursementCSVColumn(header []string, name string) bool {
+	for _, column := range header {
+		column = strings.TrimSpace(strings.TrimPrefix(column, "\ufeff"))
+		if column == name {
+			return true
+		}
+	}
+	return false
 }

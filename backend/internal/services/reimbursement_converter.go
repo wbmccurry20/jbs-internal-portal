@@ -20,6 +20,7 @@ const (
 
 type ReimbursementConversion struct {
 	CSV                   []byte
+	Filename              string
 	VoucherCount          int
 	LineCount             int
 	ShortenedDescriptions int

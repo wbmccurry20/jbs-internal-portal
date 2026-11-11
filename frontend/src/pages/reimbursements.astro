@@ -24,7 +24,7 @@ import Layout from '../layouts/Layout.astro';
       </div>
 
       <div>
-        <label for="invoice-description" class="block text-sm font-medium text-gray-800">Common invoice description</label>
+        <label for="invoice-description" class="block text-sm font-medium text-gray-800">Common invoice description (Foundation files only)</label>
         <input
           id="invoice-description"
           name="invoice_description"
@@ -34,6 +34,7 @@ import Layout from '../layouts/Layout.astro';
           value="Employee Reimbursement"
           class="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
         />
+        <p class="mt-1 text-xs text-gray-500">Concur pay screen CSVs use the processing date for the balancing credit description.</p>
       </div>
 
       <div id="conversion-status" class="hidden rounded-md px-4 py-3 text-sm" role="status" aria-live="polite"></div>
@@ -98,18 +99,19 @@ import Layout from '../layouts/Layout.astro';
         const downloadUrl = URL.createObjectURL(await response.blob());
         const download = document.createElement('a');
         download.href = downloadUrl;
-        download.download = 'foundation_reimbursements.csv';
+        const disposition = response.headers.get('Content-Disposition');
+        download.download = disposition?.match(/filename="([^"]+)"/)?.[1] || 'foundation_reimbursements.csv';
         document.body.appendChild(download);
         download.click();
         download.remove();
         window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
 
         status.className = 'rounded-md bg-green-50 px-4 py-3 text-sm text-green-800';
-        status.textContent = 'Foundation reimbursement CSV downloaded.';
-    const shortened = Number(response.headers.get('X-Reimbursement-Shortened-Descriptions') || '0');
-    if (shortened > 0) {
-      status.textContent += ` ${shortened} merchant descriptions shortened to Foundation's 30-character limit.`;
-    }
+        status.textContent = 'Reimbursement CSV downloaded.';
+        const shortened = Number(response.headers.get('X-Reimbursement-Shortened-Descriptions') || '0');
+        if (shortened > 0) {
+          status.textContent += ` ${shortened} merchant descriptions shortened to Foundation's 30-character limit.`;
+        }
       } catch (error) {
         status.className = 'rounded-md bg-red-50 px-4 py-3 text-sm text-red-800';
         status.textContent = error instanceof Error ? error.message : 'Conversion failed.';

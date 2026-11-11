@@ -158,6 +158,119 @@ func TestReimbursementCSVSeparatesReportsAndRejectsUnsupportedRows(t *testing.T)
 	}
 }
 
+func TestConvertConcurPayScreenCSVProducesHeaderlessJournal(t *testing.T) {
+	header := []string{
+		"DATE", "Employee ID", "Employee Default Currency Alpha Code", "Report Processing Payment Date",
+		"Report Entry Is Personal Flag", "Report Entry Description", "Report Entry Vendor Description",
+		"Report Entry Payment Code Code", "Journal Payee Payment Type Name", "Journal Amount",
+		"Journal Account Code", "Journal Debit Or Credit", "Cost Class", "Cost Code", "Job",
+	}
+	makeRecord := func(values map[string]string) []string {
+		record := make([]string, len(header))
+		for index, name := range header {
+			record[index] = values[name]
+		}
+		return record
+	}
+
+	var input bytes.Buffer
+	writer := csv.NewWriter(&input)
+	metadata := make([]string, len(header))
+	metadata[0] = "H"
+	if err := writer.Write(metadata); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Write(header); err != nil {
+		t.Fatal(err)
+	}
+	common := map[string]string{
+		"Employee ID":                          "employee-1",
+		"Employee Default Currency Alpha Code": "USD",
+		"Report Processing Payment Date":       "10/30/2026",
+		"Report Entry Is Personal Flag":        "N",
+		"Report Entry Payment Code Code":       "CASH",
+		"Journal Payee Payment Type Name":      "Employee",
+		"Journal Debit Or Credit":              "DR",
+	}
+	first := make(map[string]string, len(common)+5)
+	for name, value := range common {
+		first[name] = value
+	}
+	for name, value := range map[string]string{
+		"Report Entry Description":        "Team meal, approved",
+		"Report Entry Vendor Description": "Vendor fallback",
+		"Journal Amount":                  "12.5",
+		"Journal Account Code":            "5100",
+		"Cost Class":                      "7",
+		"Cost Code":                       "1",
+		"Job":                             "2026-303",
+	} {
+		first[name] = value
+	}
+	second := make(map[string]string, len(common)+5)
+	for name, value := range common {
+		second[name] = value
+	}
+	for name, value := range map[string]string{
+		"Report Entry Vendor Description": "Tools, materials",
+		"Journal Amount":                  "7.25",
+		"Journal Account Code":            "5160",
+	} {
+		second[name] = value
+	}
+	for _, record := range [][]string{makeRecord(first), makeRecord(second), make([]string, len(header)), {"Notes"}} {
+		if err := writer.Write(record); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		t.Fatal(err)
+	}
+
+	conversion, err := ConvertReimbursementCSV(bytes.NewReader(input.Bytes()), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if conversion.Filename != "reimbursement_journal.csv" {
+		t.Errorf("Filename = %q, want reimbursement_journal.csv", conversion.Filename)
+	}
+	if conversion.LineCount != 2 {
+		t.Errorf("LineCount = %d, want 2", conversion.LineCount)
+	}
+	output, err := csv.NewReader(bytes.NewReader(conversion.CSV)).ReadAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(output) != 3 {
+		t.Fatalf("output has %d rows, want two expenses and a balancing credit", len(output))
+	}
+	for rowIndex, row := range output {
+		if len(row) != reimbursementJournalColumnCount {
+			t.Fatalf("row %d has %d columns, want %d", rowIndex+1, len(row), reimbursementJournalColumnCount)
+		}
+		if rowIndex < 2 {
+			if row[1] != "" || row[2] != "" || row[3] != "" || row[4] != "" ||
+				row[8] != "" || row[10] != "" {
+				t.Errorf("expense row %d has values in required blank columns: %v", rowIndex+1, row)
+			}
+		}
+	}
+	if output[0][0] != "5100" || output[0][5] != "D" || output[0][6] != "12.50" ||
+		output[0][7] != "Team meal approved" || output[0][9] != "2026-303" ||
+		output[0][11] != "1" || output[0][12] != "7" {
+		t.Errorf("incorrect primary-description debit row: %v", output[0])
+	}
+	if output[1][0] != "5160" || output[1][5] != "D" || output[1][6] != "7.25" ||
+		output[1][7] != "Tools materials" {
+		t.Errorf("incorrect fallback-description debit row: %v", output[1])
+	}
+	if output[2][0] != "1002" || output[2][5] != "C" || output[2][6] != "19.75" ||
+		output[2][7] != "10.30.26 reimbursement" {
+		t.Errorf("incorrect balancing credit row: %v", output[2])
+	}
+}
+
 func TestConvertReimbursementWorkbookUsesSingleLineDistributions(t *testing.T) {
 	input, err := os.Open("../../../docs/data/9.22 Wyatt Bell Reimb.xlsm")
 	if err != nil {
