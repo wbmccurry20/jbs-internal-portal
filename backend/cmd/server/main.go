@@ -11,6 +11,7 @@ import (
 	"github.com/wbmccurry20/jbs-internal-portal/internal/database"
 	"github.com/wbmccurry20/jbs-internal-portal/internal/handlers"
 	"github.com/wbmccurry20/jbs-internal-portal/internal/middleware"
+	"github.com/wbmccurry20/jbs-internal-portal/internal/services"
 )
 
 func main() {
@@ -34,6 +35,8 @@ func main() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 	defer database.Close()
+
+	services.StartLicenseAlerts(database.DB)
 
 	// Initialize SharePoint / Graph API client
 	handlers.InitGraphClient()

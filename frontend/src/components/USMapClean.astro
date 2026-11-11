@@ -13,6 +13,8 @@
 
     .map-header {
       display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.5rem;
@@ -34,6 +36,7 @@
 
     .map-legend {
       display: flex;
+      flex-wrap: wrap;
       gap: 1.5rem;
       font-size: 0.875rem;
     }
@@ -54,6 +57,7 @@
     .dot-expiring { background: #EAB308; }
     .dot-pending { background: #3B82F6; }
     .dot-expired { background: #EF4444; }
+    .dot-unknown { background: #A855F7; }
     .dot-none { background: #D1D5DB; }
 
     .states-list {
@@ -96,6 +100,7 @@
     .status-expiring { background: #EAB308; }
     .status-pending { background: #3B82F6; }
     .status-expired { background: #EF4444; }
+    .status-unknown { background: #A855F7; }
     .status-none { background: #D1D5DB; }
 
     .state-right {
@@ -146,7 +151,7 @@
   </style>
 
   <div class="map-header">
-    <div class="map-title">State License Coverage</div>
+    <div class="map-title">States with License Records</div>
     <div class="map-coverage">
       <span id="licensed-count-clean">0</span><span style="color: #6B7280; font-weight: 500;">/50</span>
     </div>
@@ -168,8 +173,12 @@
         <span><span id="expired-count-clean">0</span> Expired</span>
       </div>
       <div class="legend-item">
+        <div class="legend-dot dot-unknown"></div>
+        <span><span id="unknown-count-clean">0</span> Needs review</span>
+      </div>
+      <div class="legend-item">
         <div class="legend-dot dot-none"></div>
-        <span><span id="none-count-clean">50</span> No License</span>
+        <span><span id="none-count-clean">50</span> No records</span>
       </div>
     </div>
   </div>
@@ -211,6 +220,7 @@
     if (!licenses || licenses.length === 0) return 'none';
     if (licenses.some(l => l.status === 'expired')) return 'expired';
     if (licenses.some(l => l.status === 'expiring')) return 'expiring';
+    if (licenses.some(l => l.status === 'unknown')) return 'unknown';
     if (licenses.some(l => l.status === 'active')) return 'active';
     if (licenses.some(l => l.status === 'pending')) return 'pending';
     return 'active';
@@ -287,7 +297,7 @@
     });
 
     // Count states in each status bucket
-    let activeStates = 0, expiringStates = 0, pendingStates = 0, expiredStates = 0, noneCount = 0;
+    let activeStates = 0, expiringStates = 0, pendingStates = 0, expiredStates = 0, unknownStates = 0, noneCount = 0;
 
     container.innerHTML = '';
 
@@ -307,6 +317,9 @@
         } else if (aggregated === 'pending') {
           statusClass = 'status-pending';
           pendingStates++;
+        } else if (aggregated === 'unknown') {
+          statusClass = 'status-unknown';
+          unknownStates++;
         } else {
           statusClass = 'status-active';
           activeStates++;
@@ -338,12 +351,13 @@
     });
 
     // Update header legend counts (per-state, not per-license)
-    const licensedCount = activeStates + expiringStates + expiredStates;
+    const licensedCount = activeStates + expiringStates + expiredStates + unknownStates + pendingStates;
     document.getElementById('licensed-count-clean')!.textContent = String(licensedCount);
     document.getElementById('active-count-clean')!.textContent = String(activeStates);
     document.getElementById('expiring-count-clean')!.textContent = String(expiringStates);
     document.getElementById('pending-count-clean')!.textContent = String(pendingStates);
     document.getElementById('expired-count-clean')!.textContent = String(expiredStates);
+    document.getElementById('unknown-count-clean')!.textContent = String(unknownStates);
     document.getElementById('none-count-clean')!.textContent = String(noneCount);
 
     // Bind search once

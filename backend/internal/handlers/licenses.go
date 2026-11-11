@@ -6,11 +6,22 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wbmccurry20/jbs-internal-portal/internal/database"
 )
+
+// Pending is an explicit workflow state; all other statuses reflect the
+// expiration date in the same time zone used by licensing alerts.
+const effectiveLicenseStatus = `CASE
+	WHEN sl.status = 'pending' THEN 'pending'
+	WHEN sl.expiration_date IS NULL THEN 'unknown'
+	WHEN sl.expiration_date < (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date THEN 'expired'
+	WHEN sl.expiration_date <= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date + 60 THEN 'expiring'
+	ELSE 'active'
+END`
 
 // LICENSE MANAGEMENT HANDLERS
 //
@@ -24,7 +35,7 @@ func ListLicenses(c *gin.Context) {
 	query := `
 		SELECT
 			sl.id, sl.state, sl.license_type, sl.license_number, sl.entity_name,
-			sl.issue_date, sl.expiration_date, sl.status, sl.renewal_fee, sl.notes,
+			sl.issue_date, sl.expiration_date, ` + effectiveLicenseStatus + `, sl.renewal_fee, sl.notes,
 			sl.city, sl.is_city_license, sl.is_active,
 			sl.created_at, sl.updated_at,
 			COALESCE(dc.doc_count, 0) AS document_count
@@ -46,7 +57,7 @@ func ListLicenses(c *gin.Context) {
 
 	// Filter by status
 	if status := c.Query("status"); status != "" {
-		query += fmt.Sprintf(" AND sl.status = $%d", argPos)
+		query += fmt.Sprintf(" AND (%s) = $%d", effectiveLicenseStatus, argPos)
 		args = append(args, status)
 		argPos++
 	}
@@ -58,8 +69,8 @@ func ListLicenses(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid expiring_days parameter"})
 			return
 		}
-		query += fmt.Sprintf(" AND sl.expiration_date <= CURRENT_DATE + INTERVAL '%d days'", daysInt)
-		query += " AND sl.expiration_date >= CURRENT_DATE"
+		query += fmt.Sprintf(" AND sl.expiration_date <= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date + %d", daysInt)
+		query += " AND sl.expiration_date >= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date"
 	}
 
 	query += " ORDER BY sl.state, sl.expiration_date"
@@ -76,17 +87,17 @@ func ListLicenses(c *gin.Context) {
 	licenses := make([]map[string]interface{}, 0)
 	for rows.Next() {
 		var (
-			id                                                      int
-			state, licenseType                                      string
-			licenseNumber, entityName                               sql.NullString
-			issueDate, expirationDate                               sql.NullTime
-			status                                                  sql.NullString
-			renewalFee                                              sql.NullFloat64
-			notes                                                   sql.NullString
-			city                                                    sql.NullString
-			isCityLicense, isActive                                 sql.NullBool
-			createdAt, updatedAt                                    time.Time
-			documentCount                                           int
+			id                        int
+			state, licenseType        string
+			licenseNumber, entityName sql.NullString
+			issueDate, expirationDate sql.NullTime
+			status                    sql.NullString
+			renewalFee                sql.NullFloat64
+			notes                     sql.NullString
+			city                      sql.NullString
+			isCityLicense, isActive   sql.NullBool
+			createdAt, updatedAt      time.Time
+			documentCount             int
 		)
 
 		err := rows.Scan(
@@ -134,16 +145,19 @@ func ListLicenses(c *gin.Context) {
 // GetStateSummary returns a summary of all 50 states
 func GetStateSummary(c *gin.Context) {
 	query := `
+		WITH licenses AS (
+			SELECT sl.*, ` + effectiveLicenseStatus + ` AS effective_status
+			FROM state_licenses sl WHERE sl.is_active IS DISTINCT FROM FALSE
+		)
 		SELECT 
 			state,
 			COUNT(*) as total_licenses,
-			COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
-			COUNT(CASE WHEN status = 'expiring' THEN 1 END) as expiring,
-			COUNT(CASE WHEN status = 'expired' THEN 1 END) as expired,
+			COUNT(CASE WHEN effective_status = 'active' THEN 1 END) as active,
+			COUNT(CASE WHEN effective_status = 'expiring' THEN 1 END) as expiring,
+			COUNT(CASE WHEN effective_status = 'expired' THEN 1 END) as expired,
 			COUNT(CASE WHEN is_city_license = true THEN 1 END) as city_licenses,
 			COUNT(CASE WHEN is_city_license = false OR is_city_license IS NULL THEN 1 END) as state_licenses
-		FROM state_licenses
-		WHERE is_active IS DISTINCT FROM FALSE
+		FROM licenses
 		GROUP BY state
 		ORDER BY state
 	`
@@ -202,10 +216,17 @@ func CreateLicense(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
+	req.State = strings.TrimSpace(req.State)
+	req.LicenseType = strings.TrimSpace(req.LicenseType)
+	req.City = strings.TrimSpace(req.City)
+	if req.State == "" || req.LicenseType == "" || (req.IsCityLicense && req.City == "") || (!req.IsCityLicense && req.City != "") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "State and license type are required; city is required only for city licenses"})
+		return
+	}
 
 	// Convert empty strings to null for optional fields
 	var licenseNumber, entityName, issueDate, expirationDate, notes, city interface{}
-	
+
 	if req.LicenseNumber != "" {
 		licenseNumber = req.LicenseNumber
 	}
@@ -231,24 +252,9 @@ func CreateLicense(c *gin.Context) {
 		isActive = *req.IsActive
 	}
 
-	// Auto-calculate status if not provided
+	// Date-derived statuses are computed on reads; pending remains explicit.
 	status := req.Status
-	if status == "" && req.ExpirationDate != "" {
-		expDate, err := time.Parse("2006-01-02", req.ExpirationDate)
-		if err == nil {
-			daysUntilExpiration := int(time.Until(expDate).Hours() / 24)
-			if daysUntilExpiration < 0 {
-				status = "expired"
-			} else if daysUntilExpiration <= 90 {
-				status = "expiring"
-			} else {
-				status = "active"
-			}
-		}
-	}
-	
-	// Default to active if still empty
-	if status == "" {
+	if status != "pending" {
 		status = "active"
 	}
 
@@ -299,6 +305,16 @@ func UpdateLicense(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
+	}
+	req.State = strings.TrimSpace(req.State)
+	req.LicenseType = strings.TrimSpace(req.LicenseType)
+	req.City = strings.TrimSpace(req.City)
+	if req.State == "" || req.LicenseType == "" || (req.IsCityLicense && req.City == "") || (!req.IsCityLicense && req.City != "") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "State and license type are required; city is required only for city licenses"})
+		return
+	}
+	if req.Status != "pending" {
+		req.Status = "active"
 	}
 
 	// Default is_active to true if not provided
@@ -644,11 +660,11 @@ func LinkDocument(c *gin.Context) {
 	licenseID := c.Param("id")
 
 	var req struct {
-		DocumentName      string `json:"document_name" binding:"required"`
-		DocumentURL       string `json:"document_url" binding:"required"`
-		DocumentType      string `json:"document_type"`
-		SharePointItemID  string `json:"sharepoint_item_id"`
-		FolderPath        string `json:"folder_path"`
+		DocumentName     string `json:"document_name" binding:"required"`
+		DocumentURL      string `json:"document_url" binding:"required"`
+		DocumentType     string `json:"document_type"`
+		SharePointItemID string `json:"sharepoint_item_id"`
+		FolderPath       string `json:"folder_path"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "document_name and document_url are required"})

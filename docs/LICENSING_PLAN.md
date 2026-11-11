@@ -1,5 +1,49 @@
 # Licensing & SharePoint Integration Plan
 
+## License tracking and alerts
+
+The licensing page supports state and city records. Enter a city and check
+**City License** for each actual city license; leave both blank for a state
+license. Link the actual license document from the SharePoint browser after
+creating the record. SharePoint must be configured and connected, and users
+must have access to the document.
+
+Use **Find licenses** to search by state, city, license type, number, or entity,
+and filter by status or jurisdiction. Results are ordered by expiration date.
+The map includes both state and city records; a city's expired or expiring
+license can affect the state's displayed status. A state with no records has
+not necessarily been reviewed or determined to require no license.
+
+For records that are not explicitly pending, status is computed each time
+licenses are fetched using the America/New_York calendar date: expired before
+today, expiring from today through 60 days out, active beyond 60 days, and
+needs review when no expiration date is recorded. Pending records remain
+pending and are excluded from expiration alerts until changed.
+
+### Email alert configuration
+
+Email alerts are disabled until `LICENSE_ALERT_RECIPIENTS` is configured on the
+backend. Set it to a comma-separated list of recipient addresses. Configure
+`SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, and optionally `SMTP_PORT` (default
+587) and `SMTP_FROM` (default `SMTP_USER`). The SMTP server must support
+STARTTLS. Check backend logs for configuration or delivery errors.
+
+Once enabled, the worker runs at startup and hourly while the backend is
+running. It sends reminders at 60 and 30 calendar days before expiration,
+using America/New_York. If an active record enters the system inside either
+window, or the backend was unavailable on the scheduled day, it sends one
+catch-up reminder for the most recent threshold; a later 30-day reminder still
+applies when appropriate. Already expired, pending, and undated records do not
+generate reminders. The database records delivery per license, expiration date,
+and threshold, so a new expiration date starts a new reminder cycle. If SMTP
+delivery fails, the worker logs the error and retries on a later run.
+
+Alerts are at-least-once: if SMTP accepts a message but the database commit
+fails, a retry can send a duplicate. The worker must be running for alerts to
+be delivered. Before enabling alerts in production, verify SMTP configuration,
+recipient addresses, backend uptime, and logs; enabling can immediately send
+catch-up reminders for existing licenses.
+
 ## Phased Approach
 
 The JBS SharePoint site (`netorg4205680.sharepoint.com/sites/JBS`) contains licensing documents organized by state and city. The portal manages structured license data while SharePoint remains the document store.

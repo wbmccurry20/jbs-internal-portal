@@ -7,8 +7,8 @@ import USMapClean from '../components/USMapClean.astro';
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">State Licensing</h1>
-        <p class="mt-2 text-sm text-gray-600">Manage licenses across all states</p>
+        <h1 class="text-3xl font-bold text-gray-900">Licensing</h1>
+        <p class="mt-2 text-sm text-gray-600">Manage state and city licenses</p>
       </div>
       <button id="add-license-btn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm transition-colors">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -18,12 +18,40 @@ import USMapClean from '../components/USMapClean.astro';
       </button>
     </div>
 
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h2 class="text-lg font-semibold text-gray-900">Find licenses</h2>
+      <p class="text-sm text-gray-500 mb-4">Expiration dates are shown in order. Expiring soon means within 60 days.</p>
+      <div class="grid gap-3 md:grid-cols-3">
+        <label class="text-sm text-gray-700">Search
+          <input id="license-search" type="search" placeholder="State, city, number, entity, or type" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg">
+        </label>
+        <label class="text-sm text-gray-700">Status
+          <select id="license-status-filter" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg">
+            <option value="all">All statuses</option>
+            <option value="expiring" selected>Expiring within 60 days</option>
+            <option value="expired">Expired</option>
+            <option value="unknown">Needs review (no expiration)</option>
+            <option value="pending">Pending</option>
+            <option value="active">Active</option>
+          </select>
+        </label>
+        <label class="text-sm text-gray-700">Jurisdiction
+          <select id="license-jurisdiction-filter" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg">
+            <option value="all">State and city</option>
+            <option value="state">State</option>
+            <option value="city">City</option>
+          </select>
+        </label>
+      </div>
+      <div id="license-search-results" class="mt-4 space-y-2" aria-live="polite"></div>
+    </div>
+
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
       <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <div class="text-sm text-gray-600">Total Licenses</div>
         <div id="total-licenses" class="text-2xl font-bold text-gray-900">-</div>
-        <div id="total-licenses-sub" class="text-xs text-gray-400 mt-0.5">— states licensed</div>
+        <div id="total-licenses-sub" class="text-xs text-gray-400 mt-0.5">— states with records</div>
       </div>
       <div class="bg-green-50 p-4 rounded-lg shadow-sm border border-green-200">
         <div class="text-sm text-green-700">Active</div>
@@ -41,6 +69,10 @@ import USMapClean from '../components/USMapClean.astro';
         <div class="text-sm text-red-700">Expired</div>
         <div id="expired-count" class="text-2xl font-bold text-red-900">-</div>
       </div>
+      <div class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
+        <div class="text-sm text-gray-700">Needs Review</div>
+        <div id="unknown-count" class="text-2xl font-bold text-gray-900">-</div>
+      </div>
     </div>
 
     <!-- License Dashboard -->
@@ -57,7 +89,7 @@ import USMapClean from '../components/USMapClean.astro';
           </svg>
           <div>
             <h2 class="text-base font-semibold text-gray-900">Auto-Discover from SharePoint</h2>
-            <p class="text-xs text-gray-500">Scan state folders to create license records</p>
+            <p class="text-xs text-gray-500">Folders do not confirm a license exists. Review the actual license before approving a suggestion.</p>
           </div>
         </div>
       </div>
@@ -354,11 +386,8 @@ import USMapClean from '../components/USMapClean.astro';
           <div>
             <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select id="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-              <option value="">Auto-calculate</option>
-              <option value="active">Active</option>
-              <option value="expiring">Expiring Soon</option>
+              <option value="">Based on expiration date</option>
               <option value="pending">Pending</option>
-              <option value="expired">Expired</option>
             </select>
           </div>
           <div>
@@ -388,6 +417,7 @@ import USMapClean from '../components/USMapClean.astro';
     import { escapeHtml } from '../utils/html';
     import { getApiUrl } from '../utils/api';
     import { toast } from '../utils/toast';
+    import { filterLicenses } from '../utils/licenses';
 
     const API_URL = getApiUrl();
     const token = localStorage.getItem('jbs_token');
@@ -445,6 +475,7 @@ import USMapClean from '../components/USMapClean.astro';
     function getWorstStatus(licenses: License[]): string {
       if (licenses.some(l => l.status === 'expired')) return 'expired';
       if (licenses.some(l => l.status === 'expiring')) return 'expiring';
+      if (licenses.some(l => l.status === 'unknown')) return 'unknown';
       if (licenses.some(l => l.status === 'active')) return 'active';
       if (licenses.some(l => l.status === 'pending')) return 'pending';
       return 'active';
@@ -454,7 +485,12 @@ import USMapClean from '../components/USMapClean.astro';
       if (status === 'active') return 'bg-green-100 text-green-800';
       if (status === 'expiring') return 'bg-yellow-100 text-yellow-800';
       if (status === 'pending') return 'bg-blue-100 text-blue-800';
+      if (status === 'unknown') return 'bg-gray-100 text-gray-700';
       return 'bg-red-100 text-red-800';
+    }
+
+    function statusLabel(status: string): string {
+      return status === 'unknown' ? 'Needs review' : status || 'Needs review';
     }
 
     function formatDate(dateStr: string): string {
@@ -478,7 +514,7 @@ import USMapClean from '../components/USMapClean.astro';
               ${license.license_number ? `<div class="text-xs text-gray-400 font-mono">${escapeHtml(license.license_number)}</div>` : ''}
             </div>
             ${expiry ? `<span class="text-xs text-gray-500 flex-shrink-0">${license.status === 'expired' ? 'Expired' : 'Expires'}: ${escapeHtml(expiry)}</span>` : ''}
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${sc} flex-shrink-0 capitalize">${escapeHtml(license.status || 'unknown')}</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${sc} flex-shrink-0 capitalize">${escapeHtml(statusLabel(license.status))}</span>
             ${(license.document_count && license.document_count > 0) ? `<span class="inline-flex items-center gap-0.5 text-xs text-gray-400 flex-shrink-0" title="${license.document_count} doc${license.document_count > 1 ? 's' : ''} linked"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>${license.document_count}</span>` : ''}
           </div>
           <div class="flex items-center gap-1 flex-shrink-0">
@@ -506,7 +542,7 @@ import USMapClean from '../components/USMapClean.astro';
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap mb-1">
                 <span class="font-semibold text-gray-900 text-sm">${escapeHtml(license.license_type)}</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusBadgeClasses(license.status)} capitalize">${escapeHtml(license.status || 'unknown')}</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusBadgeClasses(license.status)} capitalize">${escapeHtml(statusLabel(license.status))}</span>
               </div>
               ${license.license_number ? `<div class="text-xs text-gray-500 font-mono mb-1"># ${escapeHtml(license.license_number)}</div>` : ''}
               ${license.entity_name ? `<div class="text-xs text-gray-500 mb-1">${escapeHtml(license.entity_name)}</div>` : ''}
@@ -587,7 +623,7 @@ import USMapClean from '../components/USMapClean.astro';
                 <span class="font-semibold text-gray-900 text-sm">${escapeHtml(fullName)}</span>
                 <span class="text-xs text-gray-400 font-mono">${escapeHtml(stateCode)}</span>
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">${stateLicenses.length} license${stateLicenses.length !== 1 ? 's' : ''}</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${sc} capitalize">${escapeHtml(worstStatus)}</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${sc} capitalize">${escapeHtml(statusLabel(worstStatus))}</span>
                 ${cityCountLabel}
               </div>
               <button
@@ -627,6 +663,7 @@ import USMapClean from '../components/USMapClean.astro';
         loading.classList.add('hidden');
 
         renderGroupedTable(licenses);
+        renderSearchResults();
         updateStats(licenses);
         renderUSMap(licenses);
 
@@ -638,9 +675,26 @@ import USMapClean from '../components/USMapClean.astro';
       } catch (error: any) {
         loading.classList.add('hidden');
         container.innerHTML = '<div class="text-center py-12 text-red-500">Failed to load licenses</div>';
+        document.getElementById('license-search-results')!.textContent = 'Failed to load licenses. Refresh the page to try again.';
         renderUSMap([]);
       }
     }
+
+    function renderSearchResults() {
+      const search = (document.getElementById('license-search') as HTMLInputElement).value;
+      const status = (document.getElementById('license-status-filter') as HTMLSelectElement).value;
+      const jurisdiction = (document.getElementById('license-jurisdiction-filter') as HTMLSelectElement).value;
+      const matches = filterLicenses(currentLicenses, { search, status, jurisdiction }, STATE_NAMES);
+      const results = document.getElementById('license-search-results')!;
+      results.innerHTML = `<p class="text-sm text-gray-500">${matches.length} license${matches.length === 1 ? '' : 's'} found</p>` +
+        matches.map(license => `<div>
+          <div class="text-xs font-medium text-gray-600 mt-3 mb-1">${escapeHtml(STATE_NAMES[license.state] || license.state)}${license.is_city_license ? ` · ${escapeHtml(license.city || 'Unknown city')}` : ' · State'}</div>
+          ${renderLicenseRow(license)}
+        </div>`).join('');
+    }
+    document.getElementById('license-search')!.addEventListener('input', renderSearchResults);
+    document.getElementById('license-status-filter')!.addEventListener('change', renderSearchResults);
+    document.getElementById('license-jurisdiction-filter')!.addEventListener('change', renderSearchResults);
 
     function updateStats(licenses: License[]) {
       const total = licenses.length;
@@ -649,14 +703,16 @@ import USMapClean from '../components/USMapClean.astro';
       const expiring = licenses.filter(l => l.status === 'expiring').length;
       const pending = licenses.filter(l => l.status === 'pending').length;
       const expired = licenses.filter(l => l.status === 'expired').length;
+      const unknown = licenses.filter(l => l.status === 'unknown').length;
 
       document.getElementById('total-licenses')!.textContent = String(total);
       document.getElementById('total-licenses-sub')!.textContent =
-        `${statesWithLicenses} state${statesWithLicenses !== 1 ? 's' : ''} licensed`;
+        `${statesWithLicenses} state${statesWithLicenses !== 1 ? 's' : ''} with records`;
       document.getElementById('active-count')!.textContent = String(active);
       document.getElementById('expiring-count')!.textContent = String(expiring);
       document.getElementById('pending-count')!.textContent = String(pending);
       document.getElementById('expired-count')!.textContent = String(expired);
+      document.getElementById('unknown-count')!.textContent = String(unknown);
     }
 
     function renderUSMap(licenses: License[]) {
@@ -798,7 +854,7 @@ import USMapClean from '../components/USMapClean.astro';
       (document.getElementById('entity-name') as HTMLInputElement).value = license.entity_name || '';
       (document.getElementById('issue-date') as HTMLInputElement).value = license.issue_date || '';
       (document.getElementById('expiration-date') as HTMLInputElement).value = license.expiration_date || '';
-      (document.getElementById('status') as HTMLSelectElement).value = license.status;
+      (document.getElementById('status') as HTMLSelectElement).value = license.status === 'pending' ? 'pending' : '';
       (document.getElementById('renewal-fee') as HTMLInputElement).value = String(license.renewal_fee || 0);
       (document.getElementById('notes') as HTMLTextAreaElement).value = license.notes || '';
       (document.getElementById('city') as HTMLInputElement).value = license.city || '';
@@ -824,6 +880,13 @@ import USMapClean from '../components/USMapClean.astro';
     // Submit form
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      const cityInput = document.getElementById('city') as HTMLInputElement;
+      const isCity = (document.getElementById('is-city-license') as HTMLInputElement).checked;
+      if ((isCity && !cityInput.value.trim()) || (!isCity && cityInput.value.trim())) {
+        toast.error(isCity ? 'Enter a city for a city license.' : 'Check City License when entering a city.');
+        return;
+      }
 
       const data = {
         state: (document.getElementById('state') as HTMLInputElement).value,
@@ -856,7 +919,10 @@ import USMapClean from '../components/USMapClean.astro';
           body: JSON.stringify(data)
         });
 
-        if (!response.ok) throw new Error('Failed to save license');
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to save license');
+        }
 
         modal.classList.add('hidden');
         loadLicenses();
@@ -1294,7 +1360,7 @@ import USMapClean from '../components/USMapClean.astro';
 
           scanSuggestions.innerHTML += `
             <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 border border-gray-100">
-              <input type="checkbox" class="scan-cb rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-idx="${i}" checked>
+              <input type="checkbox" class="scan-cb rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-idx="${i}">
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold bg-gray-100 text-gray-700">${escapeHtml(s.state)}</span>
               ${badge}
               <span class="text-sm font-medium text-gray-800 flex-1">${escapeHtml(label)}</span>
